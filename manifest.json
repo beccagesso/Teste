@@ -3,7 +3,7 @@
   "short_name": "Orçamentos",
   "description": "Gerador de orçamentos da Becca Gesso",
   "lang": "pt-BR",
-  "start_url": "./index.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",

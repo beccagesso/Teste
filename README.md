@@ -108,4 +108,9 @@ e o funcionamento sem internet:
 ```bash
 npm install playwright
 node build/testar.js
+node build/testar-subcaminho.js
 ```
+
+O segundo confere o que o GitHub Pages faz na prática: servir o app em
+`/Teste/` em vez da raiz do endereço, o que quebraria o ícone e o modo offline
+se algum caminho estivesse escrito de forma absoluta.
