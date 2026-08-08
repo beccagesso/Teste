@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Becca Gesso — Gerador de Orçamentos</title>
+
+<!-- instalação na tela de início do iPhone -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Orçamentos">
+<meta name="theme-color" content="#33486a">
+<meta name="description" content="Gerador de orçamentos da Becca Gesso">
+<link rel="apple-touch-icon" href="icone-180.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icone-512.png">
+<link rel="manifest" href="manifest.json">
+
+<style>
+/*__FONTES__*/
+
+  :root{
+    --ink:#33486a;
+    --ink-soft:#5b7092;
+    --paper:#ffffff;
+    --canvas:#eef1f5;
+    --rule:#d9e0ea;
+    --stamp:#33486a;
+    --accent:#55ace4;
+    --gold:#b5822a;
+    --gold-soft:#f4ead4;
+    --ok:#2f6b4f;
+    --radius:2px;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    background:var(--canvas);
+    font-family:'Inter',sans-serif;
+    color:var(--ink);
+    background-image:
+      linear-gradient(var(--rule) 1px, transparent 1px),
+      linear-gradient(90deg, var(--rule) 1px, transparent 1px);
+    background-size:28px 28px;
+    background-attachment:fixed;
+  }
+  .app{
+    max-width:1400px;
+    margin:0 auto;
+    padding:32px 24px 80px;
+    display:grid;
+    grid-template-columns:minmax(320px,420px) 1fr;
+    gap:28px;
+    align-items:start;
+  }
+  header.top{
+    grid-column:1 / -1;
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    border-bottom:3px solid var(--ink);
+    padding-bottom:14px;
+    margin-bottom:6px;
+  }
+  header.top h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:22px;
+    letter-spacing:0.02em;
+    margin:0;
+  }
+  header.top h1 em{
+    font-style:normal;
+    font-weight:400;
+    color:var(--ink-soft);
+  }
+  header.top span{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+  }
+
+  /* ---------- EDITOR ---------- */
+  .editor{
+    background:var(--paper);
+    border:1px solid var(--rule);
+    border-radius:var(--radius);
+    padding:22px;
+    position:sticky;
+    top:24px;
+  }
+  .editor h2{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:0.1em;
+    color:var(--ink-soft);
+    margin:0 0 12px;
+    padding-bottom:6px;
+    border-bottom:1px solid var(--rule);
+  }
+  .field-group{margin-bottom:20px;}
+  .field-group:last-child{margin-bottom:0;}
+  label{
+    display:block;
+    font-size:11px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    color:var(--ink-soft);
+    margin-bottom:4px;
+  }
+  input[type=text], input[type=date], textarea{
+    width:100%;
+    padding:9px 10px;
+    border:1px solid var(--rule);
+    border-radius:var(--radius);
+    font-family:'Inter',sans-serif;
+    font-size:13.5px;
+    color:var(--ink);
+    background:#fff;
+    margin-bottom:10px;
+  }
+  input:focus, textarea:focus{
+    outline:none;
+    border-color:var(--ink);
+  }
+  textarea{resize:vertical;min-height:60px;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+  .numero-row{display:flex;gap:6px;}
+  .numero-row input{
+    margin-bottom:10px;
+    background:#f3f4f7;
+    color:var(--ink-soft);
+    font-family:'IBM Plex Mono',monospace;
+    letter-spacing:0.03em;
+  }
+  .numero-row button{
+    flex-shrink:0;
+    width:38px;
+    height:38px;
+    margin-bottom:10px;
+    border:1px solid var(--rule);
+    border-radius:var(--radius);
+    background:#fff;
+    color:var(--ink-soft);
+    font-size:15px;
+  }
+  .numero-row button:hover{border-color:var(--ink);color:var(--ink);}
+
+  .service-row{
+    border:1px solid var(--rule);
+    border-radius:var(--radius);
+    padding:10px;
+    margin-bottom:10px;
+    background:#fbfbfc;
+    position:relative;
+  }
+  /* dois campos: quantidade e valor unitário */
+  .service-row .row2{grid-template-columns:1fr 1.3fr;}
+  .service-row label{font-size:9.5px;}
+  .remove-btn{
+    position:absolute;
+    top:4px;
+    right:4px;
+    background:none;
+    border:none;
+    color:var(--stamp);
+    font-size:16px;
+    line-height:1;
+    cursor:pointer;
+    padding:6px 10px;
+  }
+  .remove-btn:hover{opacity:0.6;}
+
+  button{
+    font-family:'Inter',sans-serif;
+    cursor:pointer;
+  }
+  .btn-add{
+    width:100%;
+    padding:10px;
+    background:#fff;
+    border:1px dashed var(--ink-soft);
+    border-radius:var(--radius);
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+  }
+  .btn-add:hover{border-color:var(--ink);color:var(--ink);}
+
+  .actions{
+    display:flex;
+    gap:10px;
+    margin-top:22px;
+    padding-top:16px;
+    border-top:1px solid var(--rule);
+  }
+  .btn-primary{
+    flex:1;
+    padding:13px;
+    background:var(--ink);
+    color:#fff;
+    border:none;
+    border-radius:var(--radius);
+    font-size:13px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+  }
+  .btn-primary:hover{background:var(--ink-soft);}
+  .btn-secondary{
+    padding:13px 16px;
+    background:#fff;
+    color:var(--ink-soft);
+    border:1px solid var(--rule);
+    border-radius:var(--radius);
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+  }
+  .btn-secondary:hover{border-color:var(--ink);color:var(--ink);}
+
+  /* aviso discreto de salvamento automático */
+  .autosave{
+    margin-top:10px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10.5px;
+    color:var(--ink-soft);
+    text-align:center;
+    min-height:14px;
+    opacity:0;
+    transition:opacity .25s;
+  }
+  .autosave.on{opacity:1;}
+
+  /* ---------- DOCUMENTO / PREVIEW ---------- */
+  .doc-wrap{
+    background:var(--paper);
+    border:1px solid var(--rule);
+    box-shadow:0 8px 24px rgba(20,28,48,0.06);
+  }
+  .doc{
+    padding:48px 52px;
+    min-height:900px;
+    position:relative;
+  }
+  .doc-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    padding-bottom:22px;
+    border-bottom:2px solid var(--ink);
+  }
+  .doc-head .empresa{max-width:60%;}
+  .doc-head .logo{
+    width:190px;
+    height:auto;
+    display:block;
+    margin-bottom:12px;
+  }
+  .doc-head .empresa h2{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:20px;
+    margin:0 0 4px;
+  }
+  .doc-head .empresa p{
+    margin:1px 0;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    line-height:1.5;
+  }
+  .doc-head .meta{
+    text-align:right;
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .doc-head .meta .tag{
+    display:inline-block;
+    font-family:'Space Grotesk',sans-serif;
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:0.12em;
+    color:var(--stamp);
+    border:1.5px solid var(--stamp);
+    padding:4px 10px;
+    margin-bottom:8px;
+  }
+  .doc-head .meta div{font-size:11.5px;color:var(--ink-soft);margin-top:3px;}
+  .doc-head .meta div b{color:var(--ink);}
+
+  .doc-parties{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:24px;
+    margin:24px 0 8px;
+  }
+  .doc-parties .block-label{
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:0.1em;
+    color:var(--accent);
+    font-weight:600;
+    margin-bottom:4px;
+  }
+  .doc-parties .name{font-size:14.5px;font-weight:600;margin-bottom:2px;}
+  .doc-parties .addr{font-size:12px;color:var(--ink-soft);line-height:1.5;}
+
+  table.services{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:26px;
+    font-size:12.5px;
+  }
+  table.services thead th{
+    text-align:left;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:#fff;
+    background:var(--ink);
+    padding:9px 10px;
+    font-weight:600;
+  }
+  table.services thead th.num{text-align:right;}
+  table.services tbody td{
+    padding:9px 10px;
+    border-bottom:1px solid var(--rule);
+    vertical-align:top;
+  }
+  table.services tbody td.num{
+    text-align:right;
+    font-family:'IBM Plex Mono',monospace;
+    white-space:nowrap;
+  }
+  table.services tbody tr:nth-child(even){background:#fafafc;}
+
+  .doc-totals{
+    display:flex;
+    justify-content:flex-end;
+    margin-top:6px;
+  }
+  .doc-totals table{border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:13px;}
+  .doc-totals td{padding:6px 4px;}
+  .doc-totals td.label{color:var(--ink-soft);padding-right:22px;text-align:right;}
+  .doc-totals td.val{text-align:right;font-weight:600;}
+  .doc-totals tr.grand td{border-top:2px solid var(--ink);padding-top:10px;font-size:16px;}
+
+  .payment-box{
+    margin-top:30px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+  }
+  .pay-card{
+    border:1px solid var(--rule);
+    border-radius:var(--radius);
+    padding:14px 16px;
+    background:#fbfbfc;
+  }
+  .pay-card.discount{background:var(--gold-soft);border-color:var(--gold);}
+  .pay-card .pay-title{
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:0.07em;
+    font-weight:700;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+  .pay-card.discount .pay-title{color:var(--gold);}
+  .pay-card .pay-value{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:19px;
+    font-weight:600;
+    color:var(--ink);
+  }
+  .pay-card .pay-sub{font-size:11px;color:var(--ink-soft);margin-top:3px;}
+
+  .obs{
+    margin-top:24px;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    line-height:1.6;
+    white-space:pre-wrap;
+  }
+
+  /* carimbo decorativo */
+  .carimbo{
+    flex-shrink:0;
+    width:104px;
+    height:104px;
+    border:2px dashed var(--stamp);
+    border-radius:50%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    transform:rotate(-9deg);
+    color:var(--stamp);
+    text-align:center;
+    opacity:0.9;
+    pointer-events:none;
+    margin-left:auto;
+  }
+  .carimbo .c1{font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;}
+  .carimbo .c2{font-family:'IBM Plex Mono',monospace;font-size:9.5px;margin-top:3px;}
+  .carimbo .c3{font-family:'IBM Plex Mono',monospace;font-size:9px;margin-top:2px;}
+
+  /* ---------- ASSINATURAS ---------- */
+  .assinaturas{
+    margin-top:44px;
+    padding-top:8px;
+    break-inside:avoid;
+    page-break-inside:avoid;
+  }
+  .assinaturas .aceite{
+    font-size:11.5px;
+    color:var(--ink-soft);
+    line-height:1.6;
+    margin-bottom:34px;
+  }
+  .assinaturas .linhas{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:40px;
+  }
+  .assina{
+    border-top:1px solid var(--ink);
+    padding-top:7px;
+  }
+  .assina .quem{
+    font-size:12px;
+    font-weight:600;
+    color:var(--ink);
+  }
+  .assina .doc-id{
+    font-size:10.5px;
+    color:var(--ink-soft);
+    margin-top:3px;
+    line-height:1.6;
+  }
+  .assina .local-data{
+    font-size:10.5px;
+    color:var(--ink-soft);
+    margin-top:10px;
+  }
+
+  .doc-foot{
+    margin-top:40px;
+    padding-top:14px;
+    border-top:1px solid var(--rule);
+    font-size:10.5px;
+    color:#8891a3;
+    text-align:center;
+  }
+
+  .brand-strip{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding-bottom:18px;
+    margin-bottom:18px;
+    border-bottom:1px solid var(--rule);
+  }
+  .brand-strip img{
+    width:104px;
+    height:auto;
+    flex-shrink:0;
+  }
+  .brand-strip-text{
+    font-size:10.5px;
+    line-height:1.5;
+    color:var(--ink-soft);
+  }
+  .brand-strip-text b{
+    display:block;
+    font-family:'Space Grotesk',sans-serif;
+    font-size:13px;
+    color:var(--ink);
+    margin-bottom:1px;
+  }
+
+  /* ---------- IMPRESSÃO ---------- */
+  @media print{
+    body{background:#fff;background-image:none;}
+    .app{display:block;padding:0;max-width:none;}
+    header.top, .editor, .actions, .autosave{display:none !important;}
+    .doc-wrap{box-shadow:none;border:none;}
+    .doc{padding:14mm 16mm;min-height:0;}
+    @page{margin:0;size:A4;}
+    /* o carimbo some em telas estreitas, mas deve sair no PDF */
+    .carimbo{display:flex !important;}
+    .doc-head{flex-direction:row !important;}
+    .payment-box, .doc-parties, .assinaturas .linhas{
+      grid-template-columns:1fr 1fr !important;
+    }
+    .doc-head .meta{text-align:right !important;}
+    table.services{break-inside:auto;}
+    table.services thead{display:table-header-group;}
+    table.services tr{break-inside:avoid;}
+  }
+
+  /* ---------- TELAS ESTREITAS ----------
+     Restrito a "screen": uma folha A4 tem ~794px de largura em CSS,
+     então sem isso estas regras também valeriam na impressão. */
+  @media screen and (max-width:900px){
+    .app{grid-template-columns:1fr;padding:20px 16px 60px;}
+    .app{
+      padding-left:max(16px, env(safe-area-inset-left));
+      padding-right:max(16px, env(safe-area-inset-right));
+      padding-bottom:max(60px, env(safe-area-inset-bottom));
+    }
+    .editor{position:static;}
+    .doc{padding:24px 16px;min-height:0;}
+    /* sem isto, a largura mínima da tabela estica a coluna do grid
+       e a página inteira passa a rolar de lado */
+    .app > *{min-width:0;}
+    .doc-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+    table.services{font-size:11.5px;}
+    table.services thead th, table.services tbody td{padding:8px 7px;}
+    .doc-head{flex-direction:column;gap:14px;}
+    .doc-head .meta{text-align:left;}
+    .payment-box{grid-template-columns:1fr;}
+    .carimbo{display:none;}
+    /* o carimbo some aqui, então o cliente ocupa a linha inteira */
+    .doc-parties{grid-template-columns:1fr;}
+    .assinaturas .linhas{grid-template-columns:1fr;gap:30px;}
+    /* 16px evita que o Safari dê zoom ao tocar num campo */
+    input[type=text], input[type=date], textarea, .service-row input{
+      font-size:16px;
+    }
+    /* o seletor de data tem largura mínima grande e espremia o campo
+       do número ao lado; no celular os dois ficam um sob o outro */
+    .linha-orc{grid-template-columns:1fr;gap:0;}
+    textarea{min-height:86px;}
+    /* alvos de toque confortáveis */
+    .numero-row button{width:44px;height:44px;}
+    .remove-btn{padding:10px 12px;font-size:18px;}
+    .btn-add{padding:14px;}
+    header.top{flex-direction:column;align-items:flex-start;gap:4px;}
+  }
+
+  /* modo instalado na tela de início */
+  @media (display-mode:standalone){
+    .app{padding-top:max(20px, env(safe-area-inset-top));}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header class="top">
+    <h1>Becca Gesso <em>· Orçamentos</em></h1>
+    <span>documento pronto para impressão / PDF</span>
+  </header>
+
+  <!-- ============ EDITOR ============ -->
+  <div class="editor">
+
+    <div class="brand-strip">
+      <img id="logoEditor" alt="Becca Gesso">
+      <div class="brand-strip-text">
+        <b>Becca Gesso</b>
+        CNPJ 60.655.817/0001-20<br>
+        (14) 99757-7371 · beccagesso@gmail.com
+      </div>
+    </div>
+
+    <h2>Cliente</h2>
+    <div class="field-group">
+      <label for="cliNome">Nome do cliente</label>
+      <input type="text" id="cliNome" placeholder="Nome completo ou razão social"
+             autocomplete="name" enterkeyhint="next">
+      <label for="cliEndereco">Endereço</label>
+      <input type="text" id="cliEndereco" placeholder="Endereço completo"
+             autocomplete="street-address">
+      <label for="cliDoc">CPF / CNPJ <span style="text-transform:none;font-weight:400;">(opcional)</span></label>
+      <input type="text" id="cliDoc" placeholder="Para constar na assinatura"
+             inputmode="numeric">
+    </div>
+
+    <h2>Dados do orçamento</h2>
+    <div class="field-group">
+      <div class="row2 linha-orc">
+        <div>
+          <label for="orcNumero">Número <span style="text-transform:none;font-weight:400;">(automático)</span></label>
+          <div class="numero-row">
+            <input type="text" id="orcNumero" readonly>
+            <button type="button" id="regenNumero" title="Gerar o próximo número"
+                    aria-label="Gerar o próximo número">&#8635;</button>
+          </div>
+        </div>
+        <div>
+          <label for="orcData">Data</label>
+          <input type="date" id="orcData">
+        </div>
+      </div>
+    </div>
+
+    <h2>Serviços</h2>
+    <div class="field-group" id="servicosList"></div>
+    <button type="button" class="btn-add" id="addServico">+ adicionar serviço</button>
+
+    <h2 style="margin-top:20px;">Observações (opcional)</h2>
+    <div class="field-group">
+      <textarea id="obs" placeholder="Ex: valores não incluem materiais de terceiros, prazo de execução estimado etc."></textarea>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn-primary" id="printBtn">Imprimir / Salvar PDF</button>
+      <button type="button" class="btn-secondary" id="resetBtn">Novo</button>
+    </div>
+    <div class="autosave" id="autosave">salvo automaticamente</div>
+  </div>
+
+  <!-- ============ DOCUMENTO ============ -->
+  <div class="doc-wrap">
+    <div class="doc" id="doc">
+
+      <div class="doc-head">
+        <div class="empresa">
+          <img class="logo" id="logoDoc" alt="Becca Gesso">
+          <p>CNPJ 60.655.817/0001-20</p>
+          <p>(14) 99757-7371 · beccagesso@gmail.com</p>
+        </div>
+        <div class="meta">
+          <div class="tag">ORÇAMENTO</div>
+          <div><b>Nº</b> <span id="docNumero">—</span></div>
+          <div><b>Data</b> <span id="docData">—</span></div>
+          <div><b>Válido até</b> <span id="docValidade">—</span></div>
+        </div>
+      </div>
+
+      <div class="doc-parties">
+        <div>
+          <div class="block-label">Cliente</div>
+          <div class="name" id="docCliNome">—</div>
+          <div class="addr" id="docCliEndereco">—</div>
+        </div>
+        <div class="carimbo">
+          <div class="c1">ORÇAMENTO</div>
+          <div class="c2" id="carimboNum">Nº —</div>
+          <div class="c3" id="carimboVal">válido 15 dias</div>
+        </div>
+      </div>
+
+      <table class="services">
+        <thead>
+          <tr>
+            <th style="width:50%">Descrição</th>
+            <th class="num" style="width:12%">Qtd.</th>
+            <th class="num" style="width:19%">Valor unit.</th>
+            <th class="num" style="width:19%">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody id="docServicos">
+        </tbody>
+      </table>
+
+      <div class="doc-totals">
+        <table>
+          <tr>
+            <td class="label">Subtotal</td>
+            <td class="val" id="totSubtotal">R$ 0,00</td>
+          </tr>
+          <tr class="grand">
+            <td class="label">Total</td>
+            <td class="val" id="totTotal">R$ 0,00</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="payment-box">
+        <div class="pay-card">
+          <div class="pay-title">Cartão de crédito</div>
+          <div class="pay-value" id="payCartao">R$ 0,00</div>
+          <div class="pay-sub">em até 5x sem juros de <span id="payParcela">R$ 0,00</span></div>
+        </div>
+        <div class="pay-card discount">
+          <div class="pay-title">À vista (6% de desconto)</div>
+          <div class="pay-value" id="payAvista">R$ 0,00</div>
+          <div class="pay-sub">Pix, dinheiro ou transferência</div>
+        </div>
+      </div>
+
+      <div class="obs" id="docObs"></div>
+
+      <!-- ============ ASSINATURAS ============ -->
+      <div class="assinaturas">
+        <div class="aceite">
+          Declaro que li e aceito as condições descritas neste orçamento,
+          autorizando a execução dos serviços nos valores e prazos acima.
+        </div>
+        <div class="linhas">
+          <div class="assina">
+            <div class="quem" id="assinaCliente">Cliente</div>
+            <div class="doc-id" id="assinaClienteDoc">CPF/CNPJ: ______________________</div>
+            <div class="local-data">Data: ______ / ______ / __________</div>
+          </div>
+          <div class="assina">
+            <div class="quem">Becca Gesso</div>
+            <div class="doc-id">CNPJ 60.655.817/0001-20</div>
+            <div class="local-data">Data: ______ / ______ / __________</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="doc-foot">Este orçamento é válido por 15 dias a partir da data de emissão.</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ==========================================================
+   Becca Gesso — gerador de orçamentos
+   Arquivo único: fontes e logo estão embutidos, funciona offline.
+   ========================================================== */
+
+const LOGO = '__LOGO_B64__';
+document.getElementById('logoEditor').src = LOGO;
+document.getElementById('logoDoc').src = LOGO;
+
+const CHAVE_RASCUNHO = 'beccaGesso.rascunho.v1';
+const CHAVE_CONTADOR = 'beccaGesso.contador.v1';
+const VALIDADE_DIAS = 15;
+const PARCELAS = 5;
+const DESCONTO_AVISTA = 0.06;
+
+let servicos = [];
+let idCounter = 0;
+
+/* ---------- utilidades ---------- */
+
+function novoServico(desc="", qtd=1, valor=0){
+  idCounter++;
+  return {id:idCounter, desc, qtd, valor};
+}
+
+/* Aceita "1.500,50", "1500,50" e "1500.50" — no iPhone o teclado
+   decimal traz vírgula, e input[type=number] descartaria o valor. */
+function parseNum(v){
+  if(typeof v === 'number') return isFinite(v) ? v : 0;
+  let s = String(v).trim();
+  if(!s) return 0;
+  s = s.replace(/[^\d.,-]/g, '');
+  if(s.indexOf(',') !== -1){
+    s = s.replace(/\./g, '').replace(',', '.');
+  }
+  const n = parseFloat(s);
+  return isFinite(n) ? n : 0;
+}
+
+function fmtMoeda(v){
+  return (isFinite(v) ? v : 0)
+    .toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+}
+
+function fmtDataBR(dateStr){
+  if(!dateStr) return '—';
+  const [y,m,d] = dateStr.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function addDias(dateStr, dias){
+  if(!dateStr) return null;
+  const dt = new Date(dateStr + 'T00:00:00');
+  if(isNaN(dt)) return null;
+  dt.setDate(dt.getDate() + dias);
+  return dt;
+}
+
+function fmtDate(dt){
+  if(!dt) return '—';
+  const d = String(dt.getDate()).padStart(2,'0');
+  const m = String(dt.getMonth()+1).padStart(2,'0');
+  return `${d}/${m}/${dt.getFullYear()}`;
+}
+
+function escapeAttr(str){
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/"/g,'&quot;')
+    .replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function el(id){ return document.getElementById(id); }
+
+/* ---------- numeração sequencial ---------- */
+
+function proximoNumero(){
+  const ano = new Date().getFullYear();
+  let c = {ano:ano, seq:0};
+  try{
+    const bruto = localStorage.getItem(CHAVE_CONTADOR);
+    if(bruto){
+      const lido = JSON.parse(bruto);
+      if(lido && typeof lido.seq === 'number' && lido.ano === ano) c = lido;
+    }
+  }catch(e){ /* armazenamento indisponível: segue com 0 */ }
+  c.seq++;
+  try{ localStorage.setItem(CHAVE_CONTADOR, JSON.stringify(c)); }catch(e){}
+  return `${String(c.seq).padStart(4,'0')}/${ano}`;
+}
+
+/* ---------- salvamento automático ---------- */
+
+let timerSalvar = null;
+
+function estadoAtual(){
+  return {
+    cliNome: el('cliNome').value,
+    cliEndereco: el('cliEndereco').value,
+    cliDoc: el('cliDoc').value,
+    orcNumero: el('orcNumero').value,
+    orcData: el('orcData').value,
+    obs: el('obs').value,
+    servicos: servicos.map(s => ({desc:s.desc, qtd:s.qtd, valor:s.valor})),
+  };
+}
+
+function salvar(){
+  try{
+    localStorage.setItem(CHAVE_RASCUNHO, JSON.stringify(estadoAtual()));
+    piscarAviso();
+  }catch(e){ /* modo privado ou cota cheia: o app segue funcionando */ }
+}
+
+function agendarSalvar(){
+  clearTimeout(timerSalvar);
+  timerSalvar = setTimeout(salvar, 400);
+}
+
+let timerAviso = null;
+function piscarAviso(){
+  const a = el('autosave');
+  a.classList.add('on');
+  clearTimeout(timerAviso);
+  timerAviso = setTimeout(() => a.classList.remove('on'), 1400);
+}
+
+function restaurar(){
+  let d = null;
+  try{
+    const bruto = localStorage.getItem(CHAVE_RASCUNHO);
+    if(bruto) d = JSON.parse(bruto);
+  }catch(e){ return false; }
+  if(!d || typeof d !== 'object') return false;
+
+  el('cliNome').value = d.cliNome || '';
+  el('cliEndereco').value = d.cliEndereco || '';
+  el('cliDoc').value = d.cliDoc || '';
+  el('orcNumero').value = d.orcNumero || proximoNumero();
+  el('orcData').value = d.orcData || hojeISO();
+  el('obs').value = d.obs || '';
+
+  servicos = Array.isArray(d.servicos) && d.servicos.length
+    ? d.servicos.map(s => novoServico(s.desc || '', parseNum(s.qtd), parseNum(s.valor)))
+    : [novoServico()];
+  return true;
+}
+
+function hojeISO(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+/* ---------- editor de serviços ---------- */
+
+function renderServicosEditor(){
+  const list = el('servicosList');
+  list.innerHTML = '';
+  servicos.forEach(s => {
+    const row = document.createElement('div');
+    row.className = 'service-row';
+    row.innerHTML = `
+      <button type="button" class="remove-btn" data-id="${s.id}"
+              aria-label="Remover serviço">&times;</button>
+      <label>Descrição</label>
+      <input type="text" class="s-desc" data-id="${s.id}"
+             value="${escapeAttr(s.desc)}" placeholder="Ex: Forro de gesso liso">
+      <div class="row2">
+        <div>
+          <label>Qtd.</label>
+          <input type="text" inputmode="decimal" class="s-qtd" data-id="${s.id}"
+                 value="${escapeAttr(s.qtd)}">
+        </div>
+        <div>
+          <label>Valor unit. (R$)</label>
+          <input type="text" inputmode="decimal" class="s-valor" data-id="${s.id}"
+                 value="${escapeAttr(s.valor)}">
+        </div>
+      </div>
+    `;
+    list.appendChild(row);
+  });
+
+  list.querySelectorAll('.s-desc').forEach(x => x.addEventListener('input', e => {
+    updateServico(e.target.dataset.id, 'desc', e.target.value);
+  }));
+  list.querySelectorAll('.s-qtd').forEach(x => x.addEventListener('input', e => {
+    updateServico(e.target.dataset.id, 'qtd', parseNum(e.target.value));
+  }));
+  list.querySelectorAll('.s-valor').forEach(x => x.addEventListener('input', e => {
+    updateServico(e.target.dataset.id, 'valor', parseNum(e.target.value));
+  }));
+  list.querySelectorAll('.remove-btn').forEach(x => x.addEventListener('click', e => {
+    const id = parseInt(e.currentTarget.dataset.id, 10);
+    servicos = servicos.filter(s => s.id !== id);
+    if(!servicos.length) servicos = [novoServico()];
+    renderServicosEditor();
+    renderDoc();
+    agendarSalvar();
+  }));
+}
+
+function updateServico(id, campo, valor){
+  const s = servicos.find(s => s.id === parseInt(id, 10));
+  if(s){ s[campo] = valor; renderDoc(); agendarSalvar(); }
+}
+
+/* ---------- documento ---------- */
+
+function renderDoc(){
+  const nome = el('cliNome').value.trim();
+  const endereco = el('cliEndereco').value.trim();
+  const docCli = el('cliDoc').value.trim();
+
+  el('docCliNome').textContent = nome || '—';
+  el('docCliEndereco').textContent = endereco || '—';
+  el('assinaCliente').textContent = nome || 'Cliente';
+  el('assinaClienteDoc').textContent = docCli
+    ? 'CPF/CNPJ: ' + docCli
+    : 'CPF/CNPJ: ______________________';
+
+  const numero = el('orcNumero').value || '—';
+  el('docNumero').textContent = numero;
+  el('carimboNum').textContent = 'Nº ' + numero;
+
+  const dataStr = el('orcData').value;
+  el('docData').textContent = fmtDataBR(dataStr);
+  el('docValidade').textContent = fmtDate(addDias(dataStr, VALIDADE_DIAS));
+  el('carimboVal').textContent = `válido ${VALIDADE_DIAS} dias`;
+
+  const tbody = el('docServicos');
+  tbody.innerHTML = '';
+  let subtotal = 0;
+
+  const preenchidos = servicos.filter(
+    s => s.desc.trim() || parseNum(s.valor) > 0
+  );
+
+  if(!preenchidos.length){
+    tbody.innerHTML = '<tr><td colspan="4" style="color:#a7adba;font-style:italic;">Nenhum serviço adicionado ainda</td></tr>';
+  } else {
+    preenchidos.forEach(s => {
+      const qtd = parseNum(s.qtd);
+      const valor = parseNum(s.valor);
+      const sub = qtd * valor;
+      subtotal += sub;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${escapeHtml(s.desc) || '<span style="color:#a7adba">—</span>'}</td>
+        <td class="num">${qtd.toLocaleString('pt-BR')}</td>
+        <td class="num">${fmtMoeda(valor)}</td>
+        <td class="num">${fmtMoeda(sub)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  el('totSubtotal').textContent = fmtMoeda(subtotal);
+  el('totTotal').textContent = fmtMoeda(subtotal);
+  el('payCartao').textContent = fmtMoeda(subtotal);
+  el('payParcela').textContent = fmtMoeda(subtotal / PARCELAS);
+  el('payAvista').textContent = fmtMoeda(subtotal * (1 - DESCONTO_AVISTA));
+
+  el('docObs').textContent = el('obs').value || '';
+
+  atualizarTituloDocumento();
+}
+
+function sanitizeFilePart(str){
+  return String(str).trim()
+    .replace(/[\\/:*?"<>|]/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/* O Safari usa o título da página como nome do PDF. */
+function atualizarTituloDocumento(){
+  const cliente = sanitizeFilePart(el('cliNome').value);
+  const numero = sanitizeFilePart(el('orcNumero').value).replace('/', '-');
+  const partes = ['Orcamento Becca Gesso'];
+  if(numero) partes.push(numero);
+  if(cliente) partes.push(cliente);
+  document.title = partes.join(' - ');
+}
+
+/* ---------- eventos ---------- */
+
+el('addServico').addEventListener('click', () => {
+  servicos.push(novoServico());
+  renderServicosEditor();
+  renderDoc();
+  agendarSalvar();
+});
+
+['cliNome','cliEndereco','cliDoc','orcData','obs'].forEach(id =>
+  el(id).addEventListener('input', () => { renderDoc(); agendarSalvar(); })
+);
+
+el('regenNumero').addEventListener('click', () => {
+  el('orcNumero').value = proximoNumero();
+  renderDoc();
+  agendarSalvar();
+});
+
+el('printBtn').addEventListener('click', () => {
+  atualizarTituloDocumento();
+  salvar();
+  window.print();
+});
+
+el('resetBtn').addEventListener('click', () => {
+  if(!confirm('Iniciar um novo orçamento? Os dados atuais serão apagados.')) return;
+  el('cliNome').value = '';
+  el('cliEndereco').value = '';
+  el('cliDoc').value = '';
+  el('orcNumero').value = proximoNumero();
+  el('orcData').value = hojeISO();
+  el('obs').value = '';
+  servicos = [novoServico()];
+  renderServicosEditor();
+  renderDoc();
+  salvar();
+});
+
+/* salva ao sair / ao mandar o app para segundo plano */
+window.addEventListener('beforeunload', salvar);
+document.addEventListener('visibilitychange', () => {
+  if(document.visibilityState === 'hidden') salvar();
+});
+
+/* ---------- início ---------- */
+
+if(!restaurar()){
+  el('orcData').value = hojeISO();
+  el('orcNumero').value = proximoNumero();
+  servicos = [novoServico()];
+}
+renderServicosEditor();
+renderDoc();
+
+/* ---------- funcionamento offline ---------- */
+if('serviceWorker' in navigator && location.protocol.indexOf('http') === 0){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {
+      /* sem service worker o app continua funcionando, só não fica offline */
+    });
+  });
+}
+</script>
+
+</body>
+</html>
