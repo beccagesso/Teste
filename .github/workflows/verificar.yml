@@ -1,0 +1,45 @@
+name: Verificar o index.html
+
+# O index.html é montado a partir de build/template.html pelo build/gerar.py.
+# Se alguém editar o index.html direto, a mudança se perde na próxima geração.
+# Este teste avisa quando os dois saem de sincronia.
+
+on:
+  push:
+    branches:
+      - claude/becca-gesso-iphone-app-yuxcjz
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: O index.html confere com o template?
+        run: |
+          python3 build/gerar.py
+          if ! git diff --quiet -- index.html; then
+            echo "::error::O index.html está diferente do que build/gerar.py produz."
+            echo "Rode 'python3 build/gerar.py' e faça commit do index.html gerado."
+            git diff --stat -- index.html
+            exit 1
+          fi
+          echo "index.html confere com build/template.html."
+
+      - name: O app depende de algo externo?
+        run: |
+          if grep -Eo 'https?://[^"'"'"' )]+' index.html \
+             | grep -v '^https://github.com' | sort -u | grep .; then
+            echo "::error::O index.html precisa ser autossuficiente para funcionar offline."
+            exit 1
+          fi
+          echo "Nenhuma dependência externa no index.html."

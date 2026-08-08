@@ -3,6 +3,22 @@
 Aplicativo de orçamentos da Becca Gesso. Funciona no navegador, instala na tela
 de início do iPhone e continua funcionando sem internet.
 
+## Colocar o app no ar (uma vez só)
+
+O GitHub publica o app de graça, mas essa chave precisa ser ligada à mão —
+nem o Actions tem permissão para ligá-la sozinho. São quatro cliques:
+
+1. Abra <https://github.com/beccagesso/Teste/settings/pages>
+2. Em **Source**, escolha **Deploy from a branch**
+3. Em **Branch**, escolha `claude/becca-gesso-iphone-app-yuxcjz` e a pasta `/ (root)`
+4. Clique em **Save**
+
+Em um ou dois minutos o app fica no ar em:
+
+**<https://beccagesso.github.io/Teste/>**
+
+Depois disso, todo commit nesse branch atualiza o app sozinho.
+
 ## Como usar no iPhone
 
 1. Abra o endereço do app no **Safari** (precisa ser o Safari, não o Chrome).
