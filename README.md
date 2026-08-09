@@ -63,27 +63,9 @@ próxima vez que o arquivo for gerado.
 
 ## A assinatura no rodapé
 
-O orçamento sai com duas linhas de assinatura: a da esquerda fica em branco
-para o cliente assinar à mão, e a da direita já vem assinada, escrita em letra
-manuscrita (fonte Allura), com a data preenchida automaticamente.
-
-**Para usar a sua assinatura de verdade**: tire uma foto da sua assinatura
-numa folha branca, recorte só o traço, salve como `assinatura.png` com fundo
-transparente na raiz do projeto e, no `build/template.html`, troque a linha:
-
-```html
-<div class="rubrica"><span class="rubrica-becca">Becca Gesso</span></div>
-```
-
-por:
-
-```html
-<div class="rubrica"><img src="assinatura.png" alt="Becca Gesso"></div>
-```
-
-Depois rode `python3 build/gerar.py`. A imagem se ajusta sozinha à altura da
-linha. Só lembre de acrescentar `assinatura.png` à lista `ARQUIVOS` do `sw.js`
-para ela continuar aparecendo sem internet.
+O orçamento sai com uma linha de assinatura só, a do cliente, com espaço em
+branco acima para ele assinar à mão e um campo de data. Não há assinatura da
+Becca Gesso: um orçamento é uma proposta, quem precisa assinar é quem aceita.
 
 ## Como alterar o app
 

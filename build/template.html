@@ -436,28 +436,13 @@
     grid-template-columns:1fr 1fr;
     gap:40px;
   }
-  /* A rubrica fica acima da linha. A altura é fixa nos dois lados para
-     que as duas linhas de assinatura se alinhem, mesmo com o lado do
-     cliente vazio (é ali que ele assina à mão). */
+  /* Espaço em branco acima da linha, para o cliente assinar à mão. */
   .rubrica{
     height:54px;
     display:flex;
     align-items:flex-end;
     padding-left:10px;
     overflow:hidden;
-  }
-  .rubrica .rubrica-becca{
-    font-family:'Assinatura',cursive;
-    font-size:36px;
-    line-height:1.05;
-    color:var(--ink);
-    white-space:nowrap;
-  }
-  .rubrica img{
-    max-height:54px;
-    max-width:100%;
-    object-fit:contain;
-    object-position:left bottom;
   }
   .assina{
     border-top:1px solid var(--ink);
@@ -727,22 +712,13 @@
         </div>
         <div class="linhas">
           <div>
-            <!-- vazio de propósito: é aqui que o cliente assina à mão -->
+            <!-- vazio de propósito: é aqui que o cliente assina à mão.
+                 Só o cliente assina — um orçamento não precisa da
+                 assinatura de quem o emitiu. -->
             <div class="rubrica"></div>
             <div class="assina">
               <div class="quem" id="assinaCliente">Cliente</div>
               <div class="local-data">Data: ______ / ______ / __________</div>
-            </div>
-          </div>
-          <div>
-            <!-- Assinatura fixa da Becca. Para usar a assinatura de
-                 verdade, troque a linha abaixo por:
-                 <img src="assinatura.png" alt="Becca Gesso"> -->
-            <div class="rubrica"><span class="rubrica-becca">Becca Gesso</span></div>
-            <div class="assina">
-              <div class="quem">Becca Gesso</div>
-              <div class="doc-id">CNPJ 60.655.817/0001-20</div>
-              <div class="local-data" id="assinaDataEmpresa">Data: —</div>
             </div>
           </div>
         </div>
@@ -982,9 +958,6 @@ function renderDoc(){
   el('docData').textContent = fmtDataBR(dataStr);
   el('docValidade').textContent = fmtDate(addDias(dataStr, VALIDADE_DIAS));
   el('carimboVal').textContent = `válido ${VALIDADE_DIAS} dias`;
-  /* a assinatura da empresa já vai assinada, então a data dela é a
-     data de emissão do orçamento e não uma linha em branco */
-  el('assinaDataEmpresa').textContent = 'Data: ' + fmtDataBR(dataStr);
 
   const tbody = el('docServicos');
   tbody.innerHTML = '';

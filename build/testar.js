@@ -105,39 +105,24 @@ function checar(cond, msg) {
     `número sequencial: ${await page.inputValue('#orcNumero')}`);
   checar((await page.textContent('#assinaCliente')) === 'Construtora Alvorada Ltda',
     'nome do cliente aparece na assinatura');
-  checar((await page.textContent('#assinaDataEmpresa')).includes('08/08/2026'),
-    `data da assinatura da empresa: ${await page.textContent('#assinaDataEmpresa')}`);
-
-  // a assinatura fixa precisa estar visível e desenhada com a letra manuscrita
-  const rubrica = await page.evaluate(async () => {
-    await document.fonts.ready;
-    const e = document.querySelector('.rubrica-becca');
-    if (!e) return null;
-    const r = e.getBoundingClientRect();
-    const cs = getComputedStyle(e);
+  // só o cliente assina; nada da empresa aparece na área de assinatura
+  const assin = await page.evaluate(() => {
+    const bloco = document.querySelector('.assinaturas');
+    if (!bloco) return null;
+    const linhas = bloco.querySelectorAll('.assina');
+    const espaco = bloco.querySelector('.rubrica');
     return {
-      texto: e.textContent.trim(),
-      largura: +r.width.toFixed(1),
-      familia: cs.fontFamily,
-      manuscritaCarregou: document.fonts.check(`${cs.fontSize} Assinatura`),
+      qtdLinhas: linhas.length,
+      altura: espaco ? +espaco.getBoundingClientRect().height.toFixed(0) : 0,
+      texto: bloco.textContent.replace(/\s+/g, ' ').trim(),
     };
   });
-  checar(rubrica && rubrica.texto === 'Becca Gesso', 'assinatura fixa presente no documento');
-  checar(rubrica && rubrica.familia.includes('Assinatura'),
-    `assinatura usa a letra manuscrita (${rubrica ? rubrica.familia : '—'})`);
-  checar(rubrica && rubrica.manuscritaCarregou, 'fonte manuscrita carregou');
-  checar(rubrica && rubrica.largura > 80,
-    `assinatura tem largura visível (${rubrica ? rubrica.largura : 0}px)`);
-
-  // o cliente assina à mão: o lado dele fica em branco, mas alinhado
-  const alinhado = await page.evaluate(() => {
-    const r = [...document.querySelectorAll('.assinaturas .rubrica')];
-    if (r.length !== 2) return null;
-    const [a, b] = r.map(e => +e.getBoundingClientRect().bottom.toFixed(1));
-    return { a, b, iguais: Math.abs(a - b) < 1 };
-  });
-  checar(alinhado && alinhado.iguais,
-    'as duas linhas de assinatura ficam alinhadas');
+  checar(assin && assin.qtdLinhas === 1,
+    `uma única linha de assinatura, a do cliente (${assin ? assin.qtdLinhas : 0})`);
+  checar(assin && !/Becca Gesso|CNPJ/.test(assin.texto),
+    'nenhuma assinatura ou CNPJ da empresa na área de assinatura');
+  checar(assin && assin.altura >= 40,
+    `espaço em branco para assinar à mão (${assin ? assin.altura : 0}px)`);
   checar((await page.locator('#cliDoc').count()) === 0,
     'campo de CPF/CNPJ do cliente foi removido');
 
@@ -190,7 +175,10 @@ function checar(cond, msg) {
   checar(impressao.assinaturas === true, 'assinaturas aparecem na impressão');
   checar(impressao.carimbo === true, 'carimbo aparece na impressão (era escondido antes)');
   checar(impressao.colunasPagamento === 2, `cartões de pagamento lado a lado (${impressao.colunasPagamento} colunas)`);
-  checar(impressao.colunasAssinatura === 2, `assinaturas lado a lado (${impressao.colunasAssinatura} colunas)`);
+  // com uma assinatura só, as duas colunas mantêm a linha em meia largura
+  // em vez de esticá-la de ponta a ponta da folha
+  checar(impressao.colunasAssinatura === 2,
+    `linha de assinatura em meia largura na folha (${impressao.colunasAssinatura} colunas)`);
   checar(impressao.direcaoCabecalhoDoc === 'row', `cabeçalho do documento em linha (${impressao.direcaoCabecalhoDoc})`);
 
   await page.pdf({ path: `${SAIDA}/orcamento.pdf`, format: 'A4', printBackground: true });

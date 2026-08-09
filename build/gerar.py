@@ -20,8 +20,6 @@ PACOTE_FONTES = [
     ('Space Grotesk', 'space-grotesk.woff2',     '400 700'),
     ('IBM Plex Mono', 'ibm-plex-mono-400.woff2', '400'),
     ('IBM Plex Mono', 'ibm-plex-mono-600.woff2', '600'),
-    # letra manuscrita da assinatura fixa no rodapé do orçamento
-    ('Assinatura',    'assinatura.woff2',        '400'),
 ]
 
 
