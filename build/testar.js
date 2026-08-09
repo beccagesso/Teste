@@ -73,7 +73,6 @@ function checar(cond, msg) {
   console.log('\n[2] Preenchimento e cálculo');
   await page.fill('#cliNome', 'Construtora Alvorada Ltda');
   await page.fill('#cliEndereco', 'Rua das Palmeiras, 480 — Centro, Bauru/SP');
-  await page.fill('#cliDoc', '12.345.678/0001-90');
   await page.fill('#orcData', '2026-08-08');
 
   // vírgula decimal: era exatamente o que quebrava no iPhone
@@ -106,8 +105,41 @@ function checar(cond, msg) {
     `número sequencial: ${await page.inputValue('#orcNumero')}`);
   checar((await page.textContent('#assinaCliente')) === 'Construtora Alvorada Ltda',
     'nome do cliente aparece na assinatura');
-  checar((await page.textContent('#assinaClienteDoc')).includes('12.345.678/0001-90'),
-    'CNPJ aparece na assinatura');
+  checar((await page.textContent('#assinaDataEmpresa')).includes('08/08/2026'),
+    `data da assinatura da empresa: ${await page.textContent('#assinaDataEmpresa')}`);
+
+  // a assinatura fixa precisa estar visível e desenhada com a letra manuscrita
+  const rubrica = await page.evaluate(async () => {
+    await document.fonts.ready;
+    const e = document.querySelector('.rubrica-becca');
+    if (!e) return null;
+    const r = e.getBoundingClientRect();
+    const cs = getComputedStyle(e);
+    return {
+      texto: e.textContent.trim(),
+      largura: +r.width.toFixed(1),
+      familia: cs.fontFamily,
+      manuscritaCarregou: document.fonts.check(`${cs.fontSize} Assinatura`),
+    };
+  });
+  checar(rubrica && rubrica.texto === 'Becca Gesso', 'assinatura fixa presente no documento');
+  checar(rubrica && rubrica.familia.includes('Assinatura'),
+    `assinatura usa a letra manuscrita (${rubrica ? rubrica.familia : '—'})`);
+  checar(rubrica && rubrica.manuscritaCarregou, 'fonte manuscrita carregou');
+  checar(rubrica && rubrica.largura > 80,
+    `assinatura tem largura visível (${rubrica ? rubrica.largura : 0}px)`);
+
+  // o cliente assina à mão: o lado dele fica em branco, mas alinhado
+  const alinhado = await page.evaluate(() => {
+    const r = [...document.querySelectorAll('.assinaturas .rubrica')];
+    if (r.length !== 2) return null;
+    const [a, b] = r.map(e => +e.getBoundingClientRect().bottom.toFixed(1));
+    return { a, b, iguais: Math.abs(a - b) < 1 };
+  });
+  checar(alinhado && alinhado.iguais,
+    'as duas linhas de assinatura ficam alinhadas');
+  checar((await page.locator('#cliDoc').count()) === 0,
+    'campo de CPF/CNPJ do cliente foi removido');
 
   await page.screenshot({ path: `${SAIDA}/01-desktop.png`, fullPage: true });
 

@@ -61,6 +61,30 @@ O `index.html` **não é editado à mão** — ele é montado a partir do
 `build/template.html`. Se editar direto no `index.html`, a mudança se perde na
 próxima vez que o arquivo for gerado.
 
+## A assinatura no rodapé
+
+O orçamento sai com duas linhas de assinatura: a da esquerda fica em branco
+para o cliente assinar à mão, e a da direita já vem assinada, escrita em letra
+manuscrita (fonte Allura), com a data preenchida automaticamente.
+
+**Para usar a sua assinatura de verdade**: tire uma foto da sua assinatura
+numa folha branca, recorte só o traço, salve como `assinatura.png` com fundo
+transparente na raiz do projeto e, no `build/template.html`, troque a linha:
+
+```html
+<div class="rubrica"><span class="rubrica-becca">Becca Gesso</span></div>
+```
+
+por:
+
+```html
+<div class="rubrica"><img src="assinatura.png" alt="Becca Gesso"></div>
+```
+
+Depois rode `python3 build/gerar.py`. A imagem se ajusta sozinha à altura da
+linha. Só lembre de acrescentar `assinatura.png` à lista `ARQUIVOS` do `sw.js`
+para ela continuar aparecendo sem internet.
+
 ## Como alterar o app
 
 As mudanças do dia a dia ficam todas no `build/template.html`:

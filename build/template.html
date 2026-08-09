@@ -307,7 +307,15 @@
     font-weight:600;
     margin-bottom:4px;
   }
-  .doc-parties .name{font-size:14.5px;font-weight:600;margin-bottom:2px;}
+  .doc-parties .name{font-size:14.5px;font-weight:600;margin-bottom:6px;}
+  .doc-parties .obra-rot{
+    font-size:9.5px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--ink-soft);
+    font-weight:600;
+    margin-bottom:1px;
+  }
   .doc-parties .addr{font-size:12px;color:var(--ink-soft);line-height:1.5;}
 
   table.services{
@@ -427,6 +435,29 @@
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:40px;
+  }
+  /* A rubrica fica acima da linha. A altura é fixa nos dois lados para
+     que as duas linhas de assinatura se alinhem, mesmo com o lado do
+     cliente vazio (é ali que ele assina à mão). */
+  .rubrica{
+    height:54px;
+    display:flex;
+    align-items:flex-end;
+    padding-left:10px;
+    overflow:hidden;
+  }
+  .rubrica .rubrica-becca{
+    font-family:'Assinatura',cursive;
+    font-size:36px;
+    line-height:1.05;
+    color:var(--ink);
+    white-space:nowrap;
+  }
+  .rubrica img{
+    max-height:54px;
+    max-width:100%;
+    object-fit:contain;
+    object-position:left bottom;
   }
   .assina{
     border-top:1px solid var(--ink);
@@ -576,12 +607,9 @@
       <label for="cliNome">Nome do cliente</label>
       <input type="text" id="cliNome" placeholder="Nome completo ou razão social"
              autocomplete="name" enterkeyhint="next">
-      <label for="cliEndereco">Endereço</label>
-      <input type="text" id="cliEndereco" placeholder="Endereço completo"
+      <label for="cliEndereco">Endereço da obra</label>
+      <input type="text" id="cliEndereco" placeholder="Rua, número, bairro e cidade"
              autocomplete="street-address">
-      <label for="cliDoc">CPF / CNPJ <span style="text-transform:none;font-weight:400;">(opcional)</span></label>
-      <input type="text" id="cliDoc" placeholder="Para constar na assinatura"
-             inputmode="numeric">
     </div>
 
     <h2>Dados do orçamento</h2>
@@ -640,6 +668,7 @@
         <div>
           <div class="block-label">Cliente</div>
           <div class="name" id="docCliNome">—</div>
+          <div class="obra-rot">Endereço da obra</div>
           <div class="addr" id="docCliEndereco">—</div>
         </div>
         <div class="carimbo">
@@ -697,15 +726,24 @@
           autorizando a execução dos serviços nos valores e prazos acima.
         </div>
         <div class="linhas">
-          <div class="assina">
-            <div class="quem" id="assinaCliente">Cliente</div>
-            <div class="doc-id" id="assinaClienteDoc">CPF/CNPJ: ______________________</div>
-            <div class="local-data">Data: ______ / ______ / __________</div>
+          <div>
+            <!-- vazio de propósito: é aqui que o cliente assina à mão -->
+            <div class="rubrica"></div>
+            <div class="assina">
+              <div class="quem" id="assinaCliente">Cliente</div>
+              <div class="local-data">Data: ______ / ______ / __________</div>
+            </div>
           </div>
-          <div class="assina">
-            <div class="quem">Becca Gesso</div>
-            <div class="doc-id">CNPJ 60.655.817/0001-20</div>
-            <div class="local-data">Data: ______ / ______ / __________</div>
+          <div>
+            <!-- Assinatura fixa da Becca. Para usar a assinatura de
+                 verdade, troque a linha abaixo por:
+                 <img src="assinatura.png" alt="Becca Gesso"> -->
+            <div class="rubrica"><span class="rubrica-becca">Becca Gesso</span></div>
+            <div class="assina">
+              <div class="quem">Becca Gesso</div>
+              <div class="doc-id">CNPJ 60.655.817/0001-20</div>
+              <div class="local-data" id="assinaDataEmpresa">Data: —</div>
+            </div>
           </div>
         </div>
       </div>
@@ -820,7 +858,6 @@ function estadoAtual(){
   return {
     cliNome: el('cliNome').value,
     cliEndereco: el('cliEndereco').value,
-    cliDoc: el('cliDoc').value,
     orcNumero: el('orcNumero').value,
     orcData: el('orcData').value,
     obs: el('obs').value,
@@ -858,7 +895,6 @@ function restaurar(){
 
   el('cliNome').value = d.cliNome || '';
   el('cliEndereco').value = d.cliEndereco || '';
-  el('cliDoc').value = d.cliDoc || '';
   el('orcNumero').value = d.orcNumero || proximoNumero();
   el('orcData').value = d.orcData || hojeISO();
   el('obs').value = d.obs || '';
@@ -933,14 +969,10 @@ function updateServico(id, campo, valor){
 function renderDoc(){
   const nome = el('cliNome').value.trim();
   const endereco = el('cliEndereco').value.trim();
-  const docCli = el('cliDoc').value.trim();
 
   el('docCliNome').textContent = nome || '—';
   el('docCliEndereco').textContent = endereco || '—';
   el('assinaCliente').textContent = nome || 'Cliente';
-  el('assinaClienteDoc').textContent = docCli
-    ? 'CPF/CNPJ: ' + docCli
-    : 'CPF/CNPJ: ______________________';
 
   const numero = el('orcNumero').value || '—';
   el('docNumero').textContent = numero;
@@ -950,6 +982,9 @@ function renderDoc(){
   el('docData').textContent = fmtDataBR(dataStr);
   el('docValidade').textContent = fmtDate(addDias(dataStr, VALIDADE_DIAS));
   el('carimboVal').textContent = `válido ${VALIDADE_DIAS} dias`;
+  /* a assinatura da empresa já vai assinada, então a data dela é a
+     data de emissão do orçamento e não uma linha em branco */
+  el('assinaDataEmpresa').textContent = 'Data: ' + fmtDataBR(dataStr);
 
   const tbody = el('docServicos');
   tbody.innerHTML = '';
@@ -1015,7 +1050,7 @@ el('addServico').addEventListener('click', () => {
   agendarSalvar();
 });
 
-['cliNome','cliEndereco','cliDoc','orcData','obs'].forEach(id =>
+['cliNome','cliEndereco','orcData','obs'].forEach(id =>
   el(id).addEventListener('input', () => { renderDoc(); agendarSalvar(); })
 );
 
@@ -1035,7 +1070,6 @@ el('resetBtn').addEventListener('click', () => {
   if(!confirm('Iniciar um novo orçamento? Os dados atuais serão apagados.')) return;
   el('cliNome').value = '';
   el('cliEndereco').value = '';
-  el('cliDoc').value = '';
   el('orcNumero').value = proximoNumero();
   el('orcData').value = hojeISO();
   el('obs').value = '';

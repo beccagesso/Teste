@@ -31,6 +31,14 @@ CSS_GOOGLE = (
     "&family=IBM+Plex+Mono:wght@400;500;600"
     "&family=Inter:wght@400;500;600&display=swap"
 )
+# Letra manuscrita da assinatura fixa. Fica num pedido separado porque só
+# precisa das letras do alfabeto, não dos números e símbolos do orçamento.
+CSS_ASSINATURA = "https://fonts.googleapis.com/css2?family=Allura&display=swap"
+LETRAS_ASSINATURA = (
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+    "ÁÀÂÃÉÊÍÓÔÕÚÜÇáàâãéêíóôõúüç"
+    " .,'-&"
+)
 UA_NAVEGADOR = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
                 "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36")
 
@@ -77,10 +85,10 @@ def baixar(url: str, destino: Path) -> None:
         destino.write_bytes(r.read())
 
 
-def reduzir(origem: Path, destino: Path) -> int:
+def reduzir(origem: Path, destino: Path, unicodes: str = UNICODES) -> int:
     subprocess.run([
         sys.executable, '-m', 'fontTools.subset', str(origem),
-        f'--unicodes={UNICODES}', '--flavor=woff2',
+        f'--unicodes={unicodes}', '--flavor=woff2',
         f'--layout-features={FEATURES}', '--no-hinting',
         f'--output-file={destino}',
     ], check=True, capture_output=True)
@@ -122,6 +130,21 @@ def preparar_fontes() -> None:
         tam = reduzir(bruto, FONTES / f'{slug}-{peso}.woff2')
         depois += tam
         print(f"  {familia:15} peso {peso}          {tam/1024:5.1f} KB")
+
+    # letra manuscrita da assinatura
+    css_assin = urllib.request.urlopen(
+        urllib.request.Request(CSS_ASSINATURA, headers={'User-Agent': UA_NAVEGADOR}),
+        timeout=60).read().decode('utf-8')
+    urls_assin = urls_latin(css_assin)
+    if not urls_assin:
+        sys.exit("ERRO: não achei a fonte da assinatura no CSS do Google.")
+    bruto = temp / 'assinatura-origem.woff2'
+    baixar(next(iter(urls_assin.values())), bruto)
+    antes += bruto.stat().st_size
+    uni_assin = ",".join(f"U+{ord(c):04X}" for c in sorted(set(LETRAS_ASSINATURA)))
+    tam = reduzir(bruto, FONTES / 'assinatura.woff2', uni_assin)
+    depois += tam
+    print(f"  {'Assinatura':15} letras do alfabeto  {tam/1024:5.1f} KB")
 
     for f in temp.iterdir():
         f.unlink()
