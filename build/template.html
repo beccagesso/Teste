@@ -240,11 +240,11 @@
 
   .actions-sec{
     display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
+    grid-template-columns:repeat(3, 1fr);
+    gap:8px;
     margin-top:10px;
   }
-  .actions-sec .btn-secondary{padding:12px 10px;text-align:center;}
+  .actions-sec .btn-secondary{padding:12px 4px;text-align:center;font-size:11.5px;}
 
   /* ---------- PAINEL DO HISTÓRICO ---------- */
   .painel{
@@ -763,8 +763,9 @@
     </div>
 
     <div class="actions">
-      <button type="button" class="btn-primary" id="printBtn">Imprimir / Salvar PDF</button>
+      <button type="button" class="btn-primary" id="zapBtn">Enviar pelo WhatsApp</button>
       <div class="actions-sec">
+        <button type="button" class="btn-secondary" id="printBtn">Imprimir</button>
         <button type="button" class="btn-secondary" id="histBtn">Histórico</button>
         <button type="button" class="btn-secondary" id="resetBtn">Novo</button>
       </div>
@@ -883,6 +884,8 @@
 const LOGO = '__LOGO_B64__';
 document.getElementById('logoEditor').src = LOGO;
 document.getElementById('logoDoc').src = LOGO;
+
+/*__PDF__*/
 
 const CHAVE_RASCUNHO = 'beccaGesso.rascunho.v1';
 const CHAVE_HISTORICO = 'beccaGesso.historico.v1';
@@ -1338,6 +1341,116 @@ function atualizarTituloDocumento(){
   document.title = partes.join(' - ');
 }
 
+/* ---------- envio do PDF ---------- */
+
+function fmtNumeroBR(v){
+  return parseNum(v).toLocaleString('pt-BR', {maximumFractionDigits:2});
+}
+
+function nomeDoArquivo(){
+  const numero = sanitizeFilePart(el('orcNumero').value).replace('/', '-');
+  const cliente = sanitizeFilePart(el('cliNome').value);
+  return ['Orcamento', numero, cliente].filter(Boolean).join(' - ') + '.pdf';
+}
+
+function dadosParaPdf(){
+  const lista = servicos.map(s => ({
+    desc: s.desc,
+    qtd: parseNum(s.qtd),
+    valor: parseNum(s.valor),
+    unidade: unidadeValida(s.unidade),
+  }));
+  const subtotal = lista.reduce((soma, s) => soma + s.qtd * s.valor, 0);
+  const dataStr = el('orcData').value;
+  return {
+    numero: el('orcNumero').value || '—',
+    data: fmtDataBR(dataStr),
+    validade: fmtDate(addDias(dataStr, VALIDADE_DIAS)),
+    validadeDias: VALIDADE_DIAS,
+    cliNome: el('cliNome').value.trim(),
+    cliEndereco: el('cliEndereco').value.trim(),
+    servicos: lista,
+    subtotal: subtotal,
+    total: subtotal,
+    parcelas: PARCELAS,
+    parcela: subtotal / PARCELAS,
+    descontoPct: Math.round(DESCONTO_AVISTA * 100),
+    avista: subtotal * (1 - DESCONTO_AVISTA),
+    obs: el('obs').value,
+    titulo: nomeDoArquivo().replace(/\.pdf$/, ''),
+    fmtMoeda: fmtMoeda,
+    fmtNumero: fmtNumeroBR,
+  };
+}
+
+function pdfDoOrcamento(){
+  const bytes = gerarPdfDoOrcamento(dadosParaPdf());
+  return new Blob([bytes], {type:'application/pdf'});
+}
+
+function baixarArquivo(blob, nome){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nome;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+}
+
+function resumoParaTexto(d){
+  const linhas = [
+    `*Orçamento nº ${d.numero}* — Becca Gesso`,
+    d.cliNome ? `Cliente: ${d.cliNome}` : '',
+    d.cliEndereco ? `Obra: ${d.cliEndereco}` : '',
+    '',
+    `Total: *${d.fmtMoeda(d.total)}*`,
+    `Cartão: até ${d.parcelas}x sem juros de ${d.fmtMoeda(d.parcela)}`,
+    `À vista (${d.descontoPct}% off): ${d.fmtMoeda(d.avista)}`,
+    '',
+    `Válido até ${d.validade}.`,
+  ];
+  return linhas.filter(x => x !== '').join('\n');
+}
+
+async function enviarPeloWhatsApp(){
+  const botao = el('zapBtn');
+  const rotulo = botao.textContent;
+  botao.disabled = true;
+  botao.textContent = 'Gerando PDF…';
+  try{
+    salvar();
+    const d = dadosParaPdf();
+    const blob = pdfDoOrcamento();
+    const nome = nomeDoArquivo();
+    const arquivo = new File([blob], nome, {type:'application/pdf'});
+
+    /* caminho normal no iPhone: abre o compartilhamento com o PDF
+       anexado e você escolhe o WhatsApp e o contato */
+    if(navigator.canShare && navigator.canShare({files:[arquivo]})){
+      try{
+        await navigator.share({files:[arquivo], title:`Orçamento ${d.numero}`});
+        return;
+      }catch(erro){
+        if(erro && erro.name === 'AbortError') return;   /* você cancelou */
+        /* qualquer outra falha cai no plano B abaixo */
+      }
+    }
+
+    /* plano B: baixa o PDF e abre o WhatsApp com o resumo em texto,
+       para você anexar o arquivo na conversa */
+    baixarArquivo(blob, nome);
+    window.open('https://wa.me/?text=' +
+      encodeURIComponent(resumoParaTexto(d)), '_blank');
+  }catch(erro){
+    alert('Não consegui gerar o PDF: ' + (erro && erro.message ? erro.message : erro));
+  }finally{
+    botao.disabled = false;
+    botao.textContent = rotulo;
+  }
+}
+
 /* ---------- eventos ---------- */
 
 el('addServico').addEventListener('click', () => {
@@ -1362,6 +1475,8 @@ el('printBtn').addEventListener('click', () => {
   salvar();
   window.print();
 });
+
+el('zapBtn').addEventListener('click', enviarPeloWhatsApp);
 
 /* O orçamento atual já está guardado no histórico, então "Novo" não
    apaga nada: só começa outro número. */

@@ -27,8 +27,19 @@ Depois disso, todo commit nesse branch atualiza o app sozinho.
 4. Confirme. O ícone da Becca Gesso aparece junto com os outros apps.
 
 A partir daí ele abre em tela cheia, sem a barra de endereço, e funciona mesmo
-sem sinal. Para gerar o PDF, toque em **Imprimir / Salvar PDF** e depois em
-**Compartilhar → Salvar em Arquivos** (ou envie direto pelo WhatsApp).
+sem sinal.
+
+## Enviar o orçamento
+
+O botão **Enviar pelo WhatsApp** monta o PDF e abre a tela de compartilhamento
+do iPhone com o arquivo pronto — é só escolher o WhatsApp e o contato. O mesmo
+menu serve para salvar em Arquivos ou mandar por e-mail.
+
+Se o aparelho não souber compartilhar arquivos, o app baixa o PDF e abre o
+WhatsApp com um resumo em texto, para você anexar o arquivo na conversa.
+
+O botão **Imprimir** continua ali para imprimir em papel ou salvar o PDF pela
+impressão do próprio navegador.
 
 ## O que o app faz sozinho
 
@@ -39,6 +50,9 @@ sem sinal. Para gerar o PDF, toque em **Imprimir / Salvar PDF** e depois em
 - **Calcula o pagamento**: cartão em até 5x sem juros e à vista com 6% de
   desconto.
 - **Calcula a validade**: 15 dias a partir da data do orçamento.
+- **Monta o PDF sozinho**, com as fontes e o logo da marca, e quebra em várias
+  páginas quando o orçamento é longo — repetindo o cabeçalho da empresa em
+  cada folha.
 
 O botão **Novo** começa outro orçamento — o anterior não se perde, fica no
 histórico. O botão **↻** ao lado do número pula para o próximo número sem
@@ -76,6 +90,7 @@ linear) ou **un.** (unidade). Ela aparece junto da quantidade no orçamento —
 | `sw.js` | Faz o app funcionar sem internet. |
 | `icone-180.png`, `icone-512.png` | Ícones da tela de início. |
 | `build/` | Os arquivos de origem usados para montar o `index.html`. |
+| `build/pdf.js` | O gerador de PDF, escrito à mão para não depender de biblioteca. |
 | `gerador-orcamento-becca-gesso.html` | A versão original, guardada para consulta. |
 
 O `index.html` **não é editado à mão** — ele é montado a partir do
@@ -124,9 +139,24 @@ Plex Mono e Inter) e o logo estão embutidos no próprio arquivo. As fontes fora
 reduzidas apenas aos caracteres usados em português, o que derrubou 568 KB para
 41 KB sem mudar nada na aparência.
 
-Para regenerar as fontes ou reprocessar o logo a partir do original, use
-`python3 build/preparar-ativos.py`. Isso só é necessário se você trocar o logo
-ou usar um caractere que não estava previsto.
+O PDF é montado dentro do navegador, por `build/pdf.js`, sem biblioteca
+externa. Isso é o que permite mandar o arquivo pelo WhatsApp: o
+compartilhamento do iPhone precisa de um arquivo, e a impressão do navegador
+não devolve nenhum. As fontes vão embutidas no PDF, então o documento sai igual
+em qualquer aparelho, e o texto pode ser copiado e buscado.
+
+Se você trocar o logo, ou usar um caractere que não estava previsto, rode os
+dois scripts nesta ordem:
+
+```bash
+python3 build/preparar-ativos.py    # fontes da tela, logo e ícones
+python3 build/preparar-pdf.py       # fontes e logo do PDF
+python3 build/gerar.py              # monta o index.html
+```
+
+O `preparar-pdf.py` confere se as fontes cobrem todos os caracteres do
+orçamento e para com erro se faltar algum — foi assim que apareceu o caso do
+`²` de m², que sumia do PDF sem avisar.
 
 Há uma bateria de testes automatizados em `build/testar.js`, que confere os
 cálculos, o salvamento, o layout de impressão em A4, o comportamento no iPhone
@@ -136,6 +166,7 @@ e o funcionamento sem internet:
 npm install playwright
 node build/testar.js
 node build/testar-historico.js
+node build/testar-pdf.js
 node build/testar-subcaminho.js
 ```
 

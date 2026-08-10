@@ -41,6 +41,21 @@ def css_das_fontes() -> str:
     return "\n".join(regras)
 
 
+def gerador_de_pdf() -> str:
+    """O gerador de PDF, com as fontes e o logo do PDF já embutidos."""
+    origem = BUILD / 'pdf.js'
+    ativos = BUILD / 'pdf-ativos.json'
+    for obrigatorio in (origem, ativos):
+        if not obrigatorio.exists():
+            sys.exit(f"ERRO: arquivo não encontrado: {obrigatorio}\n"
+                     f"       rode: python3 build/preparar-pdf.py")
+    js = origem.read_text(encoding='utf-8')
+    if '/*__PDF_ATIVOS__*/null' not in js:
+        sys.exit("ERRO: marcador /*__PDF_ATIVOS__*/null sumiu do build/pdf.js.")
+    return js.replace('/*__PDF_ATIVOS__*/null',
+                      ativos.read_text(encoding='utf-8'))
+
+
 def main() -> None:
     template = BUILD / 'template.html'
     logo = BUILD / 'logo.png'
@@ -50,13 +65,14 @@ def main() -> None:
 
     html = template.read_text(encoding='utf-8')
 
-    for marcador in ('/*__FONTES__*/', '__LOGO_B64__'):
+    for marcador in ('/*__FONTES__*/', '__LOGO_B64__', '/*__PDF__*/'):
         if marcador not in html:
             sys.exit(f"ERRO: marcador {marcador} sumiu do template.")
 
     html = html.replace('/*__FONTES__*/', css_das_fontes())
     html = html.replace('__LOGO_B64__',
                         'data:image/png;base64,' + b64(logo))
+    html = html.replace('/*__PDF__*/', gerador_de_pdf())
 
     destino = RAIZ / 'index.html'
     destino.write_text(html, encoding='utf-8')
@@ -65,6 +81,8 @@ def main() -> None:
     print(f"index.html gerado: {tam/1024:.1f} KB")
     print(f"  fontes embutidas: {len(PACOTE_FONTES)} arquivos")
     print(f"  logo embutido:    {logo.stat().st_size/1024:.1f} KB")
+    print(f"  gerador de PDF:   "
+          f"{(BUILD / 'pdf-ativos.json').stat().st_size/1024:.1f} KB de fontes e logo")
 
 
 if __name__ == '__main__':
