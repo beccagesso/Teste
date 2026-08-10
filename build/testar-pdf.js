@@ -109,7 +109,22 @@ async function gerar(p, qtdServicos) {
   const qtdUnicode = (texto.match(/\/ToUnicode /g) || []).length;
   checar(qtdUnicode === 5,
     `todas as fontes têm mapa Unicode, para o texto poder ser copiado (${qtdUnicode})`);
-  checar(texto.includes('/RunLengthDecode'), 'logo embutido');
+  /* O logo já sumiu do PDF no iPhone duas vezes, por dois motivos
+     diferentes. Estas duas conferências existem por causa disso. */
+  const imagem = texto.match(
+    /\/ColorSpace \[\/Indexed \/DeviceRGB (\d+) <([0-9a-f]+)>\][^>]*?\/Filter \/(\w+)/);
+  checar(imagem !== null, 'o logo está no arquivo');
+  if(imagem){
+    const hival = Number(imagem[1]);
+    const bytesPaleta = imagem[2].length / 2;
+    checar(bytesPaleta === (hival + 1) * 3,
+      `paleta bate com o número de cores declarado ` +
+      `(${bytesPaleta} bytes para ${hival + 1} cores)`);
+    /* RunLengthDecode é do padrão, mas nem todo leitor implementa — o do
+       iPhone descartava a imagem inteira, sem erro visível */
+    checar(['FlateDecode', 'DCTDecode'].includes(imagem[3]),
+      `compressão da imagem é de suporte universal (${imagem[3]})`);
+  }
 
   // a tabela de referências precisa apontar para o número certo de objetos
   const declarado = Number((texto.match(/\/Size (\d+)/) || [])[1]);

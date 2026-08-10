@@ -303,8 +303,8 @@ function montarArquivoPDF(paginas, fontesUsadas, temLogo, titulo){
       `/Type /XObject /Subtype /Image /Width ${logo.largura} ` +
       `/Height ${logo.altura} /BitsPerComponent 8 ` +
       `/ColorSpace [/Indexed /DeviceRGB ${logo.cores - 1} <${hexPaleta}>] ` +
-      `/Filter /RunLengthDecode`,
-      bytesDeBase64(logo.rle)));
+      `/Filter /FlateDecode`,
+      bytesDeBase64(logo.flate)));
   }
 
   const recursos =

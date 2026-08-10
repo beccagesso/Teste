@@ -140,7 +140,10 @@ reduzidas apenas aos caracteres usados em português, o que derrubou 568 KB para
 41 KB sem mudar nada na aparência.
 
 O PDF é montado dentro do navegador, por `build/pdf.js`, sem biblioteca
-externa. Isso é o que permite mandar o arquivo pelo WhatsApp: o
+externa. O logo entra como imagem de paleta comprimida com **Flate** — a
+compressão que todo leitor de PDF entende. RunLengthDecode, que parecia mais
+simples, nem sempre é implementada: o leitor do iPhone descartava a imagem
+inteira e o logo sumia do orçamento, sem erro nenhum. Isso é o que permite mandar o arquivo pelo WhatsApp: o
 compartilhamento do iPhone precisa de um arquivo, e a impressão do navegador
 não devolve nenhum. As fontes vão embutidas no PDF, então o documento sai igual
 em qualquer aparelho, e o texto pode ser copiado e buscado.

@@ -15,6 +15,7 @@ import io
 import json
 import subprocess
 import sys
+import zlib
 from pathlib import Path
 
 from fontTools.ttLib import TTFont
@@ -90,53 +91,43 @@ def dados_da_fonte(arquivo: str, peso):
     }
 
 
-def comprimir_rle(dados: bytes) -> bytes:
-    """RunLengthDecode, a compressão que o PDF lê sem biblioteca nenhuma.
-    Em imagem de cor chapada como um logo, ela ganha do JPEG e ainda é
-    sem perda: 14 KB contra 34 KB, sem os borrões nas bordas."""
-    saida = bytearray()
-    i, n = 0, len(dados)
-    while i < n:
-        j = i
-        while j + 1 < n and dados[j + 1] == dados[i] and j - i < 127:
-            j += 1
-        repetidos = j - i + 1
-        if repetidos >= 2:
-            saida.append(257 - repetidos)
-            saida.append(dados[i])
-            i = j + 1
-        else:
-            k = i
-            while k < n and k - i < 127:
-                if k + 2 < n and dados[k + 1] == dados[k] and dados[k + 2] == dados[k]:
-                    break
-                k += 1
-            bloco = dados[i:k]
-            saida.append(len(bloco) - 1)
-            saida.extend(bloco)
-            i = k
-    saida.append(128)                      # fim dos dados
-    return bytes(saida)
-
-
 def dados_do_logo():
-    """O logo vai para o PDF como imagem de paleta comprimida por RLE."""
+    """O logo vai para o PDF como imagem de paleta comprimida com Flate.
+
+    Flate é a compressão que todo leitor de PDF entende. A alternativa
+    RunLengthDecode parecia atraente por ser simples, mas nem todos os
+    leitores a implementam — no iPhone o logo simplesmente sumia — e
+    ainda por cima comprime menos: 15 KB contra 8 KB.
+
+    Como o logo é fixo, a compressão é feita aqui e o navegador só
+    embute os bytes prontos, sem precisar comprimir nada.
+    """
     origem = BUILD / 'logo.png'
     im = Image.open(origem).convert('RGBA')
     fundo = Image.new('RGB', im.size, (255, 255, 255))
     fundo.paste(im, (0, 0), im)
 
-    cores = 64
-    q = fundo.quantize(colors=cores, method=Image.MEDIANCUT)
-    comprimido = comprimir_rle(q.tobytes())
-    paleta = q.getpalette()[:cores * 3]
+    q = fundo.quantize(colors=64, method=Image.MEDIANCUT)
+    indices = q.tobytes()
 
+    # getpalette() devolve só as cores que sobraram, que costumam ser menos
+    # do que as 64 pedidas. O PDF exige que o número declarado bata com o
+    # tamanho da tabela: declarar 64 com 55 cores faz leitores rigorosos
+    # (como o do iPhone) descartarem a imagem inteira, sem aviso.
+    paleta = bytes(q.getpalette())
+    cores = len(paleta) // 3
+    maior = max(indices)
+    if len(paleta) != cores * 3 or maior >= cores:
+        sys.exit(f"ERRO: paleta do logo inconsistente — {len(paleta)} bytes, "
+                 f"{cores} cores, maior índice {maior}.")
+
+    comprimido = zlib.compress(indices, 9)
     return {
         'largura': im.size[0],
         'altura': im.size[1],
         'cores': cores,
-        'paleta': base64.b64encode(bytes(paleta)).decode('ascii'),
-        'rle': base64.b64encode(comprimido).decode('ascii'),
+        'paleta': base64.b64encode(paleta).decode('ascii'),
+        'flate': base64.b64encode(comprimido).decode('ascii'),
         'bytes': len(comprimido) + len(paleta),
     }
 
@@ -166,7 +157,7 @@ def conferir_cobertura(fontes):
 def main():
     saida = {'fontes': {}, 'logo': dados_do_logo()}
     total = saida['logo']['bytes']
-    print(f"  logo (rle)       {saida['logo']['bytes']/1024:6.1f} KB")
+    print(f"  logo (flate)     {saida['logo']['bytes']/1024:6.1f} KB")
 
     for apelido, (arquivo, peso) in PACOTE.items():
         d = dados_da_fonte(arquivo, peso)
