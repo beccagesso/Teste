@@ -61,11 +61,11 @@ O `index.html` **não é editado à mão** — ele é montado a partir do
 `build/template.html`. Se editar direto no `index.html`, a mudança se perde na
 próxima vez que o arquivo for gerado.
 
-## A assinatura no rodapé
+## O fecho do documento
 
-O orçamento sai com uma linha de assinatura só, a do cliente, com espaço em
-branco acima para ele assinar à mão e um campo de data. Não há assinatura da
-Becca Gesso: um orçamento é uma proposta, quem precisa assinar é quem aceita.
+O orçamento não tem área de assinatura: é uma proposta, não um contrato. Ele
+fecha com os dados da Becca Gesso — nome, CNPJ, telefone e e-mail — e a nota de
+validade de 15 dias.
 
 ## Como alterar o app
 
@@ -73,9 +73,9 @@ As mudanças do dia a dia ficam todas no `build/template.html`:
 
 - **Preço, desconto, parcelas e validade**: no início do bloco `<script>`, nas
   linhas `VALIDADE_DIAS`, `PARCELAS` e `DESCONTO_AVISTA`.
-- **Telefone, e-mail, CNPJ**: aparecem duas vezes no arquivo — uma no bloco
-  `brand-strip` (o cabeçalho do editor) e outra no bloco `doc-head` (o
-  documento em si).
+- **Telefone, e-mail, CNPJ**: aparecem em três lugares — no bloco
+  `brand-strip` (cabeçalho do editor), no `doc-head` (topo do documento) e no
+  `fecho` (rodapé do documento). Mude nos três.
 - **Cores**: no começo do `<style>`, no bloco `:root`.
 
 Depois de editar, monte o arquivo final:

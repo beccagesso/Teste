@@ -103,26 +103,31 @@ function checar(cond, msg) {
     `validade 15 dias: ${await page.textContent('#docValidade')}`);
   checar(/^\d{4}\/2026$/.test(await page.inputValue('#orcNumero')),
     `número sequencial: ${await page.inputValue('#orcNumero')}`);
-  checar((await page.textContent('#assinaCliente')) === 'Construtora Alvorada Ltda',
-    'nome do cliente aparece na assinatura');
-  // só o cliente assina; nada da empresa aparece na área de assinatura
-  const assin = await page.evaluate(() => {
-    const bloco = document.querySelector('.assinaturas');
-    if (!bloco) return null;
-    const linhas = bloco.querySelectorAll('.assina');
-    const espaco = bloco.querySelector('.rubrica');
+  // o documento fecha com os dados da empresa, sem área de assinatura
+  const fecho = await page.evaluate(() => {
+    const e = document.querySelector('.fecho');
+    return e ? e.textContent.replace(/\s+/g, ' ').trim() : null;
+  });
+  checar(fecho !== null, 'documento fecha com o bloco da empresa');
+  checar(fecho && fecho.includes('Becca Gesso'), 'nome da empresa no fecho');
+  checar(fecho && fecho.includes('60.655.817/0001-20'), 'CNPJ no fecho');
+  checar(fecho && fecho.includes('(14) 99757-7371'), 'telefone no fecho');
+  checar(fecho && fecho.includes('beccagesso@gmail.com'), 'e-mail no fecho');
+
+  const semAssinatura = await page.evaluate(() => {
+    const seletores = ['.assinaturas', '.assina', '.rubrica', '#assinaCliente'];
+    const achados = seletores.filter(s => document.querySelector(s));
+    const texto = document.body.textContent;
     return {
-      qtdLinhas: linhas.length,
-      altura: espaco ? +espaco.getBoundingClientRect().height.toFixed(0) : 0,
-      texto: bloco.textContent.replace(/\s+/g, ' ').trim(),
+      achados,
+      temAceite: /Declaro que li e aceito/.test(texto),
+      temLinhaData: /Data: _+/.test(texto),
     };
   });
-  checar(assin && assin.qtdLinhas === 1,
-    `uma única linha de assinatura, a do cliente (${assin ? assin.qtdLinhas : 0})`);
-  checar(assin && !/Becca Gesso|CNPJ/.test(assin.texto),
-    'nenhuma assinatura ou CNPJ da empresa na área de assinatura');
-  checar(assin && assin.altura >= 40,
-    `espaço em branco para assinar à mão (${assin ? assin.altura : 0}px)`);
+  checar(semAssinatura.achados.length === 0,
+    `nenhum resto da área de assinatura ${semAssinatura.achados.join(', ')}`);
+  checar(!semAssinatura.temAceite, 'texto de aceite removido');
+  checar(!semAssinatura.temLinhaData, 'linha de data para assinar removida');
   checar((await page.locator('#cliDoc').count()) === 0,
     'campo de CPF/CNPJ do cliente foi removido');
 
@@ -164,21 +169,16 @@ function checar(cond, msg) {
       carimbo: vis('.carimbo'),
       editor: vis('.editor'),
       cabecalho: vis('header.top'),
-      assinaturas: vis('.assinaturas'),
+      fecho: vis('.fecho'),
       colunasPagamento: cols('.payment-box'),
-      colunasAssinatura: cols('.assinaturas .linhas'),
       direcaoCabecalhoDoc: getComputedStyle(document.querySelector('.doc-head')).flexDirection,
     };
   });
   checar(impressao.editor === false, 'editor escondido na impressão');
   checar(impressao.cabecalho === false, 'cabeçalho da tela escondido na impressão');
-  checar(impressao.assinaturas === true, 'assinaturas aparecem na impressão');
+  checar(impressao.fecho === true, 'dados da empresa aparecem na impressão');
   checar(impressao.carimbo === true, 'carimbo aparece na impressão (era escondido antes)');
   checar(impressao.colunasPagamento === 2, `cartões de pagamento lado a lado (${impressao.colunasPagamento} colunas)`);
-  // com uma assinatura só, as duas colunas mantêm a linha em meia largura
-  // em vez de esticá-la de ponta a ponta da folha
-  checar(impressao.colunasAssinatura === 2,
-    `linha de assinatura em meia largura na folha (${impressao.colunasAssinatura} colunas)`);
   checar(impressao.direcaoCabecalhoDoc === 'row', `cabeçalho do documento em linha (${impressao.direcaoCabecalhoDoc})`);
 
   await page.pdf({ path: `${SAIDA}/orcamento.pdf`, format: 'A4', printBackground: true });

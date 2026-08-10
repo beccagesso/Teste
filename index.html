@@ -421,51 +421,26 @@
   .carimbo .c2{font-family:'IBM Plex Mono',monospace;font-size:9.5px;margin-top:3px;}
   .carimbo .c3{font-family:'IBM Plex Mono',monospace;font-size:9px;margin-top:2px;}
 
-  /* ---------- ASSINATURAS ---------- */
-  .assinaturas{
+  /* ---------- FECHO COM OS DADOS DA EMPRESA ---------- */
+  .fecho{
     margin-top:44px;
-    padding-top:8px;
+    padding-top:18px;
+    border-top:2px solid var(--ink);
+    text-align:center;
     break-inside:avoid;
     page-break-inside:avoid;
   }
-  .assinaturas .aceite{
+  .fecho .nome{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:15px;
+    font-weight:700;
+    color:var(--ink);
+    margin-bottom:5px;
+  }
+  .fecho .contato{
     font-size:11.5px;
     color:var(--ink-soft);
-    line-height:1.6;
-    margin-bottom:34px;
-  }
-  .assinaturas .linhas{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:40px;
-  }
-  /* Espaço em branco acima da linha, para o cliente assinar à mão. */
-  .rubrica{
-    height:54px;
-    display:flex;
-    align-items:flex-end;
-    padding-left:10px;
-    overflow:hidden;
-  }
-  .assina{
-    border-top:1px solid var(--ink);
-    padding-top:7px;
-  }
-  .assina .quem{
-    font-size:12px;
-    font-weight:600;
-    color:var(--ink);
-  }
-  .assina .doc-id{
-    font-size:10.5px;
-    color:var(--ink-soft);
-    margin-top:3px;
-    line-height:1.6;
-  }
-  .assina .local-data{
-    font-size:10.5px;
-    color:var(--ink-soft);
-    margin-top:10px;
+    line-height:1.7;
   }
 
   .doc-foot{
@@ -514,7 +489,7 @@
     /* o carimbo some em telas estreitas, mas deve sair no PDF */
     .carimbo{display:flex !important;}
     .doc-head{flex-direction:row !important;}
-    .payment-box, .doc-parties, .assinaturas .linhas{
+    .payment-box, .doc-parties{
       grid-template-columns:1fr 1fr !important;
     }
     .doc-head .meta{text-align:right !important;}
@@ -547,7 +522,6 @@
     .carimbo{display:none;}
     /* o carimbo some aqui, então o cliente ocupa a linha inteira */
     .doc-parties{grid-template-columns:1fr;}
-    .assinaturas .linhas{grid-template-columns:1fr;gap:30px;}
     /* 16px evita que o Safari dê zoom ao tocar num campo */
     input[type=text], input[type=date], textarea, .service-row input{
       font-size:16px;
@@ -707,23 +681,12 @@
 
       <div class="obs" id="docObs"></div>
 
-      <!-- ============ ASSINATURAS ============ -->
-      <div class="assinaturas">
-        <div class="aceite">
-          Declaro que li e aceito as condições descritas neste orçamento,
-          autorizando a execução dos serviços nos valores e prazos acima.
-        </div>
-        <div class="linhas">
-          <div>
-            <!-- vazio de propósito: é aqui que o cliente assina à mão.
-                 Só o cliente assina — um orçamento não precisa da
-                 assinatura de quem o emitiu. -->
-            <div class="rubrica"></div>
-            <div class="assina">
-              <div class="quem" id="assinaCliente">Cliente</div>
-              <div class="local-data">Data: ______ / ______ / __________</div>
-            </div>
-          </div>
+      <!-- ============ FECHO ============ -->
+      <div class="fecho">
+        <div class="nome">Becca Gesso</div>
+        <div class="contato">
+          CNPJ 60.655.817/0001-20<br>
+          (14) 99757-7371 · beccagesso@gmail.com
         </div>
       </div>
 
@@ -951,7 +914,6 @@ function renderDoc(){
 
   el('docCliNome').textContent = nome || '—';
   el('docCliEndereco').textContent = endereco || '—';
-  el('assinaCliente').textContent = nome || 'Cliente';
 
   const numero = el('orcNumero').value || '—';
   el('docNumero').textContent = numero;
