@@ -218,6 +218,84 @@ const envelhecer = (p, numero, dias) => p.evaluate(({ numero, dias }) => {
   checar((await p.inputValue('#cliTelefone')).replace(/\D/g, '') === '14988887777',
     `telefone veio junto com o cliente: "${await p.inputValue('#cliTelefone')}"`);
 
+  // ---------- 6. mensagens personalizáveis ----------
+  console.log('\n[6] Mensagens personalizáveis');
+
+  /* o app não sabe o nome de quem usa: o padrão não pode inventar nenhum */
+  const padroes = await p.evaluate(() => MENSAGENS_PADRAO);
+  const todosPadroes = Object.values(padroes).join(' ');
+  checar(!/Becca|aqui é a|aqui é o/i.test(todosPadroes),
+    'nenhuma mensagem padrão inventa um nome para quem envia');
+  checar(Object.values(padroes).every(t => t.includes('{')),
+    'as mensagens padrão usam marcadores');
+
+  await p.click('#histBtn');
+  await p.waitForTimeout(250);
+  await p.click('#msgBtn');
+  await p.waitForTimeout(250);
+  checar(await p.locator('#painelMsg').isVisible(), 'a tela de mensagens abre');
+  checar((await p.inputValue('#msgD1')) === padroes.d1,
+    'a tela mostra o texto atual');
+  checar((await p.textContent('#msgAjuda')).includes('{cliente}'),
+    'a tela explica os marcadores');
+
+  await p.fill('#msgD1',
+    'Olá {cliente}! Aqui é a Rebeca. Orçamento {numero}, {valor}, vale até {validade}.');
+  await p.click('#msgSalvar');
+  await p.waitForTimeout(250);
+  checar(await p.locator('#painelMsg').isHidden(), 'salvar fecha a tela');
+
+  /* um orçamento novo, de 1 dia, para conferir o texto novo */
+  const numC = await criarOrcamento(p,
+    { cliente: 'José da Silva Neto', telefone: '14 96666-5555', valor: '750,00' });
+  await envelhecer(p, numC, 1);
+  await p.click('#histBtn');
+  await p.waitForTimeout(250);
+  await p.locator('.retorno-item').filter({ hasText: 'José' })
+    .locator('.retorno-btn').click();
+  await p.waitForTimeout(250);
+  const novoTexto = decodeURIComponent(
+    ((await ultimoAberto()) || '').split('text=')[1] || '');
+  checar(novoTexto.startsWith('Olá José da Silva Neto!'),
+    `o texto personalizado foi usado: "${novoTexto.slice(0, 40)}…"`);
+  checar(novoTexto.includes('Rebeca'), 'o nome que você escreveu aparece');
+  checar(novoTexto.includes(numC), '{numero} foi substituído');
+  checar(/R\$\s?7\.500,00/.test(novoTexto), `{valor} foi substituído: ${novoTexto}`);
+  checar(/\d{2}\/\d{2}\/\d{4}/.test(novoTexto), '{validade} virou uma data');
+  checar(!novoTexto.includes('{'), 'nenhum marcador sobrou no texto');
+
+  // texto em branco volta ao padrão, para não mandar mensagem vazia
+  await p.click('#msgBtn');
+  await p.waitForTimeout(250);
+  await p.fill('#msgD1', '   ');
+  await p.click('#msgSalvar');
+  await p.waitForTimeout(250);
+  checar((await p.evaluate(() => lerMensagens().d1)) === padroes.d1,
+    'mensagem apagada volta ao padrão');
+
+  // voltar ao padrão
+  await p.click('#msgBtn');
+  await p.waitForTimeout(250);
+  await p.fill('#msgD5', 'qualquer coisa');
+  await p.click('#msgPadrao');
+  await p.waitForTimeout(150);
+  checar((await p.inputValue('#msgD5')) === padroes.d5,
+    'o botão devolve o texto padrão');
+  await p.click('#msgFechar');
+  await p.waitForTimeout(200);
+
+  // ---------- 7. as mensagens entram no backup ----------
+  console.log('\n[7] Mensagens no backup');
+  await p.evaluate(() => gravarMensagens(Object.assign(lerMensagens(),
+    {d5: 'Texto só desta oficina {numero}'})));
+  const backup = await p.evaluate(() => JSON.parse(conteudoDoBackup()));
+  checar(backup.mensagens && backup.mensagens.d5 === 'Texto só desta oficina {numero}',
+    'o backup leva as mensagens junto');
+  await p.evaluate(() => restaurarMensagensPadrao());
+  await p.evaluate((b) => { restaurarDoTexto(JSON.stringify(b)); }, backup);
+  checar((await p.evaluate(() => lerMensagens().d5)) === 'Texto só desta oficina {numero}',
+    'restaurar o backup traz as mensagens de volta');
+
   checar(erros.length === 0,
     `sem erros de JavaScript ${erros.length ? '-> ' + erros.join(' | ') : ''}`);
 

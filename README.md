@@ -104,6 +104,24 @@ recusado sai de vez — só o que está **enviado** é cobrado.
 O telefone também é sugerido junto com o nome e o endereço quando o cliente já
 está no histórico.
 
+#### Escrever as mensagens do seu jeito
+
+No pé do histórico, o botão **Mensagens** abre os quatro textos — 1 dia, 5
+dias, 10 dias e "já venceu" — para você editar. Onde você puser um destes
+marcadores, o app troca pelos dados do orçamento:
+
+| Marcador | Vira |
+|---|---|
+| `{cliente}` | nome do cliente como você digitou |
+| `{primeiro}` | só o primeiro nome |
+| `{numero}` | número do orçamento |
+| `{valor}` | valor total |
+| `{validade}` | data até quando o orçamento vale |
+
+**Voltar ao padrão** devolve os textos originais. Um texto apagado volta ao
+padrão sozinho, para nunca sair uma mensagem em branco. Os textos vão junto no
+backup.
+
 ### Backup
 
 No pé do histórico, **Fazer backup** gera um arquivo com todos os orçamentos e

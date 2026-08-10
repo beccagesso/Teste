@@ -372,6 +372,32 @@
     margin-top:14px;
   }
   .painel-rodape .btn-secondary{padding:12px 8px;text-align:center;}
+  .painel-rodape.tres{grid-template-columns:repeat(3, 1fr);gap:8px;}
+  .painel-rodape.tres .btn-secondary{font-size:11px;padding:12px 4px;}
+  .painel-rodape .btn-primary{flex:none;}
+
+  .msg-ajuda{
+    background:#f3f6fa;
+    border-radius:var(--radius);
+    padding:10px 12px;
+    font-size:11px;
+    line-height:1.8;
+    color:var(--ink-soft);
+    margin-bottom:14px;
+  }
+  .msg-ajuda b{
+    font-family:'IBM Plex Mono',monospace;
+    color:var(--ink);
+    font-weight:600;
+  }
+  .msg-lista{
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    flex:1;
+    margin:0 -4px;
+    padding:0 4px;
+  }
+  .msg-lista textarea{min-height:0;font-size:13px;line-height:1.5;}
   /* ---------- retornos pendentes ---------- */
   .hist-retornos{
     border:1px solid var(--accent);
@@ -1046,11 +1072,38 @@
     <input type="search" id="histBusca" autocomplete="off"
            placeholder="Buscar por cliente ou número">
     <div class="hist-lista" id="histLista"></div>
-    <div class="painel-rodape">
+    <div class="painel-rodape tres">
+      <button type="button" class="btn-secondary" id="msgBtn">Mensagens</button>
       <button type="button" class="btn-secondary" id="backupBtn">Fazer backup</button>
       <button type="button" class="btn-secondary" id="restaurarBtn">Restaurar</button>
       <input type="file" id="restaurarArquivo" hidden
              accept=".json,.txt,application/json,text/plain">
+    </div>
+  </div>
+</div>
+
+<!-- ============ MENSAGENS DE RETORNO ============ -->
+<div class="painel" id="painelMsg" hidden>
+  <div class="painel-caixa" role="dialog" aria-modal="true" aria-labelledby="msgTitulo">
+    <div class="painel-topo">
+      <h2 id="msgTitulo">Mensagens de retorno</h2>
+      <button type="button" class="painel-fechar" id="msgFechar"
+              aria-label="Fechar">&times;</button>
+    </div>
+    <div class="msg-ajuda" id="msgAjuda"></div>
+    <div class="msg-lista">
+      <label for="msgD1">1 dia depois do envio</label>
+      <textarea id="msgD1" rows="3"></textarea>
+      <label for="msgD5">5 dias depois</label>
+      <textarea id="msgD5" rows="3"></textarea>
+      <label for="msgD10">10 dias depois</label>
+      <textarea id="msgD10" rows="3"></textarea>
+      <label for="msgVencido">Quando o orçamento já venceu</label>
+      <textarea id="msgVencido" rows="3"></textarea>
+    </div>
+    <div class="painel-rodape">
+      <button type="button" class="btn-secondary" id="msgPadrao">Voltar ao padrão</button>
+      <button type="button" class="btn-primary" id="msgSalvar">Salvar</button>
     </div>
   </div>
 </div>
@@ -2032,31 +2085,73 @@ function orcamentosParaRetorno(){
     .sort((a, b) => b.pendente.dias - a.pendente.dias);
 }
 
-/* Texto sugerido, diferente conforme há quanto tempo o orçamento foi. */
-function mensagemDeRetorno(e, etapa){
-  const nome = (e.cliNome || '').trim().split(/\s+/)[0] || '';
-  const ola = nome ? `Oi ${nome}, tudo bem?` : 'Oi, tudo bem?';
-  const num = e.orcNumero || '';
-  const valor = fmtMoeda(e.total || 0);
-  const validade = fmtDate(addDias(e.orcData,
-    (e.condicoes && e.condicoes.validadeDias) || PADRAO.validadeDias));
-  const venceu = addDias(e.orcData,
-    (e.condicoes && e.condicoes.validadeDias) || PADRAO.validadeDias) < new Date();
+/* Textos das mensagens. São editáveis: o app não sabe o seu nome nem
+   como você costuma falar com cada cliente. */
+const CHAVE_MENSAGENS = 'beccaGesso.mensagens.v1';
 
-  if(etapa === 1){
-    return `${ola} Aqui é a Becca, do Becca Gesso. ` +
-      `Passei o orçamento nº ${num} (${valor}) para você. ` +
-      `Conseguiu dar uma olhada?`;
+const MENSAGENS_PADRAO = {
+  d1: 'Oi {primeiro}, tudo bem? Passei o orçamento nº {numero} ({valor}) ' +
+      'para você. Conseguiu dar uma olhada?',
+  d5: 'Oi {primeiro}, tudo bem? Passando para saber se ficou alguma dúvida ' +
+      'sobre o orçamento nº {numero} ({valor}). Qualquer ajuste, é só falar.',
+  d10: 'Oi {primeiro}, tudo bem? Passando para lembrar que o orçamento ' +
+       'nº {numero} ({valor}) vale até {validade}. Quer seguir com o serviço?',
+  vencido: 'Oi {primeiro}, tudo bem? O orçamento nº {numero} venceu em ' +
+           '{validade}. Se ainda tiver interesse, atualizo os valores.',
+};
+
+const MARCADORES = [
+  ['{cliente}', 'nome do cliente como você digitou'],
+  ['{primeiro}', 'só o primeiro nome'],
+  ['{numero}', 'número do orçamento'],
+  ['{valor}', 'valor total'],
+  ['{validade}', 'data até quando vale'],
+];
+
+function lerMensagens(){
+  let guardadas = {};
+  try{
+    guardadas = JSON.parse(localStorage.getItem(CHAVE_MENSAGENS) || '{}') || {};
+  }catch(e){ guardadas = {}; }
+  const saida = {};
+  /* texto em branco volta ao padrão, para nunca mandar mensagem vazia */
+  for(const chave of Object.keys(MENSAGENS_PADRAO)){
+    const t = (guardadas[chave] || '').trim();
+    saida[chave] = t || MENSAGENS_PADRAO[chave];
   }
-  if(etapa === 5){
-    return `${ola} Passando para saber se ficou alguma dúvida sobre o ` +
-      `orçamento nº ${num} (${valor}). Qualquer ajuste, é só falar.`;
+  return saida;
+}
+
+function gravarMensagens(m){
+  try{ localStorage.setItem(CHAVE_MENSAGENS, JSON.stringify(m)); }catch(e){}
+}
+
+/* Monta o texto trocando os marcadores pelos dados do orçamento. */
+function mensagemDeRetorno(e, etapa){
+  const dias = (e.condicoes && e.condicoes.validadeDias) || PADRAO.validadeDias;
+  const ateQuando = addDias(e.orcData, dias);
+  const venceu = ateQuando && ateQuando < new Date();
+  const modelos = lerMensagens();
+
+  const modelo = etapa >= 10
+    ? (venceu ? modelos.vencido : modelos.d10)
+    : (etapa >= 5 ? modelos.d5 : modelos.d1);
+
+  const nomeInteiro = (e.cliNome || '').trim();
+  const valores = {
+    '{cliente}': nomeInteiro,
+    '{primeiro}': nomeInteiro.split(/\s+/)[0] || '',
+    '{numero}': e.orcNumero || '',
+    '{valor}': fmtMoeda(e.total || 0),
+    '{validade}': fmtDate(ateQuando),
+  };
+
+  let texto = modelo;
+  for(const [marcador, valor] of Object.entries(valores)){
+    texto = texto.split(marcador).join(valor);
   }
-  return venceu
-    ? `${ola} O orçamento nº ${num} venceu em ${validade}. ` +
-      `Se ainda tiver interesse, atualizo os valores para você.`
-    : `${ola} Passando para lembrar que o orçamento nº ${num} (${valor}) ` +
-      `vale até ${validade}. Quer seguir com o serviço?`;
+  /* sem nome, "Oi , tudo bem?" fica esquisito */
+  return texto.replace(/\s+,/g, ',').replace(/\s{2,}/g, ' ').trim();
 }
 
 function marcarRetornoFeito(numero, etapa){
@@ -2166,6 +2261,7 @@ function conteudoDoBackup(){
     versao: 1,
     geradoEm: new Date().toISOString(),
     contador: JSON.parse(localStorage.getItem(CHAVE_CONTADOR) || 'null'),
+    mensagens: lerMensagens(),
     historico: lerHistorico(),
   }, null, 2);
 }
@@ -2221,6 +2317,8 @@ function restaurarDoTexto(texto){
   if(!d || d.app !== MARCA_BACKUP || !Array.isArray(d.historico)){
     throw new Error('esse arquivo não é um backup do gerador de orçamentos');
   }
+
+  if(d.mensagens) gravarMensagens(d.mensagens);
 
   const atual = lerHistorico();
   const porNumero = new Map(atual.map(e => [e.orcNumero, e]));
@@ -2281,6 +2379,43 @@ async function aoEscolherBackup(evento){
     alert('Não consegui restaurar: ' +
       (erro && erro.message ? erro.message : erro));
   }
+}
+
+/* ---------- painel das mensagens ---------- */
+
+function abrirMensagens(){
+  el('msgAjuda').innerHTML = 'Escreva do seu jeito. Onde você puser um destes, ' +
+    'o app troca pelos dados do orçamento:<br>' +
+    MARCADORES.map(([m, o]) => `<b>${m}</b> ${o}`).join(' · ');
+  const m = lerMensagens();
+  el('msgD1').value = m.d1;
+  el('msgD5').value = m.d5;
+  el('msgD10').value = m.d10;
+  el('msgVencido').value = m.vencido;
+  el('painelMsg').hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function fecharMensagens(){
+  el('painelMsg').hidden = true;
+  document.body.style.overflow = el('painelHist').hidden ? '' : 'hidden';
+}
+
+function salvarMensagens(){
+  gravarMensagens({
+    d1: el('msgD1').value,
+    d5: el('msgD5').value,
+    d10: el('msgD10').value,
+    vencido: el('msgVencido').value,
+  });
+  fecharMensagens();
+}
+
+function restaurarMensagensPadrao(){
+  el('msgD1').value = MENSAGENS_PADRAO.d1;
+  el('msgD5').value = MENSAGENS_PADRAO.d5;
+  el('msgD10').value = MENSAGENS_PADRAO.d10;
+  el('msgVencido').value = MENSAGENS_PADRAO.vencido;
 }
 
 /* ---------- painel do histórico ---------- */
@@ -2777,6 +2912,14 @@ el('cliNome').addEventListener('input', preencherObraDoCliente);
 el('histBtn').addEventListener('click', abrirHistorico);
 el('histFechar').addEventListener('click', fecharHistorico);
 el('histBusca').addEventListener('input', renderHistorico);
+el('msgBtn').addEventListener('click', abrirMensagens);
+el('msgFechar').addEventListener('click', fecharMensagens);
+el('msgSalvar').addEventListener('click', salvarMensagens);
+el('msgPadrao').addEventListener('click', restaurarMensagensPadrao);
+el('painelMsg').addEventListener('click', e => {
+  if(e.target === el('painelMsg')) fecharMensagens();
+});
+
 el('backupBtn').addEventListener('click', fazerBackup);
 el('restaurarBtn').addEventListener('click', escolherBackup);
 el('restaurarArquivo').addEventListener('change', aoEscolherBackup);
@@ -2786,7 +2929,9 @@ el('painelHist').addEventListener('click', e => {
   if(e.target === el('painelHist')) fecharHistorico();
 });
 document.addEventListener('keydown', e => {
-  if(e.key === 'Escape' && !el('painelHist').hidden) fecharHistorico();
+  if(e.key !== 'Escape') return;
+  if(!el('painelMsg').hidden) return fecharMensagens();
+  if(!el('painelHist').hidden) fecharHistorico();
 });
 
 /* salva ao sair / ao mandar o app para segundo plano */
