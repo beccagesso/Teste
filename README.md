@@ -32,19 +32,40 @@ sem sinal. Para gerar o PDF, toque em **Imprimir / Salvar PDF** e depois em
 
 ## O que o app faz sozinho
 
-- **Salva enquanto você digita.** Se fechar sem querer, ao reabrir o orçamento
-  está lá do jeito que estava.
+- **Guarda todos os orçamentos.** Cada um é salvo enquanto você digita, e o
+  botão **Histórico** mostra a lista completa.
 - **Numera em sequência**: 0001/2026, 0002/2026, e assim por diante. A contagem
   recomeça do 0001 a cada ano.
 - **Calcula o pagamento**: cartão em até 5x sem juros e à vista com 6% de
   desconto.
 - **Calcula a validade**: 15 dias a partir da data do orçamento.
 
-O botão **Novo** limpa tudo e já pega o próximo número. O botão **↻** ao lado do
-número serve para pular para o próximo sem apagar o resto.
+O botão **Novo** começa outro orçamento — o anterior não se perde, fica no
+histórico. O botão **↻** ao lado do número pula para o próximo número sem
+apagar o resto.
+
+### Histórico
+
+O botão **Histórico** abre a lista de tudo que você já orçou, do mais recente
+para o mais antigo, com busca por nome do cliente, número ou endereço. Em cada
+orçamento você pode:
+
+- **Abrir** — carrega de volta para editar, mantendo o número original.
+- **Duplicar** — cria uma cópia com número novo, útil para um serviço parecido.
+- **Excluir** — apaga de vez (pergunta antes).
+
+Um orçamento entra na lista assim que tem nome de cliente ou algum serviço
+preenchido, então não fica lixo de tela em branco guardado.
+
+### Unidade de medida
+
+Cada serviço tem a sua unidade: **m²** (metro quadrado), **m.l.** (metro
+linear) ou **un.** (unidade). Ela aparece junto da quantidade no orçamento —
+"38,5 m²" em vez de só "38,5". O padrão é m².
 
 > Os dados ficam guardados **dentro do aparelho**, não em um servidor. Se você
-> usar o app no iPhone e no computador, cada um terá a sua própria numeração.
+> usar o app no iPhone e no computador, cada um terá o seu próprio histórico e
+> a sua própria numeração.
 
 ## Arquivos do projeto
 
@@ -114,6 +135,7 @@ e o funcionamento sem internet:
 ```bash
 npm install playwright
 node build/testar.js
+node build/testar-historico.js
 node build/testar-subcaminho.js
 ```
 

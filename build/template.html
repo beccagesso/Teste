@@ -112,7 +112,7 @@
     color:var(--ink-soft);
     margin-bottom:4px;
   }
-  input[type=text], input[type=date], textarea{
+  input[type=text], input[type=date], textarea, select{
     width:100%;
     padding:9px 10px;
     border:1px solid var(--rule);
@@ -123,12 +123,26 @@
     background:#fff;
     margin-bottom:10px;
   }
-  input:focus, textarea:focus{
+  input:focus, textarea:focus, select:focus{
     outline:none;
     border-color:var(--ink);
   }
+  select{
+    -webkit-appearance:none;
+    appearance:none;
+    height:38px;
+    padding-right:26px;
+    background-image:
+      linear-gradient(45deg, transparent 50%, var(--ink-soft) 50%),
+      linear-gradient(135deg, var(--ink-soft) 50%, transparent 50%);
+    background-position:calc(100% - 14px) 16px, calc(100% - 9px) 16px;
+    background-size:5px 5px, 5px 5px;
+    background-repeat:no-repeat;
+  }
   textarea{resize:vertical;min-height:60px;}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  /* quantidade, unidade e valor unitário */
+  .row3{display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:10px;}
 
   .numero-row{display:flex;gap:6px;}
   .numero-row input{
@@ -159,8 +173,6 @@
     background:#fbfbfc;
     position:relative;
   }
-  /* dois campos: quantidade e valor unitário */
-  .service-row .row2{grid-template-columns:1fr 1.3fr;}
   .service-row label{font-size:9.5px;}
   .remove-btn{
     position:absolute;
@@ -225,6 +237,143 @@
     letter-spacing:0.05em;
   }
   .btn-secondary:hover{border-color:var(--ink);color:var(--ink);}
+
+  .actions-sec{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:10px;
+  }
+  .actions-sec .btn-secondary{padding:12px 10px;text-align:center;}
+
+  /* ---------- PAINEL DO HISTÓRICO ---------- */
+  .painel{
+    position:fixed;
+    inset:0;
+    z-index:50;
+    background:rgba(20,28,48,0.45);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .painel[hidden]{display:none;}
+  .painel-caixa{
+    background:var(--paper);
+    border-radius:var(--radius);
+    width:100%;
+    max-width:620px;
+    max-height:min(760px, 88vh);
+    display:flex;
+    flex-direction:column;
+    padding:20px 22px 18px;
+    box-shadow:0 18px 50px rgba(20,28,48,0.28);
+  }
+  .painel-topo{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    border-bottom:1px solid var(--rule);
+    padding-bottom:10px;
+    margin-bottom:14px;
+  }
+  .painel-topo h2{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:15px;
+    text-transform:uppercase;
+    letter-spacing:0.1em;
+    color:var(--ink);
+    margin:0;
+  }
+  .painel-fechar{
+    background:none;
+    border:none;
+    font-size:26px;
+    line-height:1;
+    color:var(--ink-soft);
+    padding:4px 10px;
+  }
+  .painel-fechar:hover{color:var(--ink);}
+  #histBusca{margin-bottom:12px;}
+
+  .hist-lista{
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    flex:1;
+    margin:0 -4px;
+    padding:0 4px;
+  }
+  .hist-item{
+    border:1px solid var(--rule);
+    border-radius:var(--radius);
+    padding:12px 14px;
+    margin-bottom:10px;
+    background:#fbfbfc;
+  }
+  .hist-item.atual{border-color:var(--accent);background:#f5fbff;}
+  .hist-topo{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .hist-num{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+  .hist-total{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:14px;
+    font-weight:600;
+    color:var(--ink);
+    white-space:nowrap;
+  }
+  .hist-cliente{
+    font-size:14px;
+    font-weight:600;
+    margin:5px 0 2px;
+    overflow-wrap:anywhere;
+  }
+  .hist-obra{
+    font-size:11.5px;
+    color:var(--ink-soft);
+    line-height:1.5;
+    overflow-wrap:anywhere;
+  }
+  .hist-acoes{
+    display:flex;
+    gap:8px;
+    margin-top:11px;
+  }
+  .hist-acoes button{
+    flex:1;
+    padding:9px 6px;
+    border:1px solid var(--rule);
+    border-radius:var(--radius);
+    background:#fff;
+    font-size:11.5px;
+    font-weight:600;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+  }
+  .hist-acoes button:hover{border-color:var(--ink);color:var(--ink);}
+  .hist-acoes .hist-excluir:hover{border-color:#a8324a;color:#a8324a;}
+  .hist-vazio{
+    text-align:center;
+    color:var(--ink-soft);
+    font-size:12.5px;
+    line-height:1.7;
+    padding:34px 10px;
+  }
+  .hist-marca{
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--accent);
+    font-weight:600;
+  }
 
   /* aviso discreto de salvamento automático */
   .autosave{
@@ -479,7 +628,7 @@
   @media print{
     body{background:#fff;background-image:none;}
     .app{display:block;padding:0;max-width:none;}
-    header.top, .editor, .actions, .autosave{display:none !important;}
+    header.top, .editor, .actions, .autosave, .painel{display:none !important;}
     .doc-wrap{box-shadow:none;border:none;}
     .doc{padding:14mm 16mm;min-height:0;}
     @page{margin:0;size:A4;}
@@ -520,9 +669,12 @@
     /* o carimbo some aqui, então o cliente ocupa a linha inteira */
     .doc-parties{grid-template-columns:1fr;}
     /* 16px evita que o Safari dê zoom ao tocar num campo */
-    input[type=text], input[type=date], textarea, .service-row input{
+    input[type=text], input[type=date], textarea, .service-row input, select{
       font-size:16px;
     }
+    /* três campos não cabem lado a lado: o valor desce para a linha toda */
+    .row3{grid-template-columns:1fr 1fr;}
+    .row3 > :last-child{grid-column:1 / -1;}
     /* o seletor de data tem largura mínima grande e espremia o campo
        do número ao lado; no celular os dois ficam um sob o outro */
     .linha-orc{grid-template-columns:1fr;gap:0;}
@@ -532,6 +684,18 @@
     .remove-btn{padding:10px 12px;font-size:18px;}
     .btn-add{padding:14px;}
     header.top{flex-direction:column;align-items:flex-start;gap:4px;}
+    /* o histórico ocupa a tela inteira no celular */
+    .painel{padding:0;}
+    .painel-caixa{
+      max-width:none;
+      max-height:none;
+      height:100%;
+      border-radius:0;
+      padding:max(16px, env(safe-area-inset-top)) 16px
+              max(16px, env(safe-area-inset-bottom));
+    }
+    .painel-fechar{font-size:30px;padding:6px 12px;}
+    .hist-acoes button{padding:12px 6px;}
   }
 
   /* modo instalado na tela de início */
@@ -600,7 +764,10 @@
 
     <div class="actions">
       <button type="button" class="btn-primary" id="printBtn">Imprimir / Salvar PDF</button>
-      <button type="button" class="btn-secondary" id="resetBtn">Novo</button>
+      <div class="actions-sec">
+        <button type="button" class="btn-secondary" id="histBtn">Histórico</button>
+        <button type="button" class="btn-secondary" id="resetBtn">Novo</button>
+      </div>
     </div>
     <div class="autosave" id="autosave">salvo automaticamente</div>
   </div>
@@ -693,6 +860,20 @@
 
 </div>
 
+<!-- ============ HISTÓRICO ============ -->
+<div class="painel" id="painelHist" hidden>
+  <div class="painel-caixa" role="dialog" aria-modal="true" aria-labelledby="histTitulo">
+    <div class="painel-topo">
+      <h2 id="histTitulo">Orçamentos salvos</h2>
+      <button type="button" class="painel-fechar" id="histFechar"
+              aria-label="Fechar o histórico">&times;</button>
+    </div>
+    <input type="search" id="histBusca" autocomplete="off"
+           placeholder="Buscar por cliente ou número">
+    <div class="hist-lista" id="histLista"></div>
+  </div>
+</div>
+
 <script>
 /* ==========================================================
    Becca Gesso — gerador de orçamentos
@@ -704,6 +885,8 @@ document.getElementById('logoEditor').src = LOGO;
 document.getElementById('logoDoc').src = LOGO;
 
 const CHAVE_RASCUNHO = 'beccaGesso.rascunho.v1';
+const CHAVE_HISTORICO = 'beccaGesso.historico.v1';
+const MAX_HISTORICO = 300;
 const CHAVE_CONTADOR = 'beccaGesso.contador.v1';
 const VALIDADE_DIAS = 15;
 const PARCELAS = 5;
@@ -714,9 +897,21 @@ let idCounter = 0;
 
 /* ---------- utilidades ---------- */
 
-function novoServico(desc="", qtd=1, valor=0){
+/* Unidades usadas nos orçamentos de gesso. A primeira é o padrão. */
+const UNIDADES = [
+  {valor:'m²',   rotulo:'m²'},
+  {valor:'m.l.', rotulo:'m.l.'},
+  {valor:'un.',  rotulo:'un.'},
+];
+const UNIDADE_PADRAO = UNIDADES[0].valor;
+
+function unidadeValida(u){
+  return UNIDADES.some(x => x.valor === u) ? u : UNIDADE_PADRAO;
+}
+
+function novoServico(desc="", qtd=1, valor=0, unidade=UNIDADE_PADRAO){
   idCounter++;
-  return {id:idCounter, desc, qtd, valor};
+  return {id:idCounter, desc, qtd, valor, unidade:unidadeValida(unidade)};
 }
 
 /* Aceita "1.500,50", "1500,50" e "1500.50" — no iPhone o teclado
@@ -800,13 +995,15 @@ function estadoAtual(){
     orcNumero: el('orcNumero').value,
     orcData: el('orcData').value,
     obs: el('obs').value,
-    servicos: servicos.map(s => ({desc:s.desc, qtd:s.qtd, valor:s.valor})),
+    servicos: servicos.map(s => ({desc:s.desc, qtd:s.qtd, valor:s.valor, unidade:s.unidade})),
   };
 }
 
 function salvar(){
+  const estado = estadoAtual();
   try{
-    localStorage.setItem(CHAVE_RASCUNHO, JSON.stringify(estadoAtual()));
+    localStorage.setItem(CHAVE_RASCUNHO, JSON.stringify(estado));
+    arquivar(estado);
     piscarAviso();
   }catch(e){ /* modo privado ou cota cheia: o app segue funcionando */ }
 }
@@ -839,7 +1036,7 @@ function restaurar(){
   el('obs').value = d.obs || '';
 
   servicos = Array.isArray(d.servicos) && d.servicos.length
-    ? d.servicos.map(s => novoServico(s.desc || '', parseNum(s.qtd), parseNum(s.valor)))
+    ? d.servicos.map(s => novoServico(s.desc || '', parseNum(s.qtd), parseNum(s.valor), s.unidade))
     : [novoServico()];
   return true;
 }
@@ -847,6 +1044,161 @@ function restaurar(){
 function hojeISO(){
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+/* ---------- histórico ----------
+   Cada orçamento fica guardado pelo seu número. Enquanto você digita, o
+   que está na tela é gravado por cima da própria entrada — então clicar
+   em "Novo" nunca apaga o anterior, só começa outro número. */
+
+function totalDe(lista){
+  return (lista || []).reduce(
+    (soma, s) => soma + parseNum(s.qtd) * parseNum(s.valor), 0);
+}
+
+function temConteudo(e){
+  return !!(e.cliNome || '').trim()
+    || (e.servicos || []).some(s => (s.desc || '').trim() || parseNum(s.valor) > 0);
+}
+
+function lerHistorico(){
+  try{
+    const bruto = localStorage.getItem(CHAVE_HISTORICO);
+    const lista = bruto ? JSON.parse(bruto) : [];
+    return Array.isArray(lista) ? lista : [];
+  }catch(e){ return []; }
+}
+
+function gravarHistorico(lista){
+  try{
+    localStorage.setItem(CHAVE_HISTORICO,
+      JSON.stringify(lista.slice(0, MAX_HISTORICO)));
+  }catch(e){ /* sem espaço: o orçamento na tela continua salvo */ }
+}
+
+function arquivar(estado){
+  if(!temConteudo(estado)) return;
+  const entrada = Object.assign({}, estado, {
+    total: totalDe(estado.servicos),
+    atualizadoEm: Date.now(),
+  });
+  const lista = lerHistorico().filter(x => x.orcNumero !== entrada.orcNumero);
+  lista.unshift(entrada);
+  gravarHistorico(lista);
+}
+
+function carregarOrcamento(e){
+  el('cliNome').value = e.cliNome || '';
+  el('cliEndereco').value = e.cliEndereco || '';
+  el('orcNumero').value = e.orcNumero || proximoNumero();
+  el('orcData').value = e.orcData || hojeISO();
+  el('obs').value = e.obs || '';
+  servicos = Array.isArray(e.servicos) && e.servicos.length
+    ? e.servicos.map(s => novoServico(s.desc || '', parseNum(s.qtd), parseNum(s.valor), s.unidade))
+    : [novoServico()];
+  renderServicosEditor();
+  renderDoc();
+  salvar();
+}
+
+function novoOrcamento(){
+  el('cliNome').value = '';
+  el('cliEndereco').value = '';
+  el('orcNumero').value = proximoNumero();
+  el('orcData').value = hojeISO();
+  el('obs').value = '';
+  servicos = [novoServico()];
+  renderServicosEditor();
+  renderDoc();
+}
+
+/* ---------- painel do histórico ---------- */
+
+function abrirHistorico(){
+  salvar();
+  el('histBusca').value = '';
+  renderHistorico();
+  el('painelHist').hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function fecharHistorico(){
+  el('painelHist').hidden = true;
+  document.body.style.overflow = '';
+}
+
+function renderHistorico(){
+  const busca = el('histBusca').value.trim().toLowerCase();
+  const atual = el('orcNumero').value;
+  const lista = lerHistorico().filter(e => {
+    if(!busca) return true;
+    return (e.cliNome || '').toLowerCase().includes(busca)
+        || (e.orcNumero || '').toLowerCase().includes(busca)
+        || (e.cliEndereco || '').toLowerCase().includes(busca);
+  });
+
+  const alvo = el('histLista');
+  if(!lista.length){
+    alvo.innerHTML = busca
+      ? '<div class="hist-vazio">Nenhum orçamento encontrado para essa busca.</div>'
+      : '<div class="hist-vazio">Nenhum orçamento salvo ainda.<br>' +
+        'Os orçamentos aparecem aqui automaticamente conforme você preenche.</div>';
+    return;
+  }
+
+  alvo.innerHTML = lista.map(e => {
+    const ehAtual = e.orcNumero === atual;
+    const qtdServicos = (e.servicos || []).filter(
+      s => (s.desc || '').trim() || parseNum(s.valor) > 0).length;
+    return `
+      <div class="hist-item${ehAtual ? ' atual' : ''}">
+        <div class="hist-topo">
+          <span class="hist-num">Nº ${escapeHtml(e.orcNumero || '—')} ·
+            ${escapeHtml(fmtDataBR(e.orcData))}</span>
+          <span class="hist-total">${fmtMoeda(e.total || 0)}</span>
+        </div>
+        ${ehAtual ? '<div class="hist-marca">Aberto agora</div>' : ''}
+        <div class="hist-cliente">${escapeHtml(e.cliNome || 'Sem nome')}</div>
+        <div class="hist-obra">${escapeHtml(e.cliEndereco || 'Sem endereço')}
+          · ${qtdServicos} ${qtdServicos === 1 ? 'serviço' : 'serviços'}</div>
+        <div class="hist-acoes">
+          <button type="button" class="hist-abrir"
+                  data-num="${escapeAttr(e.orcNumero)}">Abrir</button>
+          <button type="button" class="hist-duplicar"
+                  data-num="${escapeAttr(e.orcNumero)}">Duplicar</button>
+          <button type="button" class="hist-excluir"
+                  data-num="${escapeAttr(e.orcNumero)}">Excluir</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  const achar = num => lerHistorico().find(x => x.orcNumero === num);
+
+  alvo.querySelectorAll('.hist-abrir').forEach(b => b.addEventListener('click', ev => {
+    const e = achar(ev.currentTarget.dataset.num);
+    if(e){ carregarOrcamento(e); fecharHistorico(); }
+  }));
+
+  alvo.querySelectorAll('.hist-duplicar').forEach(b => b.addEventListener('click', ev => {
+    const e = achar(ev.currentTarget.dataset.num);
+    if(!e) return;
+    carregarOrcamento(Object.assign({}, e, {
+      orcNumero: proximoNumero(),
+      orcData: hojeISO(),
+    }));
+    fecharHistorico();
+  }));
+
+  alvo.querySelectorAll('.hist-excluir').forEach(b => b.addEventListener('click', ev => {
+    const num = ev.currentTarget.dataset.num;
+    const e = achar(num);
+    const quem = e && e.cliNome ? ` de ${e.cliNome}` : '';
+    if(!confirm(`Excluir o orçamento nº ${num}${quem}? Isso não pode ser desfeito.`)) return;
+    gravarHistorico(lerHistorico().filter(x => x.orcNumero !== num));
+    /* se era o que está na tela, começa um novo para não ser regravado */
+    if(num === el('orcNumero').value) novoOrcamento();
+    renderHistorico();
+  }));
 }
 
 /* ---------- editor de serviços ---------- */
@@ -863,11 +1215,18 @@ function renderServicosEditor(){
       <label>Descrição</label>
       <input type="text" class="s-desc" data-id="${s.id}"
              value="${escapeAttr(s.desc)}" placeholder="Ex: Forro de gesso liso">
-      <div class="row2">
+      <div class="row3">
         <div>
           <label>Qtd.</label>
           <input type="text" inputmode="decimal" class="s-qtd" data-id="${s.id}"
                  value="${escapeAttr(s.qtd)}">
+        </div>
+        <div>
+          <label>Unidade</label>
+          <select class="s-unidade" data-id="${s.id}" aria-label="Unidade de medida">
+            ${UNIDADES.map(u => `<option value="${u.valor}"${
+              u.valor === s.unidade ? ' selected' : ''}>${u.rotulo}</option>`).join('')}
+          </select>
         </div>
         <div>
           <label>Valor unit. (R$)</label>
@@ -887,6 +1246,9 @@ function renderServicosEditor(){
   }));
   list.querySelectorAll('.s-valor').forEach(x => x.addEventListener('input', e => {
     updateServico(e.target.dataset.id, 'valor', parseNum(e.target.value));
+  }));
+  list.querySelectorAll('.s-unidade').forEach(x => x.addEventListener('change', e => {
+    updateServico(e.target.dataset.id, 'unidade', e.target.value);
   }));
   list.querySelectorAll('.remove-btn').forEach(x => x.addEventListener('click', e => {
     const id = parseInt(e.currentTarget.dataset.id, 10);
@@ -940,7 +1302,7 @@ function renderDoc(){
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${escapeHtml(s.desc) || '<span style="color:#a7adba">—</span>'}</td>
-        <td class="num">${qtd.toLocaleString('pt-BR')}</td>
+        <td class="num">${qtd.toLocaleString('pt-BR')} ${escapeHtml(unidadeValida(s.unidade))}</td>
         <td class="num">${fmtMoeda(valor)}</td>
         <td class="num">${fmtMoeda(sub)}</td>
       `;
@@ -1001,17 +1363,24 @@ el('printBtn').addEventListener('click', () => {
   window.print();
 });
 
+/* O orçamento atual já está guardado no histórico, então "Novo" não
+   apaga nada: só começa outro número. */
 el('resetBtn').addEventListener('click', () => {
-  if(!confirm('Iniciar um novo orçamento? Os dados atuais serão apagados.')) return;
-  el('cliNome').value = '';
-  el('cliEndereco').value = '';
-  el('orcNumero').value = proximoNumero();
-  el('orcData').value = hojeISO();
-  el('obs').value = '';
-  servicos = [novoServico()];
-  renderServicosEditor();
-  renderDoc();
   salvar();
+  novoOrcamento();
+  salvar();
+});
+
+el('histBtn').addEventListener('click', abrirHistorico);
+el('histFechar').addEventListener('click', fecharHistorico);
+el('histBusca').addEventListener('input', renderHistorico);
+
+/* fecha ao tocar fora da caixa ou com Esc */
+el('painelHist').addEventListener('click', e => {
+  if(e.target === el('painelHist')) fecharHistorico();
+});
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape' && !el('painelHist').hidden) fecharHistorico();
 });
 
 /* salva ao sair / ao mandar o app para segundo plano */

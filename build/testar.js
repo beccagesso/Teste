@@ -99,6 +99,21 @@ function checar(cond, msg) {
   checar(lidoAvista.replace(/\s/g, ' ') === moeda(total * 0.94).replace(/\s/g, ' '),
     `à vista -6%: ${lidoAvista}`);
 
+  // unidade de medida: m² é o padrão, m.l. e un. estão disponíveis
+  const opcoes = await page.evaluate(() =>
+    [...document.querySelector('.s-unidade').options].map(o => o.value));
+  checar(JSON.stringify(opcoes) === JSON.stringify(['m²', 'm.l.', 'un.']),
+    `unidades disponíveis: ${opcoes.join(', ')}`);
+  checar((await page.locator('.s-unidade').first().inputValue()) === 'm²',
+    'm² vem selecionado por padrão');
+
+  // segunda linha em metro linear
+  await linhas.nth(1).locator('.s-unidade').selectOption('m.l.');
+  const celulas = await page.evaluate(() =>
+    [...document.querySelectorAll('#docServicos tr')].map(tr => tr.cells[1].textContent.trim()));
+  checar(celulas[0] === '38,5 m²', `quantidade com unidade: "${celulas[0]}"`);
+  checar(celulas[1] === '12 m.l.', `unidade trocada aparece no documento: "${celulas[1]}"`);
+
   checar((await page.textContent('#docValidade')) === '23/08/2026',
     `validade 15 dias: ${await page.textContent('#docValidade')}`);
   checar(/^\d{4}\/2026$/.test(await page.inputValue('#orcNumero')),
