@@ -360,6 +360,15 @@
   }
   .hist-acoes button:hover{border-color:var(--ink);color:var(--ink);}
   .hist-acoes .hist-excluir:hover{border-color:#a8324a;color:#a8324a;}
+  .painel-rodape{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    border-top:1px solid var(--rule);
+    padding-top:14px;
+    margin-top:14px;
+  }
+  .painel-rodape .btn-secondary{padding:12px 8px;text-align:center;}
   .hist-vazio{
     text-align:center;
     color:var(--ink-soft);
@@ -872,6 +881,12 @@
     <input type="search" id="histBusca" autocomplete="off"
            placeholder="Buscar por cliente ou número">
     <div class="hist-lista" id="histLista"></div>
+    <div class="painel-rodape">
+      <button type="button" class="btn-secondary" id="backupBtn">Fazer backup</button>
+      <button type="button" class="btn-secondary" id="restaurarBtn">Restaurar</button>
+      <input type="file" id="restaurarArquivo" hidden
+             accept=".json,.txt,application/json,text/plain">
+    </div>
   </div>
 </div>
 
@@ -1113,6 +1128,136 @@ function novoOrcamento(){
   servicos = [novoServico()];
   renderServicosEditor();
   renderDoc();
+}
+
+/* ---------- backup ----------
+   Os orçamentos vivem só dentro deste aparelho. O backup gera um
+   arquivo com tudo e usa a mesma tela de compartilhamento do orçamento,
+   então dá para mandar para um grupo do WhatsApp e deixar guardado lá. */
+
+const MARCA_BACKUP = 'becca-gesso-orcamentos';
+
+function conteudoDoBackup(){
+  return JSON.stringify({
+    app: MARCA_BACKUP,
+    versao: 1,
+    geradoEm: new Date().toISOString(),
+    contador: JSON.parse(localStorage.getItem(CHAVE_CONTADOR) || 'null'),
+    historico: lerHistorico(),
+  }, null, 2);
+}
+
+function nomeDoBackup(){
+  return `becca-gesso-backup-${hojeISO()}.json`;
+}
+
+async function fazerBackup(){
+  const botao = el('backupBtn');
+  const rotulo = botao.textContent;
+  botao.disabled = true;
+  try{
+    salvar();
+    const quantos = lerHistorico().length;
+    if(!quantos){
+      alert('Ainda não há orçamentos para guardar.');
+      return;
+    }
+    const blob = new Blob([conteudoDoBackup()], {type:'application/json'});
+    const nome = nomeDoBackup();
+    const arquivo = new File([blob], nome, {type:'application/json'});
+
+    if(navigator.canShare && navigator.canShare({files:[arquivo]})){
+      try{
+        await navigator.share({
+          files:[arquivo],
+          title:'Backup dos orçamentos',
+          text:`Backup da Becca Gesso — ${quantos} ` +
+               `${quantos === 1 ? 'orçamento' : 'orçamentos'}, ${fmtDataBR(hojeISO())}`,
+        });
+        return;
+      }catch(erro){
+        if(erro && erro.name === 'AbortError') return;
+      }
+    }
+    baixarArquivo(blob, nome);
+  }catch(erro){
+    alert('Não consegui gerar o backup: ' +
+      (erro && erro.message ? erro.message : erro));
+  }finally{
+    botao.disabled = false;
+    botao.textContent = rotulo;
+  }
+}
+
+/* A restauração junta o arquivo ao que já existe em vez de trocar tudo:
+   assim um backup antigo nunca apaga orçamentos mais novos. */
+function restaurarDoTexto(texto){
+  let d;
+  try{ d = JSON.parse(texto); }
+  catch(e){ throw new Error('esse arquivo não parece um backup'); }
+  if(!d || d.app !== MARCA_BACKUP || !Array.isArray(d.historico)){
+    throw new Error('esse arquivo não é um backup do gerador de orçamentos');
+  }
+
+  const atual = lerHistorico();
+  const porNumero = new Map(atual.map(e => [e.orcNumero, e]));
+  let novos = 0, atualizados = 0, mantidos = 0;
+
+  for(const vindo of d.historico){
+    if(!vindo || !vindo.orcNumero) continue;
+    const tinha = porNumero.get(vindo.orcNumero);
+    if(!tinha){
+      porNumero.set(vindo.orcNumero, vindo);
+      novos++;
+    }else if((vindo.atualizadoEm || 0) > (tinha.atualizadoEm || 0)){
+      porNumero.set(vindo.orcNumero, vindo);
+      atualizados++;
+    }else{
+      mantidos++;
+    }
+  }
+
+  const juntos = [...porNumero.values()]
+    .sort((a, b) => (b.atualizadoEm || 0) - (a.atualizadoEm || 0));
+  gravarHistorico(juntos);
+
+  /* a numeração acompanha o maior número já usado, para não repetir */
+  const ano = new Date().getFullYear();
+  let maior = 0;
+  for(const e of juntos){
+    const [seq, anoEntrada] = String(e.orcNumero || '').split('/');
+    if(Number(anoEntrada) === ano) maior = Math.max(maior, parseInt(seq, 10) || 0);
+  }
+  try{
+    const c = JSON.parse(localStorage.getItem(CHAVE_CONTADOR) || 'null');
+    const atualSeq = (c && c.ano === ano) ? c.seq : 0;
+    localStorage.setItem(CHAVE_CONTADOR,
+      JSON.stringify({ano: ano, seq: Math.max(atualSeq, maior)}));
+  }catch(e){ /* segue sem ajustar a numeração */ }
+
+  return {novos, atualizados, mantidos};
+}
+
+function escolherBackup(){
+  el('restaurarArquivo').click();
+}
+
+async function aoEscolherBackup(evento){
+  const arquivo = evento.target.files && evento.target.files[0];
+  evento.target.value = '';          /* permite escolher o mesmo arquivo de novo */
+  if(!arquivo) return;
+  try{
+    const texto = await arquivo.text();
+    const r = restaurarDoTexto(texto);
+    renderHistorico();
+    alert(`Backup restaurado.\n\n` +
+      `${r.novos} ${r.novos === 1 ? 'orçamento novo' : 'orçamentos novos'}\n` +
+      `${r.atualizados} ${r.atualizados === 1 ? 'atualizado' : 'atualizados'}\n` +
+      `${r.mantidos} já ${r.mantidos === 1 ? 'estava' : 'estavam'} aqui`);
+  }catch(erro){
+    alert('Não consegui restaurar: ' +
+      (erro && erro.message ? erro.message : erro));
+  }
 }
 
 /* ---------- painel do histórico ---------- */
@@ -1489,6 +1634,9 @@ el('resetBtn').addEventListener('click', () => {
 el('histBtn').addEventListener('click', abrirHistorico);
 el('histFechar').addEventListener('click', fecharHistorico);
 el('histBusca').addEventListener('input', renderHistorico);
+el('backupBtn').addEventListener('click', fazerBackup);
+el('restaurarBtn').addEventListener('click', escolherBackup);
+el('restaurarArquivo').addEventListener('change', aoEscolherBackup);
 
 /* fecha ao tocar fora da caixa ou com Esc */
 el('painelHist').addEventListener('click', e => {
