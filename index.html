@@ -372,6 +372,69 @@
     margin-top:14px;
   }
   .painel-rodape .btn-secondary{padding:12px 8px;text-align:center;}
+  .hist-resumo{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:6px;
+    margin-bottom:12px;
+  }
+  .hist-chip{
+    border:1px solid var(--rule);
+    border-radius:var(--radius);
+    background:#fff;
+    padding:8px 4px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:2px;
+    line-height:1.2;
+  }
+  .hist-chip .chip-rot{
+    font-size:9px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    font-weight:600;
+    color:var(--ink-soft);
+  }
+  .hist-chip .chip-qtd{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:17px;
+    font-weight:700;
+    color:var(--ink);
+  }
+  .hist-chip .chip-val{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:8.5px;
+    color:var(--ink-soft);
+    white-space:nowrap;
+  }
+  .hist-chip.ativo{border-color:var(--ink);background:#f3f6fa;}
+  .hist-chip.sit-aprovado .chip-qtd{color:var(--ok);}
+  .hist-chip.sit-recusado .chip-qtd{color:#a8324a;}
+  .hist-chip.sit-enviado .chip-qtd{color:var(--accent);}
+
+  .hist-situacao{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-top:10px;
+  }
+  .hist-situacao label{
+    margin:0;
+    font-size:9.5px;
+    white-space:nowrap;
+  }
+  .hist-situacao select{
+    margin:0;
+    height:34px;
+    font-size:12px;
+    padding:6px 26px 6px 8px;
+    background-position:calc(100% - 13px) 15px, calc(100% - 8px) 15px;
+  }
+  .hist-sit.sit-aprovado{color:var(--ok);border-color:var(--ok);}
+  .hist-sit.sit-recusado{color:#a8324a;border-color:#a8324a;}
+  .hist-sit.sit-enviado{color:var(--accent);border-color:var(--accent);}
+
   .hist-vazio{
     text-align:center;
     color:var(--ink-soft);
@@ -741,7 +804,8 @@
     <div class="field-group">
       <label for="cliNome">Nome do cliente</label>
       <input type="text" id="cliNome" placeholder="Nome completo ou razão social"
-             autocomplete="name" enterkeyhint="next">
+             autocomplete="off" enterkeyhint="next" list="clientesConhecidos">
+      <datalist id="clientesConhecidos"></datalist>
       <label for="cliEndereco">Endereço da obra</label>
       <input type="text" id="cliEndereco" placeholder="Rua, número, bairro e cidade"
              autocomplete="street-address">
@@ -907,6 +971,7 @@
       <button type="button" class="painel-fechar" id="histFechar"
               aria-label="Fechar o histórico">&times;</button>
     </div>
+    <div class="hist-resumo" id="histResumo"></div>
     <input type="search" id="histBusca" autocomplete="off"
            placeholder="Buscar por cliente ou número">
     <div class="hist-lista" id="histLista"></div>
@@ -1796,15 +1861,50 @@ function gravarHistorico(lista){
   }catch(e){ /* sem espaço: o orçamento na tela continua salvo */ }
 }
 
+/* Em que pé está cada orçamento. A ordem é a do fluxo normal. */
+const SITUACOES = [
+  {chave:'rascunho', rotulo:'Rascunho'},
+  {chave:'enviado',  rotulo:'Enviado'},
+  {chave:'aprovado', rotulo:'Aprovado'},
+  {chave:'recusado', rotulo:'Recusado'},
+];
+
+function situacaoValida(s){
+  return SITUACOES.some(x => x.chave === s) ? s : 'rascunho';
+}
+
+/* O total do orçamento já descontado, que é o que vale para o resumo. */
+function totalComDesconto(e){
+  const bruto = totalDe(e.servicos);
+  const abatimento = Math.min(
+    (e.condicoes && parseNum(e.condicoes.abatimento)) || 0, bruto);
+  return bruto - abatimento;
+}
+
 function arquivar(estado){
   if(!temConteudo(estado)) return;
+  const lista = lerHistorico();
+  const anterior = lista.find(x => x.orcNumero === estado.orcNumero);
   const entrada = Object.assign({}, estado, {
-    total: totalDe(estado.servicos),
+    total: totalComDesconto(estado),
+    /* a situação é do orçamento, não do que está sendo digitado agora:
+       reescrever a entrada não pode rebaixar um aprovado para rascunho */
+    situacao: situacaoValida(anterior && anterior.situacao),
     atualizadoEm: Date.now(),
   });
-  const lista = lerHistorico().filter(x => x.orcNumero !== entrada.orcNumero);
-  lista.unshift(entrada);
+  const semEla = lista.filter(x => x.orcNumero !== entrada.orcNumero);
+  semEla.unshift(entrada);
+  gravarHistorico(semEla);
+}
+
+function marcarSituacao(numero, situacao){
+  const lista = lerHistorico();
+  const e = lista.find(x => x.orcNumero === numero);
+  if(!e) return false;
+  e.situacao = situacaoValida(situacao);
+  e.atualizadoEm = Date.now();
   gravarHistorico(lista);
+  return true;
 }
 
 function carregarOrcamento(e){
@@ -1832,6 +1932,39 @@ function novoOrcamento(){
   servicos = [novoServico()];
   renderServicosEditor();
   renderDoc();
+}
+
+/* ---------- clientes já atendidos ----------
+   O preço muda conforme a região, então um catálogo de serviços não
+   ajudaria. Nome e endereço de cliente, ao contrário, se repetem. */
+
+function clientesDoHistorico(){
+  const vistos = new Map();
+  for(const e of lerHistorico()){
+    const nome = (e.cliNome || '').trim();
+    const chave = nome.toLowerCase();
+    if(nome && !vistos.has(chave)) vistos.set(chave, e);
+  }
+  return vistos;
+}
+
+function atualizarSugestoesCliente(){
+  el('clientesConhecidos').innerHTML = [...clientesDoHistorico().values()]
+    .map(e => `<option value="${escapeAttr(e.cliNome)}"></option>`).join('');
+}
+
+/* Preenche o endereço da obra ao reconhecer o cliente — mas só quando o
+   campo está vazio, para nunca apagar o que já foi digitado. */
+function preencherObraDoCliente(){
+  if(el('cliEndereco').value.trim()) return;
+  const nome = el('cliNome').value.trim().toLowerCase();
+  if(!nome) return;
+  const e = clientesDoHistorico().get(nome);
+  if(e && (e.cliEndereco || '').trim()){
+    el('cliEndereco').value = e.cliEndereco;
+    renderDoc();
+    agendarSalvar();
+  }
 }
 
 /* ---------- backup ----------
@@ -1979,10 +2112,42 @@ function fecharHistorico(){
   document.body.style.overflow = '';
 }
 
+let filtroSituacao = '';         /* vazio = todas */
+
+/* Resumo por situação. Cada quadrinho também serve de filtro, então o
+   mesmo lugar responde "quanto eu mandei?" e "me mostra só esses". */
+function renderResumo(todos){
+  const contas = {};
+  for(const s of SITUACOES) contas[s.chave] = {qtd: 0, valor: 0};
+  for(const e of todos){
+    const c = contas[situacaoValida(e.situacao)];
+    c.qtd++;
+    c.valor += e.total || 0;
+  }
+  el('histResumo').innerHTML = SITUACOES.map(s => `
+    <button type="button" class="hist-chip sit-${s.chave}${
+      filtroSituacao === s.chave ? ' ativo' : ''}" data-sit="${s.chave}">
+      <span class="chip-rot">${s.rotulo}</span>
+      <span class="chip-qtd">${contas[s.chave].qtd}</span>
+      <span class="chip-val">${fmtMoeda(contas[s.chave].valor)}</span>
+    </button>`).join('');
+
+  el('histResumo').querySelectorAll('.hist-chip').forEach(b =>
+    b.addEventListener('click', ev => {
+      const s = ev.currentTarget.dataset.sit;
+      filtroSituacao = (filtroSituacao === s) ? '' : s;
+      renderHistorico();
+    }));
+}
+
 function renderHistorico(){
   const busca = el('histBusca').value.trim().toLowerCase();
   const atual = el('orcNumero').value;
-  const lista = lerHistorico().filter(e => {
+  const todos = lerHistorico();
+  renderResumo(todos);
+
+  const lista = todos.filter(e => {
+    if(filtroSituacao && situacaoValida(e.situacao) !== filtroSituacao) return false;
     if(!busca) return true;
     return (e.cliNome || '').toLowerCase().includes(busca)
         || (e.orcNumero || '').toLowerCase().includes(busca)
@@ -1991,8 +2156,8 @@ function renderHistorico(){
 
   const alvo = el('histLista');
   if(!lista.length){
-    alvo.innerHTML = busca
-      ? '<div class="hist-vazio">Nenhum orçamento encontrado para essa busca.</div>'
+    alvo.innerHTML = (busca || filtroSituacao)
+      ? '<div class="hist-vazio">Nenhum orçamento nesse filtro.</div>'
       : '<div class="hist-vazio">Nenhum orçamento salvo ainda.<br>' +
         'Os orçamentos aparecem aqui automaticamente conforme você preenche.</div>';
     return;
@@ -2000,6 +2165,7 @@ function renderHistorico(){
 
   alvo.innerHTML = lista.map(e => {
     const ehAtual = e.orcNumero === atual;
+    const sit = situacaoValida(e.situacao);
     const qtdServicos = (e.servicos || []).filter(
       s => (s.desc || '').trim() || parseNum(s.valor) > 0).length;
     return `
@@ -2013,6 +2179,14 @@ function renderHistorico(){
         <div class="hist-cliente">${escapeHtml(e.cliNome || 'Sem nome')}</div>
         <div class="hist-obra">${escapeHtml(e.cliEndereco || 'Sem endereço')}
           · ${qtdServicos} ${qtdServicos === 1 ? 'serviço' : 'serviços'}</div>
+        <div class="hist-situacao">
+          <label for="sit-${escapeAttr(e.orcNumero)}">Situação</label>
+          <select class="hist-sit sit-${sit}" id="sit-${escapeAttr(e.orcNumero)}"
+                  data-num="${escapeAttr(e.orcNumero)}">
+            ${SITUACOES.map(s => `<option value="${s.chave}"${
+              s.chave === sit ? ' selected' : ''}>${s.rotulo}</option>`).join('')}
+          </select>
+        </div>
         <div class="hist-acoes">
           <button type="button" class="hist-abrir"
                   data-num="${escapeAttr(e.orcNumero)}">Abrir</button>
@@ -2023,6 +2197,11 @@ function renderHistorico(){
         </div>
       </div>`;
   }).join('');
+
+  alvo.querySelectorAll('.hist-sit').forEach(s => s.addEventListener('change', ev => {
+    marcarSituacao(ev.currentTarget.dataset.num, ev.currentTarget.value);
+    renderHistorico();
+  }));
 
   const achar = num => lerHistorico().find(x => x.orcNumero === num);
 
@@ -2279,6 +2458,16 @@ function resumoParaTexto(d){
   return linhas.filter(x => x !== '').join('\n');
 }
 
+/* Mandar o orçamento já marca como enviado. Só sobe de rascunho: um
+   orçamento já aprovado não volta a "enviado" por ser mandado de novo. */
+function marcarComoEnviado(){
+  const numero = el('orcNumero').value;
+  const e = lerHistorico().find(x => x.orcNumero === numero);
+  if(e && situacaoValida(e.situacao) === 'rascunho'){
+    marcarSituacao(numero, 'enviado');
+  }
+}
+
 async function enviarPeloWhatsApp(){
   const botao = el('zapBtn');
   const rotulo = botao.textContent;
@@ -2296,6 +2485,7 @@ async function enviarPeloWhatsApp(){
     if(navigator.canShare && navigator.canShare({files:[arquivo]})){
       try{
         await navigator.share({files:[arquivo], title:`Orçamento ${d.numero}`});
+        marcarComoEnviado();
         return;
       }catch(erro){
         if(erro && erro.name === 'AbortError') return;   /* você cancelou */
@@ -2306,6 +2496,7 @@ async function enviarPeloWhatsApp(){
     /* plano B: baixa o PDF e abre o WhatsApp com o resumo em texto,
        para você anexar o arquivo na conversa */
     baixarArquivo(blob, nome);
+    marcarComoEnviado();
     window.open('https://wa.me/?text=' +
       encodeURIComponent(resumoParaTexto(d)), '_blank');
   }catch(erro){
@@ -2351,6 +2542,9 @@ el('resetBtn').addEventListener('click', () => {
   novoOrcamento();
   salvar();
 });
+
+el('cliNome').addEventListener('focus', atualizarSugestoesCliente);
+el('cliNome').addEventListener('input', preencherObraDoCliente);
 
 el('histBtn').addEventListener('click', abrirHistorico);
 el('histFechar').addEventListener('click', fecharHistorico);

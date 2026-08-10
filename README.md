@@ -47,9 +47,9 @@ impressão do próprio navegador.
   botão **Histórico** mostra a lista completa.
 - **Numera em sequência**: 0001/2026, 0002/2026, e assim por diante. A contagem
   recomeça do 0001 a cada ano.
-- **Calcula o pagamento**: cartão em até 5x sem juros e à vista com 6% de
-  desconto.
-- **Calcula a validade**: 15 dias a partir da data do orçamento.
+- **Calcula o pagamento**: cartão sem juros e à vista com desconto, nas
+  condições que você escolher (5x e 6% vêm predefinidos).
+- **Calcula a validade** a partir da data do orçamento.
 - **Monta o PDF sozinho**, com as fontes e o logo da marca, e quebra em várias
   páginas quando o orçamento é longo — repetindo o cabeçalho da empresa em
   cada folha.
@@ -70,6 +70,47 @@ orçamento você pode:
 
 Um orçamento entra na lista assim que tem nome de cliente ou algum serviço
 preenchido, então não fica lixo de tela em branco guardado.
+
+### Situação de cada orçamento
+
+Cada um pode ser marcado como **rascunho**, **enviado**, **aprovado** ou
+**recusado**. Mandar pelo WhatsApp já marca como enviado sozinho — e um
+orçamento já aprovado não volta para enviado se você mandar de novo.
+
+Os quatro quadrinhos no topo do histórico mostram quantos e quanto em cada
+situação, e servem de filtro: toque em **Aprovado** para ver só os aprovados,
+toque de novo para ver todos. É por ali que você acompanha quanto mandou no
+mês e quanto fechou.
+
+### Backup
+
+No pé do histórico, **Fazer backup** gera um arquivo com todos os orçamentos e
+a numeração, e abre a mesma tela de compartilhamento do orçamento — dá para
+mandar para um grupo do WhatsApp e deixar guardado lá.
+
+**Restaurar** lê esse arquivo de volta. Ele **junta** com o que já existe em
+vez de trocar tudo: orçamento que só está neste aparelho não se perde, e entre
+duas versões do mesmo número fica a mais recente. A numeração acompanha o maior
+número restaurado, para não repetir.
+
+> Vale fazer backup de vez em quando. Sem ele, trocar de celular ou limpar os
+> dados do Safari apaga o histórico inteiro.
+
+### Condições de pagamento
+
+Parcelas, desconto à vista e validade vêm com **5x**, **6%** e **15 dias**, e
+podem ser mudados em cada orçamento. Há também um campo de desconto em reais,
+que aparece como uma linha entre o subtotal e o total — quando fica vazio, a
+linha não existe.
+
+Cada orçamento guarda as condições que tinha, então reabrir um antigo traz as
+condições daquele orçamento, não as de hoje.
+
+### Cliente já atendido
+
+Ao digitar o nome do cliente, o app sugere os que já estão no histórico. Ao
+reconhecer o cliente, ele preenche o endereço da obra — mas só quando o campo
+está vazio, para nunca apagar o que você digitou.
 
 ### Unidade de medida
 
@@ -101,14 +142,15 @@ próxima vez que o arquivo for gerado.
 
 O orçamento não tem área de assinatura: é uma proposta, não um contrato. Ele
 fecha com os dados da Becca Gesso — nome, CNPJ, telefone e e-mail — e a nota de
-validade de 15 dias.
+validade.
 
 ## Como alterar o app
 
 As mudanças do dia a dia ficam todas no `build/template.html`:
 
-- **Preço, desconto, parcelas e validade**: no início do bloco `<script>`, nas
-  linhas `VALIDADE_DIAS`, `PARCELAS` e `DESCONTO_AVISTA`.
+- **Padrão de parcelas, desconto e validade**: no início do bloco `<script>`,
+  no bloco `PADRAO`. São só os valores iniciais — cada orçamento pode ter os
+  seus.
 - **Telefone, e-mail, CNPJ**: aparecem em três lugares — no bloco
   `brand-strip` (cabeçalho do editor), no `doc-head` (topo do documento) e no
   `fecho` (rodapé do documento). Mude nos três.
@@ -170,6 +212,7 @@ npm install playwright
 node build/testar.js
 node build/testar-historico.js
 node build/testar-pdf.js
+node build/testar-backup.js
 node build/testar-subcaminho.js
 ```
 

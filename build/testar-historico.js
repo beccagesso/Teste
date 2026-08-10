@@ -189,6 +189,99 @@ const guardados = p => p.evaluate(() =>
   checar(!hist.some(e => e.orcNumero === abertoAgora),
     'excluir o orçamento aberto não o traz de volta ao digitar');
 
+  // ---------- 8. situação de cada orçamento ----------
+  console.log('\n[8] Situação');
+  /* o painel continua aberto desde a seção anterior */
+  await p.waitForTimeout(250);
+  checar((await p.locator('.hist-chip').count()) === 4,
+    'as quatro situações aparecem no resumo');
+  const todos = await guardados(p);
+  checar(todos.every(e => e.situacao === 'rascunho'),
+    'todo orçamento começa como rascunho');
+
+  const primeiro = await p.locator('.hist-item').first();
+  await primeiro.locator('.hist-sit').selectOption('aprovado');
+  await p.waitForTimeout(250);
+  const numAprovado = (await guardados(p)).find(e => e.situacao === 'aprovado');
+  checar(!!numAprovado, 'a situação foi gravada');
+
+  const chipAprovado = p.locator('.hist-chip.sit-aprovado');
+  checar((await chipAprovado.locator('.chip-qtd').textContent()) === '1',
+    'o resumo conta o aprovado');
+  checar((await chipAprovado.locator('.chip-val').textContent())
+    .replace(/\s/g, ' ').includes('R$'),
+    'o resumo soma o valor aprovado');
+
+  // o quadrinho também filtra
+  const totalGuardado = (await guardados(p)).length;
+  await chipAprovado.click();
+  await p.waitForTimeout(200);
+  checar((await p.locator('.hist-item').count()) === 1,
+    'clicar no resumo filtra por aquela situação');
+  await p.locator('.hist-chip.sit-rascunho').click();
+  await p.waitForTimeout(200);
+  checar((await p.locator('.hist-item').count()) ===
+      totalGuardado - 1 || (await p.locator('.hist-vazio').count()) === 1,
+    'trocar de filtro mostra a outra situação');
+  await p.locator('.hist-chip.sit-rascunho').click();
+  await p.waitForTimeout(200);
+  checar((await p.locator('.hist-item').count()) === totalGuardado,
+    `clicar de novo tira o filtro (${totalGuardado} no total)`);
+
+  /* editar o orçamento não pode rebaixar um aprovado para rascunho */
+  await p.locator('.hist-item').filter({ hasText: numAprovado.cliNome })
+    .first().locator('.hist-abrir').click();
+  await p.waitForTimeout(300);
+  await p.fill('#cliNome', numAprovado.cliNome + ' — obra 2');
+  await p.waitForTimeout(700);
+  const depoisDeEditar = (await guardados(p))
+    .find(e => e.orcNumero === numAprovado.orcNumero);
+  checar(depoisDeEditar && depoisDeEditar.situacao === 'aprovado',
+    `editar mantém a situação (${depoisDeEditar ? depoisDeEditar.situacao : '—'})`);
+
+  // ---------- 9. cliente sugerido ----------
+  console.log('\n[9] Cliente já atendido');
+  /* abrir um orçamento já fecha o painel; garante que está fechado */
+  if(await p.locator('#painelHist').isVisible()){
+    await p.click('#histFechar');
+    await p.waitForTimeout(200);
+  }
+
+  /* cria um cliente conhecido só para esta seção, para não depender do
+     que as seções anteriores deixaram no histórico */
+  await p.click('#resetBtn');
+  await p.waitForTimeout(400);
+  await preencher(p, {
+    cliente: 'Edificadora Santa Rita', obra: 'Rua Rio Branco, 77 — Jaú/SP',
+    desc: 'Forro de gesso', qtd: '20', unidade: 'm²', valor: '95,00',
+  });
+
+  await p.click('#resetBtn');
+  await p.waitForTimeout(400);
+  await p.locator('#cliNome').focus();
+  await p.waitForTimeout(150);
+  const sugestoes = await p.evaluate(() =>
+    [...document.querySelectorAll('#clientesConhecidos option')].map(o => o.value));
+  checar(sugestoes.length > 0, `clientes sugeridos: ${sugestoes.length}`);
+  checar(sugestoes.includes('Edificadora Santa Rita'),
+    `o cliente já atendido está entre as sugestões (${sugestoes.join(' | ')})`);
+  checar(new Set(sugestoes).size === sugestoes.length,
+    'nenhum cliente repetido na lista');
+
+  await p.fill('#cliNome', 'Edificadora Santa Rita');
+  await p.waitForTimeout(300);
+  checar((await p.inputValue('#cliEndereco')).includes('Rio Branco'),
+    `endereço da obra veio junto: "${await p.inputValue('#cliEndereco')}"`);
+
+  /* endereço já digitado não pode ser sobrescrito */
+  await p.click('#resetBtn');
+  await p.waitForTimeout(400);
+  await p.fill('#cliEndereco', 'Endereço novo, 500');
+  await p.fill('#cliNome', 'Edificadora Santa Rita');
+  await p.waitForTimeout(300);
+  checar((await p.inputValue('#cliEndereco')) === 'Endereço novo, 500',
+    'endereço já preenchido não é substituído');
+
   checar(erros.length === 0,
     `sem erros de JavaScript ${erros.length ? '-> ' + erros.join(' | ') : ''}`);
 
