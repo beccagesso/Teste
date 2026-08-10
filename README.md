@@ -82,6 +82,28 @@ situação, e servem de filtro: toque em **Aprovado** para ver só os aprovados,
 toque de novo para ver todos. É por ali que você acompanha quanto mandou no
 mês e quanto fechou.
 
+### Dar retorno ao cliente
+
+Se você preencher o **WhatsApp do cliente** no orçamento, o histórico passa a
+mostrar um bloco **Para dar retorno** no topo, com os orçamentos enviados que
+já pedem uma cobrança: **1 dia**, **5 dias** e **10 dias** depois do envio.
+
+O botão **Mandar mensagem** abre direto a conversa daquele cliente no WhatsApp,
+com um texto já escrito — diferente em cada etapa: no primeiro dia pergunta se
+ele conseguiu ver, no quinto se ficou dúvida, no décimo lembra da validade (ou
+oferece atualizar os valores, se já venceu).
+
+Depois de mandar, o orçamento sai da lista até a próxima etapa. Aprovado ou
+recusado sai de vez — só o que está **enviado** é cobrado.
+
+> **O app não avisa sozinho.** Um app web no iPhone precisaria de um servidor
+> para disparar aviso no dia certo, e este não tem nenhum — é o que o mantém
+> gratuito e funcionando sem internet. A lista aparece quando você abre o
+> histórico, funcionando como uma lista de cobrança, não como um despertador.
+
+O telefone também é sugerido junto com o nome e o endereço quando o cliente já
+está no histórico.
+
 ### Backup
 
 No pé do histórico, **Fazer backup** gera um arquivo com todos os orçamentos e

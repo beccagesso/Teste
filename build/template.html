@@ -342,12 +342,12 @@
     overflow-wrap:anywhere;
   }
   .hist-acoes{
-    display:flex;
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(74px, 1fr));
     gap:8px;
     margin-top:11px;
   }
   .hist-acoes button{
-    flex:1;
     padding:9px 6px;
     border:1px solid var(--rule);
     border-radius:var(--radius);
@@ -369,6 +369,72 @@
     margin-top:14px;
   }
   .painel-rodape .btn-secondary{padding:12px 8px;text-align:center;}
+  /* ---------- retornos pendentes ---------- */
+  .hist-retornos{
+    border:1px solid var(--accent);
+    border-radius:var(--radius);
+    background:#f2f9ff;
+    padding:12px 14px;
+    margin-bottom:14px;
+  }
+  .hist-retornos[hidden]{display:none;}
+  .retorno-titulo{
+    font-size:10.5px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    font-weight:700;
+    color:var(--ink);
+    margin-bottom:10px;
+    display:flex;
+    align-items:center;
+    gap:7px;
+  }
+  .retorno-qtd{
+    background:var(--accent);
+    color:#fff;
+    border-radius:10px;
+    padding:1px 7px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    letter-spacing:0;
+  }
+  .retorno-item{
+    display:grid;
+    grid-template-columns:1fr auto;
+    grid-template-areas:'quem botao' 'quando botao';
+    align-items:center;
+    gap:1px 12px;
+    padding:8px 0;
+    border-top:1px solid #d5e8f7;
+  }
+  .retorno-item:first-of-type{border-top:none;padding-top:0;}
+  .retorno-quem{
+    grid-area:quem;
+    font-size:13px;
+    font-weight:600;
+    overflow-wrap:anywhere;
+  }
+  .retorno-quando{
+    grid-area:quando;
+    font-size:10.5px;
+    color:var(--ink-soft);
+    line-height:1.5;
+  }
+  .retorno-btn{
+    grid-area:botao;
+    border:none;
+    border-radius:var(--radius);
+    background:var(--ink);
+    color:#fff;
+    font-size:11px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    padding:11px 12px;
+    white-space:nowrap;
+  }
+  .retorno-btn:hover{background:var(--ink-soft);}
+
   .hist-resumo{
     display:grid;
     grid-template-columns:repeat(4, 1fr);
@@ -806,6 +872,10 @@
       <label for="cliEndereco">Endereço da obra</label>
       <input type="text" id="cliEndereco" placeholder="Rua, número, bairro e cidade"
              autocomplete="street-address">
+      <label for="cliTelefone">WhatsApp do cliente
+        <span style="text-transform:none;font-weight:400;">— para dar retorno</span></label>
+      <input type="text" id="cliTelefone" placeholder="(14) 99999-9999"
+             inputmode="tel" autocomplete="tel">
     </div>
 
     <h2>Dados do orçamento</h2>
@@ -968,6 +1038,7 @@
       <button type="button" class="painel-fechar" id="histFechar"
               aria-label="Fechar o histórico">&times;</button>
     </div>
+    <div class="hist-retornos" id="histRetornos" hidden></div>
     <div class="hist-resumo" id="histResumo"></div>
     <input type="search" id="histBusca" autocomplete="off"
            placeholder="Buscar por cliente ou número">
@@ -1132,6 +1203,7 @@ function estadoAtual(){
   return {
     cliNome: el('cliNome').value,
     cliEndereco: el('cliEndereco').value,
+    cliTelefone: el('cliTelefone').value,
     orcNumero: el('orcNumero').value,
     orcData: el('orcData').value,
     obs: el('obs').value,
@@ -1172,6 +1244,7 @@ function restaurar(){
 
   el('cliNome').value = d.cliNome || '';
   el('cliEndereco').value = d.cliEndereco || '';
+  el('cliTelefone').value = d.cliTelefone || '';
   el('orcNumero').value = d.orcNumero || proximoNumero();
   el('orcData').value = d.orcData || hojeISO();
   el('obs').value = d.obs || '';
@@ -1244,9 +1317,13 @@ function arquivar(estado){
   const anterior = lista.find(x => x.orcNumero === estado.orcNumero);
   const entrada = Object.assign({}, estado, {
     total: totalComDesconto(estado),
-    /* a situação é do orçamento, não do que está sendo digitado agora:
-       reescrever a entrada não pode rebaixar um aprovado para rascunho */
+    /* Estes três são do orçamento, não do que está sendo digitado agora.
+       Reescrever a entrada a cada tecla não pode rebaixar um aprovado
+       para rascunho, nem apagar a data de envio e os retornos já dados —
+       senão editar um orçamento enviado faria a cobrança recomeçar. */
     situacao: situacaoValida(anterior && anterior.situacao),
+    enviadoEm: (anterior && anterior.enviadoEm) || undefined,
+    retornos: (anterior && anterior.retornos) || undefined,
     atualizadoEm: Date.now(),
   });
   const semEla = lista.filter(x => x.orcNumero !== entrada.orcNumero);
@@ -1259,14 +1336,117 @@ function marcarSituacao(numero, situacao){
   const e = lista.find(x => x.orcNumero === numero);
   if(!e) return false;
   e.situacao = situacaoValida(situacao);
+  /* guarda quando foi enviado: é dessa data que saem os retornos */
+  if(e.situacao === 'enviado' && !e.enviadoEm) e.enviadoEm = Date.now();
   e.atualizadoEm = Date.now();
   gravarHistorico(lista);
   return true;
 }
 
+/* ---------- retorno ao cliente ----------
+   O app não consegue avisar sozinho no dia certo: um app web no iPhone
+   precisaria de um servidor para disparar aviso, e este não tem nenhum.
+   O que ele faz é mostrar os retornos pendentes quando você abre. */
+
+const ETAPAS_RETORNO = [1, 5, 10];       /* dias depois do envio */
+const DIA_EM_MS = 24 * 60 * 60 * 1000;
+
+function soDigitos(tel){
+  return String(tel || '').replace(/\D/g, '');
+}
+
+/* Monta o número no formato que o WhatsApp abre: código do país junto. */
+function telefoneParaWhats(tel){
+  let d = soDigitos(tel);
+  if(d.length < 10) return '';           /* falta o DDD */
+  if(d.length <= 11) d = '55' + d;       /* número brasileiro sem o 55 */
+  if(d.length > 13) return '';
+  return d;
+}
+
+function diasDesde(quando){
+  if(!quando) return null;
+  return Math.floor((Date.now() - quando) / DIA_EM_MS);
+}
+
+/* Qual retorno este orçamento está pedindo agora, se algum. */
+function retornoPendente(e){
+  if(situacaoValida(e.situacao) !== 'enviado') return null;
+  if(!telefoneParaWhats(e.cliTelefone)) return null;
+  const dias = diasDesde(e.enviadoEm);
+  if(dias === null) return null;
+  const feitos = Array.isArray(e.retornos) ? e.retornos : [];
+  /* a etapa mais avançada que já venceu e ainda não foi feita */
+  const devidas = ETAPAS_RETORNO.filter(x => dias >= x && !feitos.includes(x));
+  if(!devidas.length) return null;
+  return {etapa: Math.max(...devidas), dias: dias};
+}
+
+function orcamentosParaRetorno(){
+  return lerHistorico()
+    .map(e => ({entrada: e, pendente: retornoPendente(e)}))
+    .filter(x => x.pendente)
+    .sort((a, b) => b.pendente.dias - a.pendente.dias);
+}
+
+/* Texto sugerido, diferente conforme há quanto tempo o orçamento foi. */
+function mensagemDeRetorno(e, etapa){
+  const nome = (e.cliNome || '').trim().split(/\s+/)[0] || '';
+  const ola = nome ? `Oi ${nome}, tudo bem?` : 'Oi, tudo bem?';
+  const num = e.orcNumero || '';
+  const valor = fmtMoeda(e.total || 0);
+  const validade = fmtDate(addDias(e.orcData,
+    (e.condicoes && e.condicoes.validadeDias) || PADRAO.validadeDias));
+  const venceu = addDias(e.orcData,
+    (e.condicoes && e.condicoes.validadeDias) || PADRAO.validadeDias) < new Date();
+
+  if(etapa === 1){
+    return `${ola} Aqui é a Becca, do Becca Gesso. ` +
+      `Passei o orçamento nº ${num} (${valor}) para você. ` +
+      `Conseguiu dar uma olhada?`;
+  }
+  if(etapa === 5){
+    return `${ola} Passando para saber se ficou alguma dúvida sobre o ` +
+      `orçamento nº ${num} (${valor}). Qualquer ajuste, é só falar.`;
+  }
+  return venceu
+    ? `${ola} O orçamento nº ${num} venceu em ${validade}. ` +
+      `Se ainda tiver interesse, atualizo os valores para você.`
+    : `${ola} Passando para lembrar que o orçamento nº ${num} (${valor}) ` +
+      `vale até ${validade}. Quer seguir com o serviço?`;
+}
+
+function marcarRetornoFeito(numero, etapa){
+  const lista = lerHistorico();
+  const e = lista.find(x => x.orcNumero === numero);
+  if(!e) return;
+  const feitos = Array.isArray(e.retornos) ? e.retornos : [];
+  /* dá por feitas todas as etapas até esta, para não voltar a cobrar
+     a de 1 dia depois de já ter cobrado a de 10 */
+  e.retornos = [...new Set([...feitos, ...ETAPAS_RETORNO.filter(x => x <= etapa)])];
+  e.atualizadoEm = Date.now();
+  gravarHistorico(lista);
+}
+
+function abrirConversa(numero, etapa){
+  const e = lerHistorico().find(x => x.orcNumero === numero);
+  if(!e) return;
+  const fone = telefoneParaWhats(e.cliTelefone);
+  if(!fone){
+    alert('Esse orçamento não tem um WhatsApp válido guardado.\n\n' +
+          'Abra o orçamento e preencha o campo "WhatsApp do cliente".');
+    return;
+  }
+  const texto = mensagemDeRetorno(e, etapa || 1);
+  marcarRetornoFeito(numero, etapa || 1);
+  window.open(`https://wa.me/${fone}?text=${encodeURIComponent(texto)}`, '_blank');
+  renderHistorico();
+}
+
 function carregarOrcamento(e){
   el('cliNome').value = e.cliNome || '';
   el('cliEndereco').value = e.cliEndereco || '';
+  el('cliTelefone').value = e.cliTelefone || '';
   el('orcNumero').value = e.orcNumero || proximoNumero();
   el('orcData').value = e.orcData || hojeISO();
   el('obs').value = e.obs || '';
@@ -1282,6 +1462,7 @@ function carregarOrcamento(e){
 function novoOrcamento(){
   el('cliNome').value = '';
   el('cliEndereco').value = '';
+  el('cliTelefone').value = '';
   el('orcNumero').value = proximoNumero();
   el('orcData').value = hojeISO();
   el('obs').value = '';
@@ -1313,15 +1494,20 @@ function atualizarSugestoesCliente(){
 /* Preenche o endereço da obra ao reconhecer o cliente — mas só quando o
    campo está vazio, para nunca apagar o que já foi digitado. */
 function preencherObraDoCliente(){
-  if(el('cliEndereco').value.trim()) return;
   const nome = el('cliNome').value.trim().toLowerCase();
   if(!nome) return;
   const e = clientesDoHistorico().get(nome);
-  if(e && (e.cliEndereco || '').trim()){
+  if(!e) return;
+  let mudou = false;
+  if(!el('cliEndereco').value.trim() && (e.cliEndereco || '').trim()){
     el('cliEndereco').value = e.cliEndereco;
-    renderDoc();
-    agendarSalvar();
+    mudou = true;
   }
+  if(!el('cliTelefone').value.trim() && (e.cliTelefone || '').trim()){
+    el('cliTelefone').value = e.cliTelefone;
+    mudou = true;
+  }
+  if(mudou){ renderDoc(); agendarSalvar(); }
 }
 
 /* ---------- backup ----------
@@ -1497,10 +1683,42 @@ function renderResumo(todos){
     }));
 }
 
+/* Lista de cobrança: quem já pede um retorno e ainda não teve. */
+function renderRetornos(){
+  const pendentes = orcamentosParaRetorno();
+  const caixa = el('histRetornos');
+  if(!pendentes.length){
+    caixa.hidden = true;
+    caixa.innerHTML = '';
+    return;
+  }
+  caixa.hidden = false;
+  caixa.innerHTML = `
+    <div class="retorno-titulo">Para dar retorno
+      <span class="retorno-qtd">${pendentes.length}</span></div>
+    ${pendentes.map(({entrada: e, pendente: p}) => `
+      <div class="retorno-item">
+        <div class="retorno-quem">${escapeHtml(e.cliNome || 'Sem nome')}</div>
+        <div class="retorno-quando">Nº ${escapeHtml(e.orcNumero)} ·
+          enviado há ${p.dias} ${p.dias === 1 ? 'dia' : 'dias'} ·
+          ${fmtMoeda(e.total || 0)}</div>
+        <button type="button" class="retorno-btn"
+                data-num="${escapeAttr(e.orcNumero)}"
+                data-etapa="${p.etapa}">Mandar mensagem</button>
+      </div>`).join('')}`;
+
+  caixa.querySelectorAll('.retorno-btn').forEach(b =>
+    b.addEventListener('click', ev => {
+      abrirConversa(ev.currentTarget.dataset.num,
+        Number(ev.currentTarget.dataset.etapa));
+    }));
+}
+
 function renderHistorico(){
   const busca = el('histBusca').value.trim().toLowerCase();
   const atual = el('orcNumero').value;
   const todos = lerHistorico();
+  renderRetornos();
   renderResumo(todos);
 
   const lista = todos.filter(e => {
@@ -1523,6 +1741,7 @@ function renderHistorico(){
   alvo.innerHTML = lista.map(e => {
     const ehAtual = e.orcNumero === atual;
     const sit = situacaoValida(e.situacao);
+    const pend = retornoPendente(e);
     const qtdServicos = (e.servicos || []).filter(
       s => (s.desc || '').trim() || parseNum(s.valor) > 0).length;
     return `
@@ -1549,11 +1768,20 @@ function renderHistorico(){
                   data-num="${escapeAttr(e.orcNumero)}">Abrir</button>
           <button type="button" class="hist-duplicar"
                   data-num="${escapeAttr(e.orcNumero)}">Duplicar</button>
+          ${telefoneParaWhats(e.cliTelefone) ? `
+          <button type="button" class="hist-msg"
+                  data-num="${escapeAttr(e.orcNumero)}"
+                  data-etapa="${pend ? pend.etapa : 1}">Mensagem</button>` : ''}
           <button type="button" class="hist-excluir"
                   data-num="${escapeAttr(e.orcNumero)}">Excluir</button>
         </div>
       </div>`;
   }).join('');
+
+  alvo.querySelectorAll('.hist-msg').forEach(b => b.addEventListener('click', ev => {
+    abrirConversa(ev.currentTarget.dataset.num,
+      Number(ev.currentTarget.dataset.etapa) || 1);
+  }));
 
   alvo.querySelectorAll('.hist-sit').forEach(s => s.addEventListener('change', ev => {
     marcarSituacao(ev.currentTarget.dataset.num, ev.currentTarget.value);
@@ -1873,7 +2101,7 @@ el('addServico').addEventListener('click', () => {
   agendarSalvar();
 });
 
-['cliNome','cliEndereco','orcData','obs',
+['cliNome','cliEndereco','cliTelefone','orcData','obs',
  'condParcelas','condDesconto','condValidade','condAbatimento'].forEach(id =>
   el(id).addEventListener('input', () => { renderDoc(); agendarSalvar(); })
 );
