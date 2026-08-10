@@ -81,7 +81,7 @@ async function gerar(p, qtdServicos) {
   const semGlifo = await p.evaluate(() => {
     /* tudo que um orçamento pode imprimir, incluindo o ² de m² */
     const amostra = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz' +
-      '0123456789 .,;:!?()/-–—·×%$ºª²³ÁÂÃÉÊÍÓÔÕÚÇáâãéêíóôõúç' +
+      '0123456789 .,;:!?()/-–—−·×%$ºª²³ÁÂÃÉÊÍÓÔÕÚÇáâãéêíóôõúç' +
       'R$ m² m.l. un. Nº ORÇAMENTO';
     const faltando = {};
     for (const [apelido, dados] of Object.entries(PDF_ATIVOS.fontes)) {

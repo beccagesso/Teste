@@ -41,6 +41,7 @@ CARACTERES = (
     "ÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇÑáàâãäéèêëíìîïóòôõöúùûüçñ"
     " .,;:!?'\"()[]{}/\\|-_+=*&%#@$^~`<>ºª°·×–—‘’“”…€"
     "²³"                       # m² e m³: sem isto a unidade some no PDF
+    "−"                        # sinal de menos da linha de desconto
 )
 UNICODES = ",".join(f"U+{ord(c):04X}" for c in sorted(set(CARACTERES)))
 FEATURES = "kern,liga,tnum,ccmp,locl,mark,mkmk"

@@ -134,7 +134,7 @@ def dados_do_logo():
 
 # Caracteres que o documento usa sempre. Se algum faltar na fonte, ele
 # some do PDF sem avisar — foi o que aconteceu com o "²" de m².
-OBRIGATORIOS = "²ºª·×–—$%()/.,:0123456789ÁÂÃÉÊÍÓÔÕÚÇáâãéêíóôõúç"
+OBRIGATORIOS = "²−ºª·×–—$%()/.,:0123456789ÁÂÃÉÊÍÓÔÕÚÇáâãéêíóôõúç"
 
 
 def conferir_cobertura(fontes):
