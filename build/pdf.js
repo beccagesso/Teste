@@ -549,6 +549,15 @@ function gerarPdfDoOrcamento(d){
   p.texto('Subtotal', xRotulo, y, {fonte: F.mono, tamanho: 13 * PT, cor: COR.inkSoft});
   p.texto(d.fmtMoeda(d.subtotal), X1, y,
     {fonte: F.monoBold, tamanho: 13 * PT, cor: COR.ink, alinhamento: 'direita'});
+
+  /* a linha de desconto só existe quando há desconto */
+  if(d.abatimento > 0){
+    y += 19 * PT;
+    p.texto('Desconto', xRotulo, y, {fonte: F.mono, tamanho: 13 * PT, cor: COR.inkSoft});
+    p.texto('− ' + d.fmtMoeda(d.abatimento), X1, y,
+      {fonte: F.monoBold, tamanho: 13 * PT, cor: COR.ink, alinhamento: 'direita'});
+  }
+
   y += 12 * PT;
   p.linha(xRotulo - 6 * PT, y, X1, y, COR.ink, 2 * PT);
   y += 20 * PT;
@@ -580,7 +589,7 @@ function gerarPdfDoOrcamento(d){
   cartao(X0, 'CARTÃO DE CRÉDITO', d.fmtMoeda(d.total),
     `em até ${d.parcelas}x sem juros de ${d.fmtMoeda(d.parcela)}`, false);
   cartao(X0 + larguraCartao + 16 * PT,
-    `À VISTA (${d.descontoPct}% DE DESCONTO)`, d.fmtMoeda(d.avista),
+    `À VISTA (${d.fmtNumero(d.descontoPct)}% DE DESCONTO)`, d.fmtMoeda(d.avista),
     'Pix, dinheiro ou transferência', true);
   y += alturaCartao;
 

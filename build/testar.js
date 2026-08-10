@@ -146,6 +146,66 @@ function checar(cond, msg) {
   checar((await page.locator('#cliDoc').count()) === 0,
     'campo de CPF/CNPJ do cliente foi removido');
 
+  // ---------- 2b. condições editáveis ----------
+  console.log('\n[2b] Condições de pagamento');
+  checar((await page.inputValue('#condParcelas')) === '5', 'parcelas vêm com 5');
+  checar((await page.inputValue('#condDesconto')) === '6', 'desconto à vista vem com 6%');
+  checar((await page.inputValue('#condValidade')) === '15', 'validade vem com 15 dias');
+  checar((await page.locator('#linhaDesconto').isHidden()),
+    'sem desconto, a linha não aparece no documento');
+
+  await page.fill('#condParcelas', '10');
+  await page.fill('#condDesconto', '8');
+  await page.fill('#condValidade', '30');
+  await page.waitForTimeout(200);
+  checar((await page.textContent('#payParcelaQtd')) === '10', 'cartão passa a 10x');
+  checar((await page.textContent('#payParcela')).replace(/\s/g, ' ') ===
+    moeda(total / 10).replace(/\s/g, ' '), `parcela recalculada: ${await page.textContent('#payParcela')}`);
+  checar((await page.textContent('#payAvista')).replace(/\s/g, ' ') ===
+    moeda(total * 0.92).replace(/\s/g, ' '), `à vista com 8%: ${await page.textContent('#payAvista')}`);
+  checar((await page.textContent('#payTituloAvista')).includes('8%'),
+    'o cartão à vista mostra o novo percentual');
+  checar((await page.textContent('#docValidade')) === '07/09/2026',
+    `validade de 30 dias: ${await page.textContent('#docValidade')}`);
+  checar((await page.textContent('#docFoot')).includes('30 dias'),
+    'o rodapé acompanha a validade');
+  checar((await page.textContent('#carimboVal')).includes('30 dias'),
+    'o carimbo acompanha a validade');
+
+  // desconto no orçamento
+  await page.fill('#condAbatimento', '1.321,25');
+  await page.waitForTimeout(200);
+  checar(await page.locator('#linhaDesconto').isVisible(),
+    'a linha de desconto aparece quando há desconto');
+  checar((await page.textContent('#totTotal')).replace(/\s/g, ' ') ===
+    moeda(total - 1321.25).replace(/\s/g, ' '),
+    `total com desconto: ${await page.textContent('#totTotal')}`);
+  checar((await page.textContent('#totSubtotal')).replace(/\s/g, ' ') ===
+    moeda(total).replace(/\s/g, ' '), 'o subtotal continua o valor cheio');
+
+  // desconto maior que o orçamento não pode gerar total negativo
+  await page.fill('#condAbatimento', '999.999,00');
+  await page.waitForTimeout(200);
+  checar((await page.textContent('#totTotal')).replace(/\s/g, ' ') ===
+    moeda(0).replace(/\s/g, ' '),
+    `desconto maior que o total para em zero: ${await page.textContent('#totTotal')}`);
+
+  // valores absurdos voltam para um limite razoável
+  await page.fill('#condParcelas', '999');
+  await page.waitForTimeout(200);
+  const parcelasLimitadas = await page.textContent('#payParcelaQtd');
+  checar(Number(parcelasLimitadas) <= 24,
+    `parcelas ficam num limite razoável (${parcelasLimitadas})`);
+
+  // volta ao normal para o resto da bateria
+  await page.fill('#condParcelas', '5');
+  await page.fill('#condDesconto', '6');
+  await page.fill('#condValidade', '15');
+  await page.fill('#condAbatimento', '');
+  await page.waitForTimeout(300);
+  checar((await page.textContent('#totTotal')).replace(/\s/g, ' ') ===
+    moeda(total).replace(/\s/g, ' '), 'limpar o desconto devolve o total cheio');
+
   await page.screenshot({ path: `${SAIDA}/01-desktop.png`, fullPage: true });
 
   // ---------- 3. salvamento automático ----------

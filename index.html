@@ -769,6 +769,27 @@
     <div class="field-group" id="servicosList"></div>
     <button type="button" class="btn-add" id="addServico">+ adicionar serviço</button>
 
+    <h2 style="margin-top:20px;">Condições</h2>
+    <div class="field-group">
+      <div class="row3">
+        <div>
+          <label for="condParcelas">Parcelas</label>
+          <input type="text" inputmode="numeric" id="condParcelas">
+        </div>
+        <div>
+          <label for="condDesconto">À vista (%)</label>
+          <input type="text" inputmode="decimal" id="condDesconto">
+        </div>
+        <div>
+          <label for="condValidade">Validade (dias)</label>
+          <input type="text" inputmode="numeric" id="condValidade">
+        </div>
+      </div>
+      <label for="condAbatimento">Desconto no orçamento (R$)
+        <span style="text-transform:none;font-weight:400;">— opcional</span></label>
+      <input type="text" inputmode="decimal" id="condAbatimento" placeholder="0,00">
+    </div>
+
     <h2 style="margin-top:20px;">Observações (opcional)</h2>
     <div class="field-group">
       <textarea id="obs" placeholder="Ex: valores não incluem materiais de terceiros, prazo de execução estimado etc."></textarea>
@@ -836,6 +857,10 @@
             <td class="label">Subtotal</td>
             <td class="val" id="totSubtotal">R$ 0,00</td>
           </tr>
+          <tr id="linhaDesconto" hidden>
+            <td class="label">Desconto</td>
+            <td class="val" id="totDesconto">R$ 0,00</td>
+          </tr>
           <tr class="grand">
             <td class="label">Total</td>
             <td class="val" id="totTotal">R$ 0,00</td>
@@ -845,12 +870,13 @@
 
       <div class="payment-box">
         <div class="pay-card">
-          <div class="pay-title">Cartão de crédito</div>
+          <div class="pay-title" id="payTituloCartao">Cartão de crédito</div>
           <div class="pay-value" id="payCartao">R$ 0,00</div>
-          <div class="pay-sub">em até 5x sem juros de <span id="payParcela">R$ 0,00</span></div>
+          <div class="pay-sub">em até <span id="payParcelaQtd">5</span>x sem juros
+            de <span id="payParcela">R$ 0,00</span></div>
         </div>
         <div class="pay-card discount">
-          <div class="pay-title">À vista (6% de desconto)</div>
+          <div class="pay-title" id="payTituloAvista">À vista (6% de desconto)</div>
           <div class="pay-value" id="payAvista">R$ 0,00</div>
           <div class="pay-sub">Pix, dinheiro ou transferência</div>
         </div>
@@ -867,7 +893,7 @@
         </div>
       </div>
 
-      <div class="doc-foot">Este orçamento é válido por 15 dias a partir da data de emissão.</div>
+      <div class="doc-foot" id="docFoot">Este orçamento é válido por 15 dias a partir da data de emissão.</div>
     </div>
   </div>
 
@@ -1454,6 +1480,15 @@ function gerarPdfDoOrcamento(d){
   p.texto('Subtotal', xRotulo, y, {fonte: F.mono, tamanho: 13 * PT, cor: COR.inkSoft});
   p.texto(d.fmtMoeda(d.subtotal), X1, y,
     {fonte: F.monoBold, tamanho: 13 * PT, cor: COR.ink, alinhamento: 'direita'});
+
+  /* a linha de desconto só existe quando há desconto */
+  if(d.abatimento > 0){
+    y += 19 * PT;
+    p.texto('Desconto', xRotulo, y, {fonte: F.mono, tamanho: 13 * PT, cor: COR.inkSoft});
+    p.texto('− ' + d.fmtMoeda(d.abatimento), X1, y,
+      {fonte: F.monoBold, tamanho: 13 * PT, cor: COR.ink, alinhamento: 'direita'});
+  }
+
   y += 12 * PT;
   p.linha(xRotulo - 6 * PT, y, X1, y, COR.ink, 2 * PT);
   y += 20 * PT;
@@ -1485,7 +1520,7 @@ function gerarPdfDoOrcamento(d){
   cartao(X0, 'CARTÃO DE CRÉDITO', d.fmtMoeda(d.total),
     `em até ${d.parcelas}x sem juros de ${d.fmtMoeda(d.parcela)}`, false);
   cartao(X0 + larguraCartao + 16 * PT,
-    `À VISTA (${d.descontoPct}% DE DESCONTO)`, d.fmtMoeda(d.avista),
+    `À VISTA (${d.fmtNumero(d.descontoPct)}% DE DESCONTO)`, d.fmtMoeda(d.avista),
     'Pix, dinheiro ou transferência', true);
   y += alturaCartao;
 
@@ -1540,9 +1575,13 @@ const CHAVE_RASCUNHO = 'beccaGesso.rascunho.v1';
 const CHAVE_HISTORICO = 'beccaGesso.historico.v1';
 const MAX_HISTORICO = 300;
 const CHAVE_CONTADOR = 'beccaGesso.contador.v1';
-const VALIDADE_DIAS = 15;
-const PARCELAS = 5;
-const DESCONTO_AVISTA = 0.06;
+/* Condições predefinidas de cada orçamento novo. Elas podem ser
+   mudadas orçamento a orçamento, sem mexer aqui. */
+const PADRAO = {
+  parcelas: 5,
+  descontoAvista: 6,        /* em % */
+  validadeDias: 15,
+};
 
 let servicos = [];
 let idCounter = 0;
@@ -1619,6 +1658,33 @@ function escapeHtml(str){
 
 function el(id){ return document.getElementById(id); }
 
+/* Mantém o valor dentro de limites que fazem sentido, e volta ao padrão
+   se o campo estiver vazio ou ilegível. */
+function limitar(valor, minimo, maximo, padrao){
+  const n = parseNum(valor);
+  if(!n) return padrao;
+  return Math.min(maximo, Math.max(minimo, n));
+}
+
+/* Preenche os campos de condição. Sem nada guardado, volta ao padrão. */
+function aplicarCondicoes(c){
+  const v = c || {};
+  el('condParcelas').value = v.parcelas || PADRAO.parcelas;
+  el('condDesconto').value = fmtNumeroBR(
+    v.descontoPct === undefined ? PADRAO.descontoAvista : v.descontoPct);
+  el('condValidade').value = v.validadeDias || PADRAO.validadeDias;
+  el('condAbatimento').value = v.abatimento ? fmtNumeroBR(v.abatimento) : '';
+}
+
+function condicoes(){
+  return {
+    parcelas: Math.round(limitar(el('condParcelas').value, 1, 24, PADRAO.parcelas)),
+    descontoPct: limitar(el('condDesconto').value, 0, 90, PADRAO.descontoAvista),
+    validadeDias: Math.round(limitar(el('condValidade').value, 1, 365, PADRAO.validadeDias)),
+    abatimento: Math.max(0, parseNum(el('condAbatimento').value)),
+  };
+}
+
 /* ---------- numeração sequencial ---------- */
 
 function proximoNumero(){
@@ -1647,6 +1713,7 @@ function estadoAtual(){
     orcNumero: el('orcNumero').value,
     orcData: el('orcData').value,
     obs: el('obs').value,
+    condicoes: condicoes(),
     servicos: servicos.map(s => ({desc:s.desc, qtd:s.qtd, valor:s.valor, unidade:s.unidade})),
   };
 }
@@ -1686,6 +1753,7 @@ function restaurar(){
   el('orcNumero').value = d.orcNumero || proximoNumero();
   el('orcData').value = d.orcData || hojeISO();
   el('obs').value = d.obs || '';
+  aplicarCondicoes(d.condicoes);
 
   servicos = Array.isArray(d.servicos) && d.servicos.length
     ? d.servicos.map(s => novoServico(s.desc || '', parseNum(s.qtd), parseNum(s.valor), s.unidade))
@@ -1745,6 +1813,7 @@ function carregarOrcamento(e){
   el('orcNumero').value = e.orcNumero || proximoNumero();
   el('orcData').value = e.orcData || hojeISO();
   el('obs').value = e.obs || '';
+  aplicarCondicoes(e.condicoes);
   servicos = Array.isArray(e.servicos) && e.servicos.length
     ? e.servicos.map(s => novoServico(s.desc || '', parseNum(s.qtd), parseNum(s.valor), s.unidade))
     : [novoServico()];
@@ -1759,6 +1828,7 @@ function novoOrcamento(){
   el('orcNumero').value = proximoNumero();
   el('orcData').value = hojeISO();
   el('obs').value = '';
+  aplicarCondicoes(null);
   servicos = [novoServico()];
   renderServicosEditor();
   renderDoc();
@@ -2060,10 +2130,15 @@ function renderDoc(){
   el('docNumero').textContent = numero;
   el('carimboNum').textContent = 'Nº ' + numero;
 
+  const c = condicoes();
   const dataStr = el('orcData').value;
   el('docData').textContent = fmtDataBR(dataStr);
-  el('docValidade').textContent = fmtDate(addDias(dataStr, VALIDADE_DIAS));
-  el('carimboVal').textContent = `válido ${VALIDADE_DIAS} dias`;
+  el('docValidade').textContent = fmtDate(addDias(dataStr, c.validadeDias));
+  el('carimboVal').textContent = `válido ${c.validadeDias} dias`;
+  el('docFoot').textContent =
+    `Este orçamento é válido por ${c.validadeDias} dias a partir da data de emissão.`;
+  el('payTituloCartao').textContent = 'Cartão de crédito';
+  el('payTituloAvista').textContent = `À vista (${fmtNumeroBR(c.descontoPct)}% de desconto)`;
 
   const tbody = el('docServicos');
   tbody.innerHTML = '';
@@ -2092,11 +2167,18 @@ function renderDoc(){
     });
   }
 
+  /* o desconto nunca pode deixar o total negativo */
+  const abatimento = Math.min(c.abatimento, subtotal);
+  const total = subtotal - abatimento;
+
   el('totSubtotal').textContent = fmtMoeda(subtotal);
-  el('totTotal').textContent = fmtMoeda(subtotal);
-  el('payCartao').textContent = fmtMoeda(subtotal);
-  el('payParcela').textContent = fmtMoeda(subtotal / PARCELAS);
-  el('payAvista').textContent = fmtMoeda(subtotal * (1 - DESCONTO_AVISTA));
+  el('linhaDesconto').hidden = abatimento <= 0;
+  el('totDesconto').textContent = '− ' + fmtMoeda(abatimento);
+  el('totTotal').textContent = fmtMoeda(total);
+  el('payCartao').textContent = fmtMoeda(total);
+  el('payParcela').textContent = fmtMoeda(total / c.parcelas);
+  el('payParcelaQtd').textContent = c.parcelas;
+  el('payAvista').textContent = fmtMoeda(total * (1 - c.descontoPct / 100));
 
   el('docObs').textContent = el('obs').value || '';
 
@@ -2140,21 +2222,25 @@ function dadosParaPdf(){
     unidade: unidadeValida(s.unidade),
   }));
   const subtotal = lista.reduce((soma, s) => soma + s.qtd * s.valor, 0);
+  const c = condicoes();
+  const abatimento = Math.min(c.abatimento, subtotal);
+  const total = subtotal - abatimento;
   const dataStr = el('orcData').value;
   return {
     numero: el('orcNumero').value || '—',
     data: fmtDataBR(dataStr),
-    validade: fmtDate(addDias(dataStr, VALIDADE_DIAS)),
-    validadeDias: VALIDADE_DIAS,
+    validade: fmtDate(addDias(dataStr, c.validadeDias)),
+    validadeDias: c.validadeDias,
     cliNome: el('cliNome').value.trim(),
     cliEndereco: el('cliEndereco').value.trim(),
     servicos: lista,
     subtotal: subtotal,
-    total: subtotal,
-    parcelas: PARCELAS,
-    parcela: subtotal / PARCELAS,
-    descontoPct: Math.round(DESCONTO_AVISTA * 100),
-    avista: subtotal * (1 - DESCONTO_AVISTA),
+    abatimento: abatimento,
+    total: total,
+    parcelas: c.parcelas,
+    parcela: total / c.parcelas,
+    descontoPct: c.descontoPct,
+    avista: total * (1 - c.descontoPct / 100),
     obs: el('obs').value,
     titulo: nomeDoArquivo().replace(/\.pdf$/, ''),
     fmtMoeda: fmtMoeda,
@@ -2239,7 +2325,8 @@ el('addServico').addEventListener('click', () => {
   agendarSalvar();
 });
 
-['cliNome','cliEndereco','orcData','obs'].forEach(id =>
+['cliNome','cliEndereco','orcData','obs',
+ 'condParcelas','condDesconto','condValidade','condAbatimento'].forEach(id =>
   el(id).addEventListener('input', () => { renderDoc(); agendarSalvar(); })
 );
 
@@ -2291,6 +2378,7 @@ document.addEventListener('visibilitychange', () => {
 if(!restaurar()){
   el('orcData').value = hojeISO();
   el('orcNumero').value = proximoNumero();
+  aplicarCondicoes(null);
   servicos = [novoServico()];
 }
 renderServicosEditor();
