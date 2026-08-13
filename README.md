@@ -1,7 +1,14 @@
 # Gerador de Orçamentos — Becca Gesso
 
-Aplicativo de orçamentos da Becca Gesso. Funciona no navegador, instala na tela
-de início do iPhone e continua funcionando sem internet.
+Aplicativo da Becca Gesso. Funciona no navegador, instala na tela de início do
+iPhone e continua funcionando sem internet.
+
+O app tem duas seções, trocadas pelos botões abaixo do cabeçalho:
+
+- **Orçamentos** — montar, imprimir e mandar orçamento pelo WhatsApp.
+- **Contas a pagar** — o que a empresa deve, com vencimento e situação.
+
+Ele abre na última seção que você usou.
 
 ## Colocar o app no ar (uma vez só)
 
@@ -155,9 +162,10 @@ backup.
 
 ### Backup
 
-No pé do histórico, **Fazer backup** gera um arquivo com todos os orçamentos e
-a numeração, e abre a mesma tela de compartilhamento do orçamento — dá para
-mandar para um grupo do WhatsApp e deixar guardado lá.
+No pé do histórico, **Fazer backup** gera um arquivo com todos os orçamentos,
+as contas a pagar, as mensagens e a numeração, e abre a mesma tela de
+compartilhamento do orçamento — dá para mandar para um grupo do WhatsApp e
+deixar guardado lá.
 
 **Restaurar** lê esse arquivo de volta. Ele **junta** com o que já existe em
 vez de trocar tudo: orçamento que só está neste aparelho não se perde, e entre
@@ -192,6 +200,62 @@ linear) ou **un.** (unidade). Ela aparece junto da quantidade no orçamento —
 > Os dados ficam guardados **dentro do aparelho**, não em um servidor. Se você
 > usar o app no iPhone e no computador, cada um terá o seu próprio histórico e
 > a sua própria numeração.
+
+## Contas a pagar
+
+A segunda seção do app é o controle do que a empresa tem a pagar: material,
+aluguel, ajudante, combustível, imposto. Fica no mesmo aparelho e no mesmo
+backup dos orçamentos.
+
+### Lançar uma conta
+
+O formulário da esquerda pede **descrição**, **valor** e **vencimento** — só
+esses três são obrigatórios. **Fornecedor**, **categoria** e **observação**
+são opcionais. O campo de fornecedor sugere os que você já usou antes, então
+não precisa digitar "Gessos Bauru" de novo toda vez.
+
+O valor aceita vírgula do jeito que o teclado do iPhone escreve: `1.480,50`.
+
+### Como o app mostra a situação
+
+Cada conta ganha uma tarja e uma cor conforme o vencimento:
+
+| Situação | Quando | Cor |
+|---|---|---|
+| **Vencida** | o vencimento já passou | vermelho |
+| **Vence hoje** | vence hoje | dourado |
+| **A vencer** | ainda vai vencer | cinza |
+| **Paga** | você marcou como paga | verde |
+
+Uma conta que vence hoje **não** entra como vencida — só no dia seguinte. As
+contas em aberto ficam no topo da lista, da mais próxima de vencer para a mais
+distante, e as pagas descem para o fim.
+
+### Os três totais do topo
+
+- **Vencidas** — quanto está atrasado.
+- **A vencer** — quanto ainda vai vencer.
+- **Pagas no mês** — quanto já saiu neste mês.
+
+Cada um é também um filtro: toque para ver só aquelas contas, toque de novo
+para ver todas. A busca ao lado procura por descrição, fornecedor, categoria
+ou observação.
+
+### Os botões de cada conta
+
+- **Marcar paga** — registra o pagamento com a data de hoje. **Desfazer**
+  volta atrás.
+- **Editar** — abre a conta no formulário. **Cancelar edição** desiste sem
+  mudar nada.
+- **Próximo mês** — cria a mesma conta com vencimento no mês seguinte, para
+  aluguel, internet e contador, que voltam sempre. Uma conta do dia 31 cai no
+  último dia do mês seguinte, nunca no mês errado, e o app avisa em vez de
+  duplicar se a conta do próximo mês já existir.
+- **Excluir** — apaga de vez (pergunta antes).
+
+> As contas entram no backup junto com os orçamentos, com a mesma regra: o
+> arquivo **junta** com o que já existe, e entre duas versões da mesma conta
+> fica a que foi mexida por último.
 
 ## Arquivos do projeto
 
@@ -284,9 +348,12 @@ node build/testar.js
 node build/testar-historico.js
 node build/testar-pdf.js
 node build/testar-backup.js
+node build/testar-retorno.js
+node build/testar-acesso.js
+node build/testar-contas.js
 node build/testar-subcaminho.js
 ```
 
-O segundo confere o que o GitHub Pages faz na prática: servir o app em
+O último confere o que o GitHub Pages faz na prática: servir o app em
 `/Teste/` em vez da raiz do endereço, o que quebraria o ícone e o modo offline
 se algum caminho estivesse escrito de forma absoluta.

@@ -52,13 +52,43 @@
     max-width:1400px;
     margin:0 auto;
     padding:32px 24px 80px;
+  }
+  /* cada seção monta o seu próprio layout */
+  .secao-orcamentos, .secao-contas{
     display:grid;
     grid-template-columns:minmax(320px,420px) 1fr;
     gap:28px;
     align-items:start;
   }
+  .secao[hidden]{display:none;}
+
+  /* ---------- TROCA DE SEÇÃO ---------- */
+  .secoes{
+    display:flex;
+    gap:8px;
+    margin:16px 0 22px;
+  }
+  .secao-btn{
+    flex:1;
+    padding:13px 12px;
+    border:1px solid var(--rule);
+    border-radius:var(--radius);
+    background:#fff;
+    font-family:'Space Grotesk',sans-serif;
+    font-size:12.5px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--ink-soft);
+  }
+  .secao-btn:hover{border-color:var(--ink-soft);color:var(--ink);}
+  .secao-btn.ativo{
+    background:var(--ink);
+    border-color:var(--ink);
+    color:#fff;
+  }
+
   header.top{
-    grid-column:1 / -1;
     display:flex;
     align-items:baseline;
     justify-content:space-between;
@@ -249,6 +279,132 @@
     margin-top:10px;
   }
   .actions-sec .btn-secondary{padding:12px 4px;text-align:center;font-size:11.5px;}
+  /* sem isto o display:grid acima venceria o hidden e o bloco apareceria */
+  .actions-sec[hidden]{display:none;}
+
+  /* ---------- CONTAS A PAGAR ---------- */
+  .contas-painel{
+    background:var(--paper);
+    border:1px solid var(--rule);
+    border-radius:var(--radius);
+    padding:20px 22px;
+    box-shadow:0 8px 24px rgba(20,28,48,0.06);
+  }
+  .contas-resumo{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:8px;
+    margin-bottom:14px;
+  }
+  .conta-chip{
+    border:1px solid var(--rule);
+    border-radius:var(--radius);
+    background:#fff;
+    padding:10px 6px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:2px;
+    line-height:1.2;
+  }
+  .conta-chip .chip-rot{
+    font-size:9px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    font-weight:600;
+    color:var(--ink-soft);
+    text-align:center;
+  }
+  .conta-chip .chip-val{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:14px;
+    font-weight:600;
+    color:var(--ink);
+    white-space:nowrap;
+  }
+  .conta-chip .chip-qtd{font-size:9.5px;color:var(--ink-soft);}
+  .conta-chip.ativo{border-color:var(--ink);background:#f3f6fa;}
+  .conta-chip.vencidas .chip-val{color:#a8324a;}
+  .conta-chip.pagas .chip-val{color:var(--ok);}
+
+  #contasBusca{margin-bottom:12px;}
+
+  .conta-item{
+    border:1px solid var(--rule);
+    border-left:3px solid var(--rule);
+    border-radius:var(--radius);
+    padding:12px 14px;
+    margin-bottom:10px;
+    background:#fbfbfc;
+  }
+  .conta-item.vencida{border-left-color:#a8324a;background:#fdf5f7;}
+  .conta-item.hoje{border-left-color:var(--gold);background:#fdfaf3;}
+  .conta-item.paga{border-left-color:var(--ok);opacity:0.75;}
+  .conta-topo{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .conta-desc{
+    font-size:13.5px;
+    font-weight:600;
+    overflow-wrap:anywhere;
+  }
+  .conta-valor{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:14px;
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .conta-linha2{
+    font-size:11px;
+    color:var(--ink-soft);
+    line-height:1.6;
+    margin-top:3px;
+    overflow-wrap:anywhere;
+  }
+  .conta-marca{
+    display:inline-block;
+    font-size:9.5px;
+    text-transform:uppercase;
+    letter-spacing:0.07em;
+    font-weight:700;
+    padding:2px 7px;
+    border-radius:10px;
+    margin-top:7px;
+  }
+  .conta-marca.vencida{background:#f7dde3;color:#8f2740;}
+  .conta-marca.hoje{background:var(--gold-soft);color:var(--gold);}
+  .conta-marca.avencer{background:#e7eef7;color:var(--ink-soft);}
+  .conta-marca.paga{background:#dceee4;color:var(--ok);}
+  .conta-acoes{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(74px, 1fr));
+    gap:8px;
+    margin-top:11px;
+  }
+  .conta-acoes button{
+    padding:9px 6px;
+    border:1px solid var(--rule);
+    border-radius:var(--radius);
+    background:#fff;
+    font-size:11px;
+    font-weight:600;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+  }
+  .conta-acoes button:hover{border-color:var(--ink);color:var(--ink);}
+  .conta-acoes .ct-pagar{border-color:var(--ok);color:var(--ok);}
+  .conta-acoes .ct-excluir:hover{border-color:#a8324a;color:#a8324a;}
+  .contas-vazio{
+    text-align:center;
+    color:var(--ink-soft);
+    font-size:12.5px;
+    line-height:1.7;
+    padding:34px 10px;
+  }
 
   /* ---------- TELA DE ACESSO ---------- */
   .tranca{
@@ -856,7 +1012,9 @@
   @media print{
     body{background:#fff;background-image:none;}
     .app{display:block;padding:0;max-width:none;}
-    header.top, .editor, .actions, .autosave, .painel{display:none !important;}
+    header.top, .editor, .actions, .autosave, .painel,
+    .secoes, .secao-contas{display:none !important;}
+    .secao-orcamentos{display:block !important;}
     .doc-wrap{box-shadow:none;border:none;}
     .doc{padding:14mm 16mm;min-height:0;}
     @page{margin:0;size:A4;}
@@ -876,7 +1034,13 @@
      Restrito a "screen": uma folha A4 tem ~794px de largura em CSS,
      então sem isso estas regras também valeriam na impressão. */
   @media screen and (max-width:900px){
-    .app{grid-template-columns:1fr;padding:20px 16px 60px;}
+    .app{padding:20px 16px 60px;}
+    .secao-orcamentos, .secao-contas{grid-template-columns:1fr;}
+    .secoes{margin:12px 0 18px;}
+    .secao-btn{font-size:11.5px;padding:14px 8px;letter-spacing:0.05em;}
+    .contas-painel{padding:16px 14px;}
+    .contas-resumo{gap:6px;}
+    .conta-chip .chip-val{font-size:12.5px;}
     .app{
       padding-left:max(16px, env(safe-area-inset-left));
       padding-right:max(16px, env(safe-area-inset-right));
@@ -908,6 +1072,10 @@
        do número ao lado; no celular os dois ficam um sob o outro */
     .linha-orc{grid-template-columns:1fr;gap:0;}
     textarea{min-height:86px;}
+    .contas-painel{padding:16px 14px;}
+    /* em três colunas os rótulos quebram no meio e sobra um botão
+       sozinho na segunda linha; em duas cada um cabe numa linha só */
+    .conta-acoes{grid-template-columns:1fr 1fr;}
     /* alvos de toque confortáveis */
     .numero-row button{width:44px;height:44px;}
     .remove-btn{padding:10px 12px;font-size:18px;}
@@ -956,9 +1124,18 @@
 <div class="app">
 
   <header class="top">
-    <h1>Becca Gesso <em>· Orçamentos</em></h1>
-    <span>documento pronto para impressão / PDF</span>
+    <h1>Becca Gesso</h1>
+    <span id="tituloSecao">documento pronto para impressão / PDF</span>
   </header>
+
+  <nav class="secoes" aria-label="Seções do app">
+    <button type="button" class="secao-btn ativo" data-secao="orcamentos"
+            aria-current="page">Orçamentos</button>
+    <button type="button" class="secao-btn" data-secao="contas">Contas a pagar</button>
+  </nav>
+
+  <!-- ============ SEÇÃO: ORÇAMENTOS ============ -->
+  <section class="secao secao-orcamentos" id="secaoOrcamentos">
 
   <!-- ============ EDITOR ============ -->
   <div class="editor">
@@ -1136,6 +1313,58 @@
       <div class="doc-foot" id="docFoot">Este orçamento é válido por 15 dias a partir da data de emissão.</div>
     </div>
   </div>
+
+  </section>
+
+  <!-- ============ SEÇÃO: CONTAS A PAGAR ============ -->
+  <section class="secao secao-contas" id="secaoContas" hidden>
+
+    <div class="editor">
+      <h2 id="contaFormTitulo">Nova conta</h2>
+      <div class="field-group">
+        <label for="ctDescricao">Descrição</label>
+        <input type="text" id="ctDescricao" placeholder="Ex: Placas de gesso — NF 1234">
+
+        <label for="ctFornecedor">Fornecedor <span style="text-transform:none;font-weight:400;">— opcional</span></label>
+        <input type="text" id="ctFornecedor" placeholder="A quem você paga"
+               autocomplete="off" list="fornecedoresConhecidos">
+        <datalist id="fornecedoresConhecidos"></datalist>
+
+        <div class="row2">
+          <div>
+            <label for="ctValor">Valor (R$)</label>
+            <input type="text" inputmode="decimal" id="ctValor" placeholder="0,00">
+          </div>
+          <div>
+            <label for="ctVencimento">Vencimento</label>
+            <input type="date" id="ctVencimento">
+          </div>
+        </div>
+
+        <label for="ctCategoria">Categoria</label>
+        <select id="ctCategoria"></select>
+
+        <label for="ctObs">Observação <span style="text-transform:none;font-weight:400;">— opcional</span></label>
+        <textarea id="ctObs" rows="2" placeholder="Ex: parcela 2 de 3"></textarea>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn-primary" id="ctSalvar">Adicionar conta</button>
+        <div class="actions-sec" id="ctSecundarios" hidden>
+          <button type="button" class="btn-secondary" id="ctCancelar">Cancelar edição</button>
+        </div>
+      </div>
+      <div class="autosave" id="ctAviso">conta salva</div>
+    </div>
+
+    <div class="contas-painel">
+      <div class="contas-resumo" id="contasResumo"></div>
+      <input type="search" id="contasBusca" autocomplete="off"
+             placeholder="Buscar por descrição, fornecedor ou categoria">
+      <div class="contas-lista" id="contasLista"></div>
+    </div>
+
+  </section>
 
 </div>
 
@@ -1935,6 +2164,13 @@ function fmtMoeda(v){
     .toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
 }
 
+/* Dinheiro de volta num campo de digitação: sempre com os centavos, para
+   2200 voltar como "2.200,00" e não como "2.200". */
+function fmtValorEditavel(v){
+  return (isFinite(v) ? v : 0).toLocaleString('pt-BR',
+    {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
 function fmtDataBR(dateStr){
   if(!dateStr) return '—';
   const [y,m,d] = dateStr.split('-');
@@ -2385,6 +2621,7 @@ function conteudoDoBackup(){
     contador: JSON.parse(localStorage.getItem(CHAVE_CONTADOR) || 'null'),
     mensagens: lerMensagens(),
     historico: lerHistorico(),
+    contas: lerContas(),
   }, null, 2);
 }
 
@@ -2399,8 +2636,9 @@ async function fazerBackup(){
   try{
     salvar();
     const quantos = lerHistorico().length;
-    if(!quantos){
-      alert('Ainda não há orçamentos para guardar.');
+    const contas = lerContas().length;
+    if(!quantos && !contas){
+      alert('Ainda não há nada para guardar.');
       return;
     }
     const blob = new Blob([conteudoDoBackup()], {type:'application/json'});
@@ -2411,9 +2649,10 @@ async function fazerBackup(){
       try{
         await navigator.share({
           files:[arquivo],
-          title:'Backup dos orçamentos',
+          title:'Backup da Becca Gesso',
           text:`Backup da Becca Gesso — ${quantos} ` +
-               `${quantos === 1 ? 'orçamento' : 'orçamentos'}, ${fmtDataBR(hojeISO())}`,
+               `${quantos === 1 ? 'orçamento' : 'orçamentos'} e ${contas} ` +
+               `${contas === 1 ? 'conta' : 'contas'}, ${fmtDataBR(hojeISO())}`,
         });
         return;
       }catch(erro){
@@ -2478,7 +2717,25 @@ function restaurarDoTexto(texto){
       JSON.stringify({ano: ano, seq: Math.max(atualSeq, maior)}));
   }catch(e){ /* segue sem ajustar a numeração */ }
 
-  return {novos, atualizados, mantidos};
+  return Object.assign({novos, atualizados, mantidos}, restaurarContas(d.contas));
+}
+
+/* As contas seguem a mesma regra do histórico: junta em vez de trocar, e
+   entre duas versões da mesma conta fica a que foi mexida por último. */
+function restaurarContas(vindas){
+  if(!Array.isArray(vindas)) return {contasNovas: 0, contasAtualizadas: 0};
+  const porId = new Map(lerContas().map(c => [c.id, c]));
+  let contasNovas = 0, contasAtualizadas = 0;
+  for(const c of vindas){
+    if(!c || !c.id) continue;
+    const tinha = porId.get(c.id);
+    if(!tinha){ porId.set(c.id, c); contasNovas++; }
+    else if((c.atualizadoEm || 0) > (tinha.atualizadoEm || 0)){
+      porId.set(c.id, c); contasAtualizadas++;
+    }
+  }
+  gravarContas([...porId.values()]);
+  return {contasNovas, contasAtualizadas};
 }
 
 function escolherBackup(){
@@ -2493,14 +2750,338 @@ async function aoEscolherBackup(evento){
     const texto = await arquivo.text();
     const r = restaurarDoTexto(texto);
     renderHistorico();
+    renderContas();
     alert(`Backup restaurado.\n\n` +
       `${r.novos} ${r.novos === 1 ? 'orçamento novo' : 'orçamentos novos'}\n` +
       `${r.atualizados} ${r.atualizados === 1 ? 'atualizado' : 'atualizados'}\n` +
-      `${r.mantidos} já ${r.mantidos === 1 ? 'estava' : 'estavam'} aqui`);
+      `${r.mantidos} já ${r.mantidos === 1 ? 'estava' : 'estavam'} aqui\n` +
+      `${r.contasNovas} ${r.contasNovas === 1 ? 'conta nova' : 'contas novas'}`);
   }catch(erro){
     alert('Não consegui restaurar: ' +
       (erro && erro.message ? erro.message : erro));
   }
+}
+
+/* ---------- seções do app ---------- */
+
+const CHAVE_SECAO = 'beccaGesso.secao.v1';
+
+const SECOES = {
+  orcamentos: {alvo:'secaoOrcamentos', titulo:'documento pronto para impressão / PDF'},
+  contas:     {alvo:'secaoContas',     titulo:'o que a empresa tem a pagar'},
+};
+
+function abrirSecao(nome){
+  const escolhida = SECOES[nome] ? nome : 'orcamentos';
+  for(const [chave, s] of Object.entries(SECOES)){
+    el(s.alvo).hidden = chave !== escolhida;
+  }
+  document.querySelectorAll('.secao-btn').forEach(b => {
+    const ativo = b.dataset.secao === escolhida;
+    b.classList.toggle('ativo', ativo);
+    if(ativo) b.setAttribute('aria-current', 'page');
+    else b.removeAttribute('aria-current');
+  });
+  el('tituloSecao').textContent = SECOES[escolhida].titulo;
+  try{ localStorage.setItem(CHAVE_SECAO, escolhida); }catch(e){}
+  if(escolhida === 'contas') renderContas();
+  window.scrollTo(0, 0);
+}
+
+function secaoGuardada(){
+  try{ return localStorage.getItem(CHAVE_SECAO) || 'orcamentos'; }
+  catch(e){ return 'orcamentos'; }
+}
+
+/* ---------- contas a pagar ---------- */
+
+const CHAVE_CONTAS = 'beccaGesso.contas.v1';
+
+const CATEGORIAS = ['Material', 'Ferramenta', 'Mão de obra', 'Transporte',
+                    'Imposto', 'Aluguel', 'Serviços', 'Outros'];
+
+let contaEditando = null;      /* id da conta aberta para edição */
+let filtroContas = '';         /* '', 'vencidas', 'avencer' ou 'pagas' */
+
+function lerContas(){
+  try{
+    const lista = JSON.parse(localStorage.getItem(CHAVE_CONTAS) || '[]');
+    return Array.isArray(lista) ? lista : [];
+  }catch(e){ return []; }
+}
+
+function gravarContas(lista){
+  try{ localStorage.setItem(CHAVE_CONTAS, JSON.stringify(lista)); }catch(e){}
+}
+
+/* Compara só a data, ignorando a hora: uma conta que vence hoje não
+   está vencida às 14h. */
+function diasAteVencer(vencimento){
+  if(!vencimento) return null;
+  const alvo = new Date(vencimento + 'T00:00:00');
+  if(isNaN(alvo)) return null;
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  return Math.round((alvo - hoje) / DIA_EM_MS);
+}
+
+function situacaoDaConta(c){
+  if(c.pago) return 'paga';
+  const dias = diasAteVencer(c.vencimento);
+  if(dias === null) return 'avencer';
+  if(dias < 0) return 'vencida';
+  if(dias === 0) return 'hoje';
+  return 'avencer';
+}
+
+const ROTULO_SITUACAO = {
+  vencida: 'Vencida',
+  hoje: 'Vence hoje',
+  avencer: 'A vencer',
+  paga: 'Paga',
+};
+
+function limparFormConta(){
+  contaEditando = null;
+  el('contaFormTitulo').textContent = 'Nova conta';
+  el('ctSalvar').textContent = 'Adicionar conta';
+  el('ctSecundarios').hidden = true;
+  el('ctDescricao').value = '';
+  el('ctFornecedor').value = '';
+  el('ctValor').value = '';
+  el('ctVencimento').value = hojeISO();
+  el('ctCategoria').value = '';
+  el('ctObs').value = '';
+}
+
+function salvarConta(){
+  const descricao = el('ctDescricao').value.trim();
+  const valor = parseNum(el('ctValor').value);
+  const vencimento = el('ctVencimento').value;
+
+  if(!descricao) return alert('Escreva a descrição da conta.');
+  if(valor <= 0) return alert('Informe o valor da conta.');
+  if(!vencimento) return alert('Informe a data de vencimento.');
+
+  const lista = lerContas();
+  const dados = {
+    descricao: descricao,
+    fornecedor: el('ctFornecedor').value.trim(),
+    categoria: el('ctCategoria').value,
+    valor: valor,
+    vencimento: vencimento,
+    obs: el('ctObs').value.trim(),
+    atualizadoEm: Date.now(),
+  };
+
+  if(contaEditando){
+    const c = lista.find(x => x.id === contaEditando);
+    if(c) Object.assign(c, dados);
+  }else{
+    lista.push(Object.assign({
+      id: 'c' + Date.now() + Math.random().toString(36).slice(2, 7),
+      pago: false,
+      pagoEm: null,
+      criadoEm: Date.now(),
+    }, dados));
+  }
+  gravarContas(lista);
+  limparFormConta();
+  renderContas();
+  piscarAvisoConta();
+}
+
+function editarConta(id){
+  const c = lerContas().find(x => x.id === id);
+  if(!c) return;
+  contaEditando = id;
+  el('contaFormTitulo').textContent = 'Editando conta';
+  el('ctSalvar').textContent = 'Salvar alterações';
+  el('ctSecundarios').hidden = false;
+  el('ctDescricao').value = c.descricao || '';
+  el('ctFornecedor').value = c.fornecedor || '';
+  el('ctValor').value = c.valor ? fmtValorEditavel(c.valor) : '';
+  el('ctVencimento').value = c.vencimento || '';
+  el('ctCategoria').value = c.categoria || '';
+  el('ctObs').value = c.obs || '';
+  el('ctDescricao').focus();
+  el('ctDescricao').scrollIntoView({block:'center', behavior:'smooth'});
+}
+
+function alternarPagamento(id){
+  const lista = lerContas();
+  const c = lista.find(x => x.id === id);
+  if(!c) return;
+  c.pago = !c.pago;
+  c.pagoEm = c.pago ? hojeISO() : null;
+  c.atualizadoEm = Date.now();
+  gravarContas(lista);
+  renderContas();
+}
+
+/* Aluguel, internet e contador voltam todo mês. Em vez de um sistema de
+   repetição, um toque cria a conta do mês seguinte já preenchida. */
+function repetirNoProximoMes(id){
+  const lista = lerContas();
+  const c = lista.find(x => x.id === id);
+  if(!c) return;
+  const d = new Date(c.vencimento + 'T00:00:00');
+  const diaOriginal = d.getDate();
+  d.setDate(1);
+  d.setMonth(d.getMonth() + 1);
+  /* 31 de janeiro repetido cai no último dia de fevereiro, não em março */
+  const ultimoDia = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+  d.setDate(Math.min(diaOriginal, ultimoDia));
+  const proximo = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
+  if(lista.some(x => x.descricao === c.descricao && x.vencimento === proximo)){
+    return alert(`Já existe "${c.descricao}" com vencimento em ${fmtDataBR(proximo)}.`);
+  }
+
+  lista.push({
+    id: 'c' + Date.now() + Math.random().toString(36).slice(2, 7),
+    descricao: c.descricao,
+    fornecedor: c.fornecedor,
+    categoria: c.categoria,
+    valor: c.valor,
+    vencimento: proximo,
+    obs: c.obs,
+    pago: false,
+    pagoEm: null,
+    criadoEm: Date.now(),
+    atualizadoEm: Date.now(),
+  });
+  gravarContas(lista);
+  renderContas();
+  alert(`Criada para ${fmtDataBR(proximo)}.`);
+}
+
+function excluirConta(id){
+  const c = lerContas().find(x => x.id === id);
+  if(!c) return;
+  if(!confirm(`Excluir "${c.descricao}"? Isso não pode ser desfeito.`)) return;
+  gravarContas(lerContas().filter(x => x.id !== id));
+  if(contaEditando === id) limparFormConta();
+  renderContas();
+}
+
+let timerAvisoConta = null;
+function piscarAvisoConta(){
+  const a = el('ctAviso');
+  a.classList.add('on');
+  clearTimeout(timerAvisoConta);
+  timerAvisoConta = setTimeout(() => a.classList.remove('on'), 1400);
+}
+
+function atualizarFornecedores(){
+  const nomes = [...new Set(lerContas()
+    .map(c => (c.fornecedor || '').trim()).filter(Boolean))];
+  el('fornecedoresConhecidos').innerHTML =
+    nomes.map(n => `<option value="${escapeAttr(n)}"></option>`).join('');
+}
+
+function renderResumoContas(contas){
+  const hoje = new Date();
+  const mesAtual = hoje.getFullYear() + '-' + String(hoje.getMonth()+1).padStart(2,'0');
+  const grupos = {
+    vencidas: {rot:'Vencidas', qtd:0, valor:0},
+    avencer:  {rot:'A vencer', qtd:0, valor:0},
+    pagas:    {rot:'Pagas no mês', qtd:0, valor:0},
+  };
+  for(const c of contas){
+    const sit = situacaoDaConta(c);
+    if(sit === 'paga'){
+      if((c.pagoEm || '').startsWith(mesAtual)){
+        grupos.pagas.qtd++; grupos.pagas.valor += c.valor || 0;
+      }
+    }else if(sit === 'vencida'){
+      grupos.vencidas.qtd++; grupos.vencidas.valor += c.valor || 0;
+    }else{
+      grupos.avencer.qtd++; grupos.avencer.valor += c.valor || 0;
+    }
+  }
+  el('contasResumo').innerHTML = Object.entries(grupos).map(([chave, g]) => `
+    <button type="button" class="conta-chip ${chave}${
+      filtroContas === chave ? ' ativo' : ''}" data-filtro="${chave}">
+      <span class="chip-rot">${g.rot}</span>
+      <span class="chip-val">${fmtMoeda(g.valor)}</span>
+      <span class="chip-qtd">${g.qtd} ${g.qtd === 1 ? 'conta' : 'contas'}</span>
+    </button>`).join('');
+
+  el('contasResumo').querySelectorAll('.conta-chip').forEach(b =>
+    b.addEventListener('click', ev => {
+      const f = ev.currentTarget.dataset.filtro;
+      filtroContas = (filtroContas === f) ? '' : f;
+      renderContas();
+    }));
+}
+
+function renderContas(){
+  const todas = lerContas();
+  renderResumoContas(todas);
+  atualizarFornecedores();
+
+  const busca = el('contasBusca').value.trim().toLowerCase();
+  const lista = todas.filter(c => {
+    const sit = situacaoDaConta(c);
+    if(filtroContas === 'vencidas' && sit !== 'vencida') return false;
+    if(filtroContas === 'pagas' && sit !== 'paga') return false;
+    if(filtroContas === 'avencer' && (sit === 'paga' || sit === 'vencida')) return false;
+    if(!busca) return true;
+    return [c.descricao, c.fornecedor, c.categoria, c.obs]
+      .some(x => (x || '').toLowerCase().includes(busca));
+  }).sort((a, b) => {
+    /* não pagas primeiro, e dentro de cada grupo o vencimento mais
+       próximo na frente: é a ordem em que as contas precisam de atenção */
+    if(!!a.pago !== !!b.pago) return a.pago ? 1 : -1;
+    return String(a.vencimento).localeCompare(String(b.vencimento));
+  });
+
+  const alvo = el('contasLista');
+  if(!lista.length){
+    alvo.innerHTML = (busca || filtroContas)
+      ? '<div class="contas-vazio">Nenhuma conta nesse filtro.</div>'
+      : '<div class="contas-vazio">Nenhuma conta cadastrada ainda.<br>' +
+        'Use o formulário ao lado para lançar a primeira.</div>';
+    return;
+  }
+
+  alvo.innerHTML = lista.map(c => {
+    const sit = situacaoDaConta(c);
+    const dias = diasAteVencer(c.vencimento);
+    let quando = fmtDataBR(c.vencimento);
+    if(sit === 'vencida') quando += ` · há ${Math.abs(dias)} ${Math.abs(dias) === 1 ? 'dia' : 'dias'}`;
+    else if(sit === 'avencer' && dias !== null) quando += ` · em ${dias} ${dias === 1 ? 'dia' : 'dias'}`;
+    else if(sit === 'paga' && c.pagoEm) quando = `Paga em ${fmtDataBR(c.pagoEm)}`;
+
+    const detalhes = [c.fornecedor, c.categoria].filter(Boolean).join(' · ');
+    return `
+      <div class="conta-item ${sit}">
+        <div class="conta-topo">
+          <span class="conta-desc">${escapeHtml(c.descricao)}</span>
+          <span class="conta-valor">${fmtMoeda(c.valor || 0)}</span>
+        </div>
+        <div class="conta-linha2">${escapeHtml(quando)}${
+          detalhes ? ' · ' + escapeHtml(detalhes) : ''}${
+          c.obs ? '<br>' + escapeHtml(c.obs) : ''}</div>
+        <span class="conta-marca ${sit}">${ROTULO_SITUACAO[sit]}</span>
+        <div class="conta-acoes">
+          <button type="button" class="ct-pagar" data-id="${escapeAttr(c.id)}">${
+            c.pago ? 'Desfazer' : 'Marcar paga'}</button>
+          <button type="button" class="ct-editar" data-id="${escapeAttr(c.id)}">Editar</button>
+          <button type="button" class="ct-repetir" data-id="${escapeAttr(c.id)}">Próximo mês</button>
+          <button type="button" class="ct-excluir" data-id="${escapeAttr(c.id)}">Excluir</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  const ligar = (classe, acao) =>
+    alvo.querySelectorAll('.' + classe).forEach(b =>
+      b.addEventListener('click', ev => acao(ev.currentTarget.dataset.id)));
+  ligar('ct-pagar', alternarPagamento);
+  ligar('ct-editar', editarConta);
+  ligar('ct-repetir', repetirNoProximoMes);
+  ligar('ct-excluir', excluirConta);
 }
 
 /* ---------- senha de acesso ----------
@@ -3263,6 +3844,13 @@ el('backupBtn').addEventListener('click', fazerBackup);
 el('restaurarBtn').addEventListener('click', escolherBackup);
 el('restaurarArquivo').addEventListener('change', aoEscolherBackup);
 
+document.querySelectorAll('.secao-btn').forEach(b =>
+  b.addEventListener('click', () => abrirSecao(b.dataset.secao)));
+
+el('ctSalvar').addEventListener('click', salvarConta);
+el('ctCancelar').addEventListener('click', limparFormConta);
+el('contasBusca').addEventListener('input', renderContas);
+
 /* fecha ao tocar fora da caixa ou com Esc */
 el('painelHist').addEventListener('click', e => {
   if(e.target === el('painelHist')) fecharHistorico();
@@ -3297,6 +3885,11 @@ if(!restaurar()){
 }
 renderServicosEditor();
 renderDoc();
+
+el('ctCategoria').innerHTML = '<option value="">— sem categoria —</option>' +
+  CATEGORIAS.map(c => `<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`).join('');
+limparFormConta();
+abrirSecao(secaoGuardada());
 
 /* ---------- funcionamento offline ---------- */
 if('serviceWorker' in navigator && location.protocol.indexOf('http') === 0){
