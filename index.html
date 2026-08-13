@@ -115,7 +115,8 @@
     color:var(--ink-soft);
     margin-bottom:4px;
   }
-  input[type=text], input[type=date], textarea, select{
+  input[type=text], input[type=date], input[type=password],
+  input[type=search], textarea, select{
     width:100%;
     padding:9px 10px;
     border:1px solid var(--rule);
@@ -249,6 +250,66 @@
   }
   .actions-sec .btn-secondary{padding:12px 4px;text-align:center;font-size:11.5px;}
 
+  /* ---------- TELA DE ACESSO ---------- */
+  .tranca{
+    position:fixed;
+    inset:0;
+    z-index:80;
+    background:var(--canvas);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .tranca[hidden]{display:none;}
+  .tranca-caixa{
+    background:var(--paper);
+    border:1px solid var(--rule);
+    border-radius:var(--radius);
+    padding:30px 26px 24px;
+    width:100%;
+    max-width:360px;
+    box-shadow:0 18px 50px rgba(20,28,48,0.12);
+  }
+  .tranca-caixa img{
+    width:150px;
+    height:auto;
+    display:block;
+    margin:0 auto 18px;
+  }
+  .tranca-caixa h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:14px;
+    text-transform:uppercase;
+    letter-spacing:0.12em;
+    color:var(--ink-soft);
+    text-align:center;
+    margin:0 0 22px;
+    font-weight:600;
+  }
+  .tranca-caixa .btn-primary{width:100%;margin-top:6px;}
+  .tranca-erro{
+    background:#fbeaee;
+    border:1px solid #e3b6c1;
+    color:#8f2740;
+    border-radius:var(--radius);
+    padding:9px 11px;
+    font-size:12px;
+    line-height:1.5;
+    margin-bottom:12px;
+  }
+  .tranca-erro[hidden]{display:none;}
+  .tranca-nota{
+    margin-top:16px;
+    font-size:10.5px;
+    line-height:1.6;
+    color:var(--ink-soft);
+    text-align:center;
+  }
+  /* enquanto trancado, nada do app fica montado atrás */
+  body.trancado .app,
+  body.trancado .painel{display:none !important;}
+
   /* ---------- PAINEL DO HISTÓRICO ---------- */
   .painel{
     position:fixed;
@@ -372,8 +433,8 @@
     margin-top:14px;
   }
   .painel-rodape .btn-secondary{padding:12px 8px;text-align:center;}
-  .painel-rodape.tres{grid-template-columns:repeat(3, 1fr);gap:8px;}
-  .painel-rodape.tres .btn-secondary{font-size:11px;padding:12px 4px;}
+  .painel-rodape.quatro{grid-template-columns:repeat(2, 1fr);gap:8px;}
+  .painel-rodape.quatro .btn-secondary{font-size:11px;padding:12px 4px;}
   .painel-rodape .btn-primary{flex:none;}
 
   .msg-ajuda{
@@ -836,7 +897,8 @@
     /* o carimbo some aqui, então o cliente ocupa a linha inteira */
     .doc-parties{grid-template-columns:1fr;}
     /* 16px evita que o Safari dê zoom ao tocar num campo */
-    input[type=text], input[type=date], textarea, .service-row input, select{
+    input[type=text], input[type=date], input[type=password],
+    input[type=search], textarea, .service-row input, select{
       font-size:16px;
     }
     /* três campos não cabem lado a lado: o valor desce para a linha toda */
@@ -872,6 +934,24 @@
 </style>
 </head>
 <body>
+
+<!-- ============ TELA DE ACESSO ============ -->
+<div class="tranca" id="tranca" hidden>
+  <form class="tranca-caixa" id="trancaForm" autocomplete="on">
+    <img id="logoTranca" alt="Becca Gesso">
+    <h1>Orçamentos</h1>
+    <label for="acUsuario">Usuário</label>
+    <input type="text" id="acUsuario" autocomplete="username"
+           autocapitalize="none" autocorrect="off" enterkeyhint="next">
+    <label for="acSenha">Senha</label>
+    <input type="password" id="acSenha" autocomplete="current-password"
+           enterkeyhint="go">
+    <div class="tranca-erro" id="acErro" hidden></div>
+    <button type="submit" class="btn-primary" id="acEntrar">Entrar</button>
+    <div class="tranca-nota">Se esquecer a senha não há como recuperá-la.
+      Mantenha um backup dos orçamentos.</div>
+  </form>
+</div>
 
 <div class="app">
 
@@ -1072,12 +1152,43 @@
     <input type="search" id="histBusca" autocomplete="off"
            placeholder="Buscar por cliente ou número">
     <div class="hist-lista" id="histLista"></div>
-    <div class="painel-rodape tres">
+    <div class="painel-rodape quatro">
+      <button type="button" class="btn-secondary" id="acessoBtn">Senha</button>
       <button type="button" class="btn-secondary" id="msgBtn">Mensagens</button>
       <button type="button" class="btn-secondary" id="backupBtn">Fazer backup</button>
       <button type="button" class="btn-secondary" id="restaurarBtn">Restaurar</button>
       <input type="file" id="restaurarArquivo" hidden
              accept=".json,.txt,application/json,text/plain">
+    </div>
+  </div>
+</div>
+
+<!-- ============ SENHA DE ACESSO ============ -->
+<div class="painel" id="painelAcesso" hidden>
+  <div class="painel-caixa" role="dialog" aria-modal="true" aria-labelledby="acTitulo">
+    <div class="painel-topo">
+      <h2 id="acTitulo">Senha de acesso</h2>
+      <button type="button" class="painel-fechar" id="acFechar"
+              aria-label="Fechar">&times;</button>
+    </div>
+    <div class="msg-ajuda" id="acAjuda"></div>
+    <div class="msg-lista">
+      <div id="acAtualBloco" hidden>
+        <label for="acSenhaAtual">Senha atual</label>
+        <input type="password" id="acSenhaAtual" autocomplete="current-password">
+      </div>
+      <label for="acNovoUsuario">Usuário</label>
+      <input type="text" id="acNovoUsuario" autocomplete="username"
+             autocapitalize="none" autocorrect="off" placeholder="becca">
+      <label for="acNovaSenha">Senha</label>
+      <input type="password" id="acNovaSenha" autocomplete="new-password">
+      <label for="acRepetirSenha">Repita a senha</label>
+      <input type="password" id="acRepetirSenha" autocomplete="new-password">
+      <div class="tranca-erro" id="acAviso" hidden></div>
+    </div>
+    <div class="painel-rodape">
+      <button type="button" class="btn-secondary" id="acRemover">Tirar a senha</button>
+      <button type="button" class="btn-primary" id="acGravar">Salvar</button>
     </div>
   </div>
 </div>
@@ -1114,9 +1225,20 @@
    Arquivo único: fontes e logo estão embutidos, funciona offline.
    ========================================================== */
 
+/* Antes de qualquer outra coisa: se há senha e a sessão não foi liberada,
+   marca a página como trancada para o app não piscar na tela. */
+try{
+  const quando = Number(sessionStorage.getItem('beccaGesso.destrancado') || 0);
+  const dentroDoPrazo = quando && (Date.now() - quando) < 30 * 60 * 1000;
+  if(localStorage.getItem('beccaGesso.acesso.v1') && !dentroDoPrazo){
+    document.body.classList.add('trancado');
+  }
+}catch(e){ /* armazenamento bloqueado: segue sem tranca */ }
+
 const LOGO = 'data:image/png;base64,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';
 document.getElementById('logoEditor').src = LOGO;
 document.getElementById('logoDoc').src = LOGO;
+document.getElementById('logoTranca').src = LOGO;
 
 /* ============================================================
    Gerador de PDF do orçamento
@@ -2381,6 +2503,214 @@ async function aoEscolherBackup(evento){
   }
 }
 
+/* ---------- senha de acesso ----------
+   Isto é uma tranca de tela, não criptografia: serve para quem pega o
+   aparelho destravado e abre o app. A senha não fica guardada em texto
+   puro — o que fica é o resultado de PBKDF2, que não permite voltar
+   para a senha original. */
+
+const CHAVE_ACESSO = 'beccaGesso.acesso.v1';
+const CHAVE_SESSAO = 'beccaGesso.destrancado';
+const VOLTAS_PBKDF2 = 250000;
+/* No iPhone o app pode ficar horas em segundo plano sem fechar de vez.
+   Sem um prazo, a senha praticamente nunca voltaria a ser pedida. */
+const MINUTOS_ABERTO = 30;
+
+function lerAcesso(){
+  try{ return JSON.parse(localStorage.getItem(CHAVE_ACESSO) || 'null'); }
+  catch(e){ return null; }
+}
+
+function temSenha(){
+  const a = lerAcesso();
+  return !!(a && a.hash && a.sal);
+}
+
+function bytesParaTexto64(bytes){
+  let bin = '';
+  for(const b of new Uint8Array(bytes)) bin += String.fromCharCode(b);
+  return btoa(bin);
+}
+
+async function derivarSenha(senha, sal64, voltas){
+  const sal = bytesDeBase64(sal64);
+  const material = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(senha), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits(
+    {name:'PBKDF2', salt: sal, iterations: voltas, hash:'SHA-256'},
+    material, 256);
+  return bytesParaTexto64(bits);
+}
+
+async function definirSenha(usuario, senha){
+  const sal = crypto.getRandomValues(new Uint8Array(16));
+  const sal64 = bytesParaTexto64(sal);
+  const hash = await derivarSenha(senha, sal64, VOLTAS_PBKDF2);
+  localStorage.setItem(CHAVE_ACESSO, JSON.stringify({
+    usuario: (usuario || '').trim(),
+    sal: sal64,
+    voltas: VOLTAS_PBKDF2,
+    hash: hash,
+    criadoEm: Date.now(),
+  }));
+}
+
+async function senhaConfere(usuario, senha){
+  const a = lerAcesso();
+  if(!a) return false;
+  const nomeOk = (a.usuario || '').toLowerCase() ===
+                 (usuario || '').trim().toLowerCase();
+  const hash = await derivarSenha(senha, a.sal, a.voltas || VOLTAS_PBKDF2);
+  /* compara os dois de qualquer jeito, para o tempo de resposta não
+     entregar se o que errou foi o usuário ou a senha */
+  return nomeOk && hash === a.hash;
+}
+
+function estaDestrancado(){
+  try{
+    const quando = Number(sessionStorage.getItem(CHAVE_SESSAO) || 0);
+    if(!quando) return false;
+    if(Date.now() - quando > MINUTOS_ABERTO * 60 * 1000){
+      esquecerSessao();
+      return false;
+    }
+    return true;
+  }catch(e){ return false; }
+}
+
+function marcarDestrancado(){
+  try{ sessionStorage.setItem(CHAVE_SESSAO, String(Date.now())); }catch(e){}
+}
+
+function esquecerSessao(){
+  try{ sessionStorage.removeItem(CHAVE_SESSAO); }catch(e){}
+}
+
+function trancar(){
+  document.body.classList.add('trancado');
+  el('tranca').hidden = false;
+  el('acUsuario').value = '';
+  el('acSenha').value = '';
+  el('acErro').hidden = true;
+  setTimeout(() => el('acUsuario').focus(), 60);
+}
+
+function destrancar(){
+  marcarDestrancado();
+  document.body.classList.remove('trancado');
+  el('tranca').hidden = true;
+}
+
+let tentativas = 0;
+
+async function tentarEntrar(evento){
+  if(evento) evento.preventDefault();
+  const botao = el('acEntrar');
+  botao.disabled = true;
+  botao.textContent = 'Conferindo…';
+  try{
+    const ok = await senhaConfere(el('acUsuario').value, el('acSenha').value);
+    if(ok){
+      tentativas = 0;
+      destrancar();
+      return;
+    }
+    tentativas++;
+    el('acErro').hidden = false;
+    el('acErro').textContent = 'Usuário ou senha não confere.';
+    el('acSenha').value = '';
+    el('acSenha').focus();
+    /* espera crescente, para dificultar tentativa após tentativa */
+    if(tentativas >= 3){
+      const espera = Math.min(10, tentativas - 2) * 1000;
+      el('acErro').textContent =
+        `Usuário ou senha não confere. Aguarde ${espera / 1000}s.`;
+      await new Promise(r => setTimeout(r, espera));
+    }
+  }catch(erro){
+    el('acErro').hidden = false;
+    el('acErro').textContent = 'Não consegui conferir a senha neste navegador.';
+  }finally{
+    botao.disabled = false;
+    botao.textContent = 'Entrar';
+  }
+}
+
+/* ---------- painel da senha ---------- */
+
+function abrirAcesso(){
+  const tem = temSenha();
+  el('acAjuda').innerHTML = tem
+    ? 'A senha é pedida toda vez que o app abre. Para trocá-la, informe a ' +
+      'atual e escreva a nova.<br><b>Se esquecer, não há como recuperar.</b>'
+    : 'Com uma senha definida, o app passa a pedi-la ao abrir. Protege de ' +
+      'quem pega o aparelho destravado — não substitui a senha do iPhone.' +
+      '<br><b>Se esquecer, não há como recuperar: mantenha um backup.</b>';
+  el('acAtualBloco').hidden = !tem;
+  el('acRemover').hidden = !tem;
+  el('acNovoUsuario').value = tem ? (lerAcesso().usuario || '') : '';
+  el('acSenhaAtual').value = '';
+  el('acNovaSenha').value = '';
+  el('acRepetirSenha').value = '';
+  el('acAviso').hidden = true;
+  el('painelAcesso').hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function fecharAcesso(){
+  el('painelAcesso').hidden = true;
+  document.body.style.overflow = el('painelHist').hidden ? '' : 'hidden';
+}
+
+function avisarAcesso(texto){
+  el('acAviso').hidden = false;
+  el('acAviso').textContent = texto;
+}
+
+async function gravarAcesso(){
+  const usuario = el('acNovoUsuario').value.trim();
+  const nova = el('acNovaSenha').value;
+  const repetida = el('acRepetirSenha').value;
+
+  if(temSenha()){
+    const atual = el('acSenhaAtual').value;
+    if(!await senhaConfere(lerAcesso().usuario, atual)){
+      return avisarAcesso('A senha atual não confere.');
+    }
+  }
+  if(!usuario) return avisarAcesso('Escolha um usuário.');
+  if(nova.length < 4) return avisarAcesso('A senha precisa de pelo menos 4 caracteres.');
+  if(nova !== repetida) return avisarAcesso('As duas senhas não são iguais.');
+
+  const botao = el('acGravar');
+  botao.disabled = true;
+  botao.textContent = 'Salvando…';
+  try{
+    await definirSenha(usuario, nova);
+    marcarDestrancado();
+    fecharAcesso();
+    alert('Senha definida.\n\nEla será pedida na próxima vez que o app abrir.\n' +
+          'Guarde-a bem: não há como recuperá-la.');
+  }catch(erro){
+    avisarAcesso('Não consegui salvar a senha neste navegador.');
+  }finally{
+    botao.disabled = false;
+    botao.textContent = 'Salvar';
+  }
+}
+
+async function removerAcesso(){
+  const atual = el('acSenhaAtual').value;
+  if(!await senhaConfere(lerAcesso().usuario, atual)){
+    return avisarAcesso('Informe a senha atual para poder tirá-la.');
+  }
+  if(!confirm('Tirar a senha? O app volta a abrir direto, sem pedir nada.')) return;
+  localStorage.removeItem(CHAVE_ACESSO);
+  esquecerSessao();
+  fecharAcesso();
+  alert('Senha removida.');
+}
+
 /* ---------- painel das mensagens ---------- */
 
 function abrirMensagens(){
@@ -2912,6 +3242,15 @@ el('cliNome').addEventListener('input', preencherObraDoCliente);
 el('histBtn').addEventListener('click', abrirHistorico);
 el('histFechar').addEventListener('click', fecharHistorico);
 el('histBusca').addEventListener('input', renderHistorico);
+el('trancaForm').addEventListener('submit', tentarEntrar);
+el('acessoBtn').addEventListener('click', abrirAcesso);
+el('acFechar').addEventListener('click', fecharAcesso);
+el('acGravar').addEventListener('click', gravarAcesso);
+el('acRemover').addEventListener('click', removerAcesso);
+el('painelAcesso').addEventListener('click', e => {
+  if(e.target === el('painelAcesso')) fecharAcesso();
+});
+
 el('msgBtn').addEventListener('click', abrirMensagens);
 el('msgFechar').addEventListener('click', fecharMensagens);
 el('msgSalvar').addEventListener('click', salvarMensagens);
@@ -2930,6 +3269,7 @@ el('painelHist').addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => {
   if(e.key !== 'Escape') return;
+  if(!el('painelAcesso').hidden) return fecharAcesso();
   if(!el('painelMsg').hidden) return fecharMensagens();
   if(!el('painelHist').hidden) fecharHistorico();
 });
@@ -2937,10 +3277,17 @@ document.addEventListener('keydown', e => {
 /* salva ao sair / ao mandar o app para segundo plano */
 window.addEventListener('beforeunload', salvar);
 document.addEventListener('visibilitychange', () => {
-  if(document.visibilityState === 'hidden') salvar();
+  if(document.visibilityState === 'hidden'){ salvar(); return; }
+  /* voltou para o app: se o prazo venceu, tranca de novo */
+  if(temSenha() && !estaDestrancado() && el('tranca').hidden) trancar();
+  else if(temSenha() && !el('tranca').hidden) return;
+  else if(temSenha()) marcarDestrancado();
 });
 
 /* ---------- início ---------- */
+
+/* mostra a tela de acesso quando há senha e a sessão ainda não foi aberta */
+if(document.body.classList.contains('trancado')) trancar();
 
 if(!restaurar()){
   el('orcData').value = hojeISO();

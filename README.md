@@ -41,6 +41,37 @@ WhatsApp com um resumo em texto, para você anexar o arquivo na conversa.
 O botão **Imprimir** continua ali para imprimir em papel ou salvar o PDF pela
 impressão do próprio navegador.
 
+## Senha de acesso
+
+No pé do histórico, o botão **Senha** define um usuário e uma senha. A partir
+daí o app pede os dois ao abrir.
+
+**Do que ela protege:** de quem pega o seu iPhone destravado e abre o app. Num
+app instalado na tela de início não existe "ver código-fonte" nem inspetor,
+então a tranca funciona de verdade nesse caso.
+
+**Do que ela não protege:** de quem liga o iPhone a um computador com as
+ferramentas de desenvolvedor. Também não substitui a senha do próprio iPhone —
+com o celular travado, ninguém chega ao app de qualquer forma.
+
+**O endereço do app é público, mas isso não expõe nada seu:** os orçamentos
+ficam guardados dentro do aparelho, não em servidor. Quem abrir o endereço em
+outro celular vê um app vazio.
+
+A senha **não fica guardada em texto**. O que fica é o resultado de um PBKDF2
+com 250 mil voltas e um sal sorteado, do qual não dá para voltar à senha
+original.
+
+Depois de entrar, o app fica liberado por **30 minutos** de uso. Passado esse
+tempo, ou ao fechar e abrir o app, ele pede a senha de novo.
+
+> **Se você esquecer a senha, não há como recuperá-la.** A saída seria
+> reinstalar o app, o que apaga os orçamentos do aparelho. Por isso, com senha
+> definida, o backup deixa de ser opcional.
+
+O botão **Tirar a senha** remove a tranca (pedindo a senha atual antes) e não
+apaga nenhum orçamento.
+
 ## O que o app faz sozinho
 
 - **Guarda todos os orçamentos.** Cada um é salvo enquanto você digita, e o

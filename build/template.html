@@ -112,7 +112,8 @@
     color:var(--ink-soft);
     margin-bottom:4px;
   }
-  input[type=text], input[type=date], textarea, select{
+  input[type=text], input[type=date], input[type=password],
+  input[type=search], textarea, select{
     width:100%;
     padding:9px 10px;
     border:1px solid var(--rule);
@@ -246,6 +247,66 @@
   }
   .actions-sec .btn-secondary{padding:12px 4px;text-align:center;font-size:11.5px;}
 
+  /* ---------- TELA DE ACESSO ---------- */
+  .tranca{
+    position:fixed;
+    inset:0;
+    z-index:80;
+    background:var(--canvas);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .tranca[hidden]{display:none;}
+  .tranca-caixa{
+    background:var(--paper);
+    border:1px solid var(--rule);
+    border-radius:var(--radius);
+    padding:30px 26px 24px;
+    width:100%;
+    max-width:360px;
+    box-shadow:0 18px 50px rgba(20,28,48,0.12);
+  }
+  .tranca-caixa img{
+    width:150px;
+    height:auto;
+    display:block;
+    margin:0 auto 18px;
+  }
+  .tranca-caixa h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:14px;
+    text-transform:uppercase;
+    letter-spacing:0.12em;
+    color:var(--ink-soft);
+    text-align:center;
+    margin:0 0 22px;
+    font-weight:600;
+  }
+  .tranca-caixa .btn-primary{width:100%;margin-top:6px;}
+  .tranca-erro{
+    background:#fbeaee;
+    border:1px solid #e3b6c1;
+    color:#8f2740;
+    border-radius:var(--radius);
+    padding:9px 11px;
+    font-size:12px;
+    line-height:1.5;
+    margin-bottom:12px;
+  }
+  .tranca-erro[hidden]{display:none;}
+  .tranca-nota{
+    margin-top:16px;
+    font-size:10.5px;
+    line-height:1.6;
+    color:var(--ink-soft);
+    text-align:center;
+  }
+  /* enquanto trancado, nada do app fica montado atrás */
+  body.trancado .app,
+  body.trancado .painel{display:none !important;}
+
   /* ---------- PAINEL DO HISTÓRICO ---------- */
   .painel{
     position:fixed;
@@ -369,8 +430,8 @@
     margin-top:14px;
   }
   .painel-rodape .btn-secondary{padding:12px 8px;text-align:center;}
-  .painel-rodape.tres{grid-template-columns:repeat(3, 1fr);gap:8px;}
-  .painel-rodape.tres .btn-secondary{font-size:11px;padding:12px 4px;}
+  .painel-rodape.quatro{grid-template-columns:repeat(2, 1fr);gap:8px;}
+  .painel-rodape.quatro .btn-secondary{font-size:11px;padding:12px 4px;}
   .painel-rodape .btn-primary{flex:none;}
 
   .msg-ajuda{
@@ -833,7 +894,8 @@
     /* o carimbo some aqui, então o cliente ocupa a linha inteira */
     .doc-parties{grid-template-columns:1fr;}
     /* 16px evita que o Safari dê zoom ao tocar num campo */
-    input[type=text], input[type=date], textarea, .service-row input, select{
+    input[type=text], input[type=date], input[type=password],
+    input[type=search], textarea, .service-row input, select{
       font-size:16px;
     }
     /* três campos não cabem lado a lado: o valor desce para a linha toda */
@@ -869,6 +931,24 @@
 </style>
 </head>
 <body>
+
+<!-- ============ TELA DE ACESSO ============ -->
+<div class="tranca" id="tranca" hidden>
+  <form class="tranca-caixa" id="trancaForm" autocomplete="on">
+    <img id="logoTranca" alt="Becca Gesso">
+    <h1>Orçamentos</h1>
+    <label for="acUsuario">Usuário</label>
+    <input type="text" id="acUsuario" autocomplete="username"
+           autocapitalize="none" autocorrect="off" enterkeyhint="next">
+    <label for="acSenha">Senha</label>
+    <input type="password" id="acSenha" autocomplete="current-password"
+           enterkeyhint="go">
+    <div class="tranca-erro" id="acErro" hidden></div>
+    <button type="submit" class="btn-primary" id="acEntrar">Entrar</button>
+    <div class="tranca-nota">Se esquecer a senha não há como recuperá-la.
+      Mantenha um backup dos orçamentos.</div>
+  </form>
+</div>
 
 <div class="app">
 
@@ -1069,12 +1149,43 @@
     <input type="search" id="histBusca" autocomplete="off"
            placeholder="Buscar por cliente ou número">
     <div class="hist-lista" id="histLista"></div>
-    <div class="painel-rodape tres">
+    <div class="painel-rodape quatro">
+      <button type="button" class="btn-secondary" id="acessoBtn">Senha</button>
       <button type="button" class="btn-secondary" id="msgBtn">Mensagens</button>
       <button type="button" class="btn-secondary" id="backupBtn">Fazer backup</button>
       <button type="button" class="btn-secondary" id="restaurarBtn">Restaurar</button>
       <input type="file" id="restaurarArquivo" hidden
              accept=".json,.txt,application/json,text/plain">
+    </div>
+  </div>
+</div>
+
+<!-- ============ SENHA DE ACESSO ============ -->
+<div class="painel" id="painelAcesso" hidden>
+  <div class="painel-caixa" role="dialog" aria-modal="true" aria-labelledby="acTitulo">
+    <div class="painel-topo">
+      <h2 id="acTitulo">Senha de acesso</h2>
+      <button type="button" class="painel-fechar" id="acFechar"
+              aria-label="Fechar">&times;</button>
+    </div>
+    <div class="msg-ajuda" id="acAjuda"></div>
+    <div class="msg-lista">
+      <div id="acAtualBloco" hidden>
+        <label for="acSenhaAtual">Senha atual</label>
+        <input type="password" id="acSenhaAtual" autocomplete="current-password">
+      </div>
+      <label for="acNovoUsuario">Usuário</label>
+      <input type="text" id="acNovoUsuario" autocomplete="username"
+             autocapitalize="none" autocorrect="off" placeholder="becca">
+      <label for="acNovaSenha">Senha</label>
+      <input type="password" id="acNovaSenha" autocomplete="new-password">
+      <label for="acRepetirSenha">Repita a senha</label>
+      <input type="password" id="acRepetirSenha" autocomplete="new-password">
+      <div class="tranca-erro" id="acAviso" hidden></div>
+    </div>
+    <div class="painel-rodape">
+      <button type="button" class="btn-secondary" id="acRemover">Tirar a senha</button>
+      <button type="button" class="btn-primary" id="acGravar">Salvar</button>
     </div>
   </div>
 </div>
@@ -1111,9 +1222,20 @@
    Arquivo único: fontes e logo estão embutidos, funciona offline.
    ========================================================== */
 
+/* Antes de qualquer outra coisa: se há senha e a sessão não foi liberada,
+   marca a página como trancada para o app não piscar na tela. */
+try{
+  const quando = Number(sessionStorage.getItem('beccaGesso.destrancado') || 0);
+  const dentroDoPrazo = quando && (Date.now() - quando) < 30 * 60 * 1000;
+  if(localStorage.getItem('beccaGesso.acesso.v1') && !dentroDoPrazo){
+    document.body.classList.add('trancado');
+  }
+}catch(e){ /* armazenamento bloqueado: segue sem tranca */ }
+
 const LOGO = '__LOGO_B64__';
 document.getElementById('logoEditor').src = LOGO;
 document.getElementById('logoDoc').src = LOGO;
+document.getElementById('logoTranca').src = LOGO;
 
 /*__PDF__*/
 
@@ -1738,6 +1860,214 @@ async function aoEscolherBackup(evento){
   }
 }
 
+/* ---------- senha de acesso ----------
+   Isto é uma tranca de tela, não criptografia: serve para quem pega o
+   aparelho destravado e abre o app. A senha não fica guardada em texto
+   puro — o que fica é o resultado de PBKDF2, que não permite voltar
+   para a senha original. */
+
+const CHAVE_ACESSO = 'beccaGesso.acesso.v1';
+const CHAVE_SESSAO = 'beccaGesso.destrancado';
+const VOLTAS_PBKDF2 = 250000;
+/* No iPhone o app pode ficar horas em segundo plano sem fechar de vez.
+   Sem um prazo, a senha praticamente nunca voltaria a ser pedida. */
+const MINUTOS_ABERTO = 30;
+
+function lerAcesso(){
+  try{ return JSON.parse(localStorage.getItem(CHAVE_ACESSO) || 'null'); }
+  catch(e){ return null; }
+}
+
+function temSenha(){
+  const a = lerAcesso();
+  return !!(a && a.hash && a.sal);
+}
+
+function bytesParaTexto64(bytes){
+  let bin = '';
+  for(const b of new Uint8Array(bytes)) bin += String.fromCharCode(b);
+  return btoa(bin);
+}
+
+async function derivarSenha(senha, sal64, voltas){
+  const sal = bytesDeBase64(sal64);
+  const material = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(senha), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits(
+    {name:'PBKDF2', salt: sal, iterations: voltas, hash:'SHA-256'},
+    material, 256);
+  return bytesParaTexto64(bits);
+}
+
+async function definirSenha(usuario, senha){
+  const sal = crypto.getRandomValues(new Uint8Array(16));
+  const sal64 = bytesParaTexto64(sal);
+  const hash = await derivarSenha(senha, sal64, VOLTAS_PBKDF2);
+  localStorage.setItem(CHAVE_ACESSO, JSON.stringify({
+    usuario: (usuario || '').trim(),
+    sal: sal64,
+    voltas: VOLTAS_PBKDF2,
+    hash: hash,
+    criadoEm: Date.now(),
+  }));
+}
+
+async function senhaConfere(usuario, senha){
+  const a = lerAcesso();
+  if(!a) return false;
+  const nomeOk = (a.usuario || '').toLowerCase() ===
+                 (usuario || '').trim().toLowerCase();
+  const hash = await derivarSenha(senha, a.sal, a.voltas || VOLTAS_PBKDF2);
+  /* compara os dois de qualquer jeito, para o tempo de resposta não
+     entregar se o que errou foi o usuário ou a senha */
+  return nomeOk && hash === a.hash;
+}
+
+function estaDestrancado(){
+  try{
+    const quando = Number(sessionStorage.getItem(CHAVE_SESSAO) || 0);
+    if(!quando) return false;
+    if(Date.now() - quando > MINUTOS_ABERTO * 60 * 1000){
+      esquecerSessao();
+      return false;
+    }
+    return true;
+  }catch(e){ return false; }
+}
+
+function marcarDestrancado(){
+  try{ sessionStorage.setItem(CHAVE_SESSAO, String(Date.now())); }catch(e){}
+}
+
+function esquecerSessao(){
+  try{ sessionStorage.removeItem(CHAVE_SESSAO); }catch(e){}
+}
+
+function trancar(){
+  document.body.classList.add('trancado');
+  el('tranca').hidden = false;
+  el('acUsuario').value = '';
+  el('acSenha').value = '';
+  el('acErro').hidden = true;
+  setTimeout(() => el('acUsuario').focus(), 60);
+}
+
+function destrancar(){
+  marcarDestrancado();
+  document.body.classList.remove('trancado');
+  el('tranca').hidden = true;
+}
+
+let tentativas = 0;
+
+async function tentarEntrar(evento){
+  if(evento) evento.preventDefault();
+  const botao = el('acEntrar');
+  botao.disabled = true;
+  botao.textContent = 'Conferindo…';
+  try{
+    const ok = await senhaConfere(el('acUsuario').value, el('acSenha').value);
+    if(ok){
+      tentativas = 0;
+      destrancar();
+      return;
+    }
+    tentativas++;
+    el('acErro').hidden = false;
+    el('acErro').textContent = 'Usuário ou senha não confere.';
+    el('acSenha').value = '';
+    el('acSenha').focus();
+    /* espera crescente, para dificultar tentativa após tentativa */
+    if(tentativas >= 3){
+      const espera = Math.min(10, tentativas - 2) * 1000;
+      el('acErro').textContent =
+        `Usuário ou senha não confere. Aguarde ${espera / 1000}s.`;
+      await new Promise(r => setTimeout(r, espera));
+    }
+  }catch(erro){
+    el('acErro').hidden = false;
+    el('acErro').textContent = 'Não consegui conferir a senha neste navegador.';
+  }finally{
+    botao.disabled = false;
+    botao.textContent = 'Entrar';
+  }
+}
+
+/* ---------- painel da senha ---------- */
+
+function abrirAcesso(){
+  const tem = temSenha();
+  el('acAjuda').innerHTML = tem
+    ? 'A senha é pedida toda vez que o app abre. Para trocá-la, informe a ' +
+      'atual e escreva a nova.<br><b>Se esquecer, não há como recuperar.</b>'
+    : 'Com uma senha definida, o app passa a pedi-la ao abrir. Protege de ' +
+      'quem pega o aparelho destravado — não substitui a senha do iPhone.' +
+      '<br><b>Se esquecer, não há como recuperar: mantenha um backup.</b>';
+  el('acAtualBloco').hidden = !tem;
+  el('acRemover').hidden = !tem;
+  el('acNovoUsuario').value = tem ? (lerAcesso().usuario || '') : '';
+  el('acSenhaAtual').value = '';
+  el('acNovaSenha').value = '';
+  el('acRepetirSenha').value = '';
+  el('acAviso').hidden = true;
+  el('painelAcesso').hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function fecharAcesso(){
+  el('painelAcesso').hidden = true;
+  document.body.style.overflow = el('painelHist').hidden ? '' : 'hidden';
+}
+
+function avisarAcesso(texto){
+  el('acAviso').hidden = false;
+  el('acAviso').textContent = texto;
+}
+
+async function gravarAcesso(){
+  const usuario = el('acNovoUsuario').value.trim();
+  const nova = el('acNovaSenha').value;
+  const repetida = el('acRepetirSenha').value;
+
+  if(temSenha()){
+    const atual = el('acSenhaAtual').value;
+    if(!await senhaConfere(lerAcesso().usuario, atual)){
+      return avisarAcesso('A senha atual não confere.');
+    }
+  }
+  if(!usuario) return avisarAcesso('Escolha um usuário.');
+  if(nova.length < 4) return avisarAcesso('A senha precisa de pelo menos 4 caracteres.');
+  if(nova !== repetida) return avisarAcesso('As duas senhas não são iguais.');
+
+  const botao = el('acGravar');
+  botao.disabled = true;
+  botao.textContent = 'Salvando…';
+  try{
+    await definirSenha(usuario, nova);
+    marcarDestrancado();
+    fecharAcesso();
+    alert('Senha definida.\n\nEla será pedida na próxima vez que o app abrir.\n' +
+          'Guarde-a bem: não há como recuperá-la.');
+  }catch(erro){
+    avisarAcesso('Não consegui salvar a senha neste navegador.');
+  }finally{
+    botao.disabled = false;
+    botao.textContent = 'Salvar';
+  }
+}
+
+async function removerAcesso(){
+  const atual = el('acSenhaAtual').value;
+  if(!await senhaConfere(lerAcesso().usuario, atual)){
+    return avisarAcesso('Informe a senha atual para poder tirá-la.');
+  }
+  if(!confirm('Tirar a senha? O app volta a abrir direto, sem pedir nada.')) return;
+  localStorage.removeItem(CHAVE_ACESSO);
+  esquecerSessao();
+  fecharAcesso();
+  alert('Senha removida.');
+}
+
 /* ---------- painel das mensagens ---------- */
 
 function abrirMensagens(){
@@ -2269,6 +2599,15 @@ el('cliNome').addEventListener('input', preencherObraDoCliente);
 el('histBtn').addEventListener('click', abrirHistorico);
 el('histFechar').addEventListener('click', fecharHistorico);
 el('histBusca').addEventListener('input', renderHistorico);
+el('trancaForm').addEventListener('submit', tentarEntrar);
+el('acessoBtn').addEventListener('click', abrirAcesso);
+el('acFechar').addEventListener('click', fecharAcesso);
+el('acGravar').addEventListener('click', gravarAcesso);
+el('acRemover').addEventListener('click', removerAcesso);
+el('painelAcesso').addEventListener('click', e => {
+  if(e.target === el('painelAcesso')) fecharAcesso();
+});
+
 el('msgBtn').addEventListener('click', abrirMensagens);
 el('msgFechar').addEventListener('click', fecharMensagens);
 el('msgSalvar').addEventListener('click', salvarMensagens);
@@ -2287,6 +2626,7 @@ el('painelHist').addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => {
   if(e.key !== 'Escape') return;
+  if(!el('painelAcesso').hidden) return fecharAcesso();
   if(!el('painelMsg').hidden) return fecharMensagens();
   if(!el('painelHist').hidden) fecharHistorico();
 });
@@ -2294,10 +2634,17 @@ document.addEventListener('keydown', e => {
 /* salva ao sair / ao mandar o app para segundo plano */
 window.addEventListener('beforeunload', salvar);
 document.addEventListener('visibilitychange', () => {
-  if(document.visibilityState === 'hidden') salvar();
+  if(document.visibilityState === 'hidden'){ salvar(); return; }
+  /* voltou para o app: se o prazo venceu, tranca de novo */
+  if(temSenha() && !estaDestrancado() && el('tranca').hidden) trancar();
+  else if(temSenha() && !el('tranca').hidden) return;
+  else if(temSenha()) marcarDestrancado();
 });
 
 /* ---------- início ---------- */
+
+/* mostra a tela de acesso quando há senha e a sessão ainda não foi aberta */
+if(document.body.classList.contains('trancado')) trancar();
 
 if(!restaurar()){
   el('orcData').value = hojeISO();
