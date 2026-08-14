@@ -35,11 +35,35 @@ jobs:
           fi
           echo "index.html confere com build/template.html."
 
-      - name: O app depende de algo externo?
+      # O que faz o app quebrar sem internet é BAIXAR alguma coisa de fora:
+      # uma fonte, um script, uma folha de estilo, uma imagem. Um endereço
+      # que o app só abre em outra aba (WhatsApp) ou chama de propósito e
+      # sabe viver sem (Supabase) não impede o app de abrir offline.
+      #
+      # A conferência antiga proibia qualquer endereço no arquivo, o que
+      # passou a acusar os links do WhatsApp. Agora são duas conferências
+      # separadas, cada uma medindo o que interessa.
+      - name: O app baixa alguma coisa de fora?
         run: |
-          if grep -Eo 'https?://[^"'"'"' )]+' index.html \
-             | grep -v '^https://github.com' | sort -u | grep .; then
-            echo "::error::O index.html precisa ser autossuficiente para funcionar offline."
+          achados=$(grep -Eo '(src|href)="https?://[^"]*"|@import|url\(https?:' index.html || true)
+          if [ -n "$achados" ]; then
+            echo "::error::O index.html está baixando algo de fora e não abriria sem internet."
+            echo "$achados"
             exit 1
           fi
-          echo "Nenhuma dependência externa no index.html."
+          echo "Nada é baixado de fora: o app abre sem internet."
+
+      - name: Só endereços conhecidos aparecem no arquivo?
+        run: |
+          # wa.me      -> abre a conversa do WhatsApp em outra aba
+          # supabase   -> a nuvem, que é opcional e tem queda para offline
+          # github.com -> comentários e documentação
+          inesperados=$(grep -Eo 'https?://[^"'"'"' )]+' index.html \
+            | grep -Ev '^https?://(wa\.me|[a-z0-9-]*\.?supabase\.(co|in)|github\.com)' \
+            | sort -u || true)
+          if [ -n "$inesperados" ]; then
+            echo "::error::Apareceu endereço externo que ninguém previu."
+            echo "$inesperados"
+            exit 1
+          fi
+          echo "Só os endereços previstos aparecem no arquivo."

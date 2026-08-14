@@ -50,6 +50,72 @@ WhatsApp com um resumo em texto, para você anexar o arquivo na conversa.
 O botão **Imprimir** continua ali para imprimir em papel ou salvar o PDF pela
 impressão do próprio navegador.
 
+## Nuvem (Supabase)
+
+Sem a nuvem, os orçamentos e as contas existem só dentro do celular. Com ela
+ligada, ficam guardados fora do aparelho e aparecem em qualquer lugar onde
+você entrar — o celular na obra e o computador em casa vendo a mesma coisa.
+
+O app **continua funcionando sem internet**. O celular segue sendo a fonte
+imediata: você lança normalmente na obra sem sinal, e o que foi lançado sobe
+quando a internet volta. A nuvem entra ao lado, não no lugar.
+
+### Ligar (uma vez por aparelho)
+
+1. No painel do Supabase, abra **SQL Editor → New query**, cole o conteúdo de
+   `build/supabase.sql` e clique em **Run**. Isso cria as duas tabelas e liga
+   as regras de acesso. Pode rodar de novo depois sem estragar nada.
+2. Ainda no Supabase, abra **Authentication → Users → Add user** e crie o seu
+   usuário com e-mail e senha. É com ele que você vai entrar no app.
+3. No app: **Histórico → Nuvem**. Cole o endereço do projeto e a chave
+   pública, que ficam em **Project Settings → API**. Pode colar os blocos
+   inteiros — o app acha o que interessa. Toque em **Salvar e conectar**.
+4. Feche e abra o app. Agora ele pede e-mail e senha.
+
+Repita só o passo 3 e 4 no segundo aparelho.
+
+### Por que a senha passou a importar
+
+O app fica num endereço público, e a chave que ele carrega pode ser lida por
+qualquer um que abra o código da página. Isso é normal e é assim que o
+Supabase foi feito para funcionar — **desde que as regras de acesso estejam
+ligadas**, que é o que o `build/supabase.sql` faz. Com elas, a chave sozinha
+não mostra nem grava nada: só depois de entrar com e-mail e senha o banco
+passa a enxergar as suas linhas.
+
+Por isso a tranca deixou de ser decorativa. Antes ela só escondia a tela de
+quem pegasse o celular destravado. Agora é ela que separa os seus dados do
+resto do mundo.
+
+> Se você rodar o app sem ter rodado o SQL, o próprio app avisa que as
+> tabelas não existem.
+
+### Sem internet
+
+- **Já entrou alguma vez neste aparelho:** o app abre e você entra com a
+  mesma senha. Ele guarda o embaralhamento dela aqui justamente para isso.
+- **Aparelho novo que nunca entrou:** aí não dá, e o app explica. A primeira
+  entrada precisa de internet.
+
+O aviso no alto da tela diz em que pé está: *Tudo salvo na nuvem*,
+*N itens para subir*, *Sem internet* ou *Nuvem com problema*. Tocar nele abre
+a tela da nuvem.
+
+### Quando os dois aparelhos mexeram na mesma coisa
+
+Vence a alteração mais recente — a mesma regra do backup em arquivo. Isso vale
+dos dois lados: o aparelho que sincroniza por último não ganha por isso, e o
+banco recusa uma versão mais velha que chegue atrasada.
+
+Excluir também atravessa: um orçamento apagado no celular some do computador
+na sincronização seguinte, e não volta.
+
+### Desligar
+
+**Histórico → Nuvem → Desligar** tira a nuvem deste aparelho. Nada é apagado:
+os orçamentos e as contas continuam no aparelho e continuam na nuvem. O app
+volta a pedir só a senha local.
+
 ## Senha de acesso
 
 No pé do histórico, o botão **Senha** define um usuário e uma senha. A partir
@@ -312,6 +378,8 @@ ou observação.
 | `icone-180.png`, `icone-512.png` | Ícones da tela de início. |
 | `build/` | Os arquivos de origem usados para montar o `index.html`. |
 | `build/pdf.js` | O gerador de PDF, escrito à mão para não depender de biblioteca. |
+| `build/supabase.sql` | As tabelas e as regras de acesso. Rode uma vez no Supabase. |
+| `build/falso-supabase.js` | Um Supabase de mentira, usado só pelos testes. |
 | `gerador-orcamento-becca-gesso.html` | A versão original, guardada para consulta. |
 
 O `index.html` **não é editado à mão** — ele é montado a partir do
@@ -397,9 +465,14 @@ node build/testar-retorno.js
 node build/testar-acesso.js
 node build/testar-contas.js
 node build/testar-inicio.js
+node build/testar-nuvem.js
 node build/testar-subcaminho.js
 ```
 
-O último confere o que o GitHub Pages faz na prática: servir o app em
+O `testar-nuvem.js` roda contra um Supabase de mentira (`build/falso-supabase.js`),
+que imita o login, a leitura, a gravação e as regras de acesso. Assim os
+testes de sincronia rodam sem chave de verdade e sem tocar no projeto real.
+
+O `testar-subcaminho.js` confere o que o GitHub Pages faz na prática: servir o app em
 `/Teste/` em vez da raiz do endereço, o que quebraria o ícone e o modo offline
 se algum caminho estivesse escrito de forma absoluta.

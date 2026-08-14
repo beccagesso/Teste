@@ -142,8 +142,12 @@
     color:var(--ink-soft);
     margin-bottom:4px;
   }
-  input[type=text], input[type=date], input[type=password],
-  input[type=search], textarea, select{
+  /* Todo campo de digitar, sem listar tipo por tipo: já esqueci de
+     incluir password, search, url e email nesta lista, e cada esquecimento
+     deixou um campo espremido na tela. Os três excluídos não são campos
+     de texto e têm aparência própria. */
+  input:not([type=file]):not([type=checkbox]):not([type=radio]),
+  textarea, select{
     width:100%;
     padding:9px 10px;
     border:1px solid var(--rule);
@@ -278,6 +282,48 @@
   .actions-sec .btn-secondary{padding:12px 4px;text-align:center;font-size:11.5px;}
   /* sem isto o display:grid acima venceria o hidden e o bloco apareceria */
   .actions-sec[hidden]{display:none;}
+
+  /* ---------- NUVEM ---------- */
+  .top-dir{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:5px;
+  }
+  .nuvem-estado{
+    font-size:9.5px;
+    text-transform:uppercase;
+    letter-spacing:0.07em;
+    font-weight:600;
+    padding:3px 9px;
+    border:1px solid var(--rule);
+    border-radius:10px;
+    background:#fff;
+    color:var(--ink-soft);
+    white-space:nowrap;
+  }
+  .nuvem-estado[hidden]{display:none;}
+  .nuvem-estado.ok{border-color:var(--ok);color:var(--ok);}
+  .nuvem-estado.pendente{border-color:var(--gold);color:var(--gold);}
+  .nuvem-estado.offline{border-color:var(--ink-soft);color:var(--ink-soft);}
+  .nuvem-estado.erro{border-color:#a8324a;color:#a8324a;}
+  .nuvem-estado.fora{border-color:var(--gold);color:var(--gold);}
+
+  .nuvem-situacao{
+    border:1px solid var(--rule);
+    border-left:3px solid var(--rule);
+    border-radius:var(--radius);
+    padding:11px 13px;
+    margin-bottom:14px;
+    font-size:12px;
+    line-height:1.6;
+    color:var(--ink-soft);
+  }
+  .nuvem-situacao b{color:var(--ink);font-weight:600;}
+  .nuvem-situacao.ligada{border-left-color:var(--ok);background:#f4faf6;}
+  .nuvem-situacao.parcial{border-left-color:var(--gold);background:#fdfaf3;}
+  .msg-ajuda.pequena{font-size:11px;line-height:1.6;}
+  .rodape-largo{grid-column:1 / -1;}
 
   /* ---------- TELA DE INÍCIO ---------- */
   .secao-inicio{
@@ -1236,8 +1282,8 @@
     /* o carimbo some aqui, então o cliente ocupa a linha inteira */
     .doc-parties{grid-template-columns:1fr;}
     /* 16px evita que o Safari dê zoom ao tocar num campo */
-    input[type=text], input[type=date], input[type=password],
-    input[type=search], textarea, .service-row input, select{
+    input:not([type=file]):not([type=checkbox]):not([type=radio]),
+    textarea, .service-row input, select{
       font-size:16px;
     }
     /* três campos não cabem lado a lado: o valor desce para a linha toda */
@@ -1283,7 +1329,7 @@
   <form class="tranca-caixa" id="trancaForm" autocomplete="on">
     <img id="logoTranca" alt="Becca Gesso">
     <h1>Orçamentos</h1>
-    <label for="acUsuario">Usuário</label>
+    <label for="acUsuario" id="rotuloUsuario">Usuário</label>
     <input type="text" id="acUsuario" autocomplete="username"
            autocapitalize="none" autocorrect="off" enterkeyhint="next">
     <label for="acSenha">Senha</label>
@@ -1291,8 +1337,8 @@
            enterkeyhint="go">
     <div class="tranca-erro" id="acErro" hidden></div>
     <button type="submit" class="btn-primary" id="acEntrar">Entrar</button>
-    <div class="tranca-nota">Se esquecer a senha não há como recuperá-la.
-      Mantenha um backup dos orçamentos.</div>
+    <div class="tranca-nota" id="trancaNota">Se esquecer a senha não há como
+      recuperá-la. Mantenha um backup dos orçamentos.</div>
   </form>
 </div>
 
@@ -1300,7 +1346,10 @@
 
   <header class="top">
     <h1>Becca Gesso</h1>
-    <span id="tituloSecao">documento pronto para impressão / PDF</span>
+    <div class="top-dir">
+      <span id="tituloSecao">documento pronto para impressão / PDF</span>
+      <button type="button" class="nuvem-estado" id="nuvemEstado" hidden></button>
+    </div>
   </header>
 
   <nav class="secoes" aria-label="Seções do app">
@@ -1616,6 +1665,8 @@
            placeholder="Buscar por cliente ou número">
     <div class="hist-lista" id="histLista"></div>
     <div class="painel-rodape quatro">
+      <button type="button" class="btn-secondary rodape-largo"
+              id="nuvemBtn">Nuvem</button>
       <button type="button" class="btn-secondary" id="acessoBtn">Senha</button>
       <button type="button" class="btn-secondary" id="msgBtn">Mensagens</button>
       <button type="button" class="btn-secondary" id="backupBtn">Fazer backup</button>
@@ -1627,6 +1678,52 @@
 </div>
 
 <!-- ============ SENHA DE ACESSO ============ -->
+<!-- ============ NUVEM ============ -->
+<div class="painel" id="painelNuvem" hidden>
+  <div class="painel-caixa" role="dialog" aria-modal="true" aria-labelledby="nvTitulo">
+    <div class="painel-topo">
+      <h2 id="nvTitulo">Nuvem</h2>
+      <button type="button" class="painel-fechar" id="nvFechar"
+              aria-label="Fechar">&times;</button>
+    </div>
+
+    <div class="nuvem-situacao" id="nvSituacao"></div>
+
+    <div class="msg-ajuda">
+      Com a nuvem ligada, os orçamentos e as contas ficam guardados fora do
+      celular e aparecem em qualquer aparelho onde você entrar. O app
+      continua funcionando sem internet: o que você lançar sobe quando o
+      sinal voltar.
+    </div>
+
+    <div class="msg-lista">
+      <label for="nvUrl">Endereço do projeto</label>
+      <input type="url" id="nvUrl" autocomplete="off" autocapitalize="none"
+             autocorrect="off" spellcheck="false"
+             placeholder="https://xxxxxxxx.supabase.co">
+      <label for="nvChave">Chave pública do projeto</label>
+      <textarea id="nvChave" rows="3" autocomplete="off" autocapitalize="none"
+                autocorrect="off" spellcheck="false"
+                placeholder="cole aqui a chave anon / publishable"></textarea>
+      <div class="msg-ajuda pequena">
+        No painel do Supabase: <b>Project Settings → API</b>. Pode colar o
+        bloco inteiro — o app acha o endereço e a chave sozinho. Esta chave
+        é pública de propósito; quem protege os dados é a sua senha.
+      </div>
+      <div class="tranca-erro" id="nvAviso" hidden></div>
+    </div>
+
+    <div class="painel-rodape">
+      <button type="button" class="btn-secondary" id="nvDesligar">Desligar</button>
+      <button type="button" class="btn-primary" id="nvSalvar">Salvar e conectar</button>
+    </div>
+    <div class="painel-rodape" id="nvLigada" hidden>
+      <button type="button" class="btn-secondary" id="nvSair">Sair da conta</button>
+      <button type="button" class="btn-secondary" id="nvSincronizar">Sincronizar agora</button>
+    </div>
+  </div>
+</div>
+
 <div class="painel" id="painelAcesso" hidden>
   <div class="painel-caixa" role="dialog" aria-modal="true" aria-labelledby="acTitulo">
     <div class="painel-topo">
@@ -1693,7 +1790,9 @@
 try{
   const quando = Number(sessionStorage.getItem('beccaGesso.destrancado') || 0);
   const dentroDoPrazo = quando && (Date.now() - quando) < 30 * 60 * 1000;
-  if(localStorage.getItem('beccaGesso.acesso.v1') && !dentroDoPrazo){
+  const pedeEntrada = localStorage.getItem('beccaGesso.acesso.v1')
+                   || localStorage.getItem('beccaGesso.nuvem.v1');
+  if(pedeEntrada && !dentroDoPrazo){
     document.body.classList.add('trancado');
   }
 }catch(e){ /* armazenamento bloqueado: segue sem tranca */ }
@@ -1937,6 +2036,7 @@ function gravarHistorico(lista){
     localStorage.setItem(CHAVE_HISTORICO,
       JSON.stringify(lista.slice(0, MAX_HISTORICO)));
   }catch(e){ /* sem espaço: o orçamento na tela continua salvo */ }
+  agendarSincronia();
 }
 
 /* Em que pé está cada orçamento. A ordem é a do fluxo normal. */
@@ -2408,6 +2508,7 @@ function lerContas(){
 
 function gravarContas(lista){
   try{ localStorage.setItem(CHAVE_CONTAS, JSON.stringify(lista)); }catch(e){}
+  agendarSincronia();
 }
 
 /* Compara só a data, ignorando a hora: uma conta que vence hoje não
@@ -2557,6 +2658,7 @@ function excluirConta(id){
   if(!c) return;
   if(!confirm(`Excluir "${c.descricao}"? Isso não pode ser desfeito.`)) return;
   gravarContas(lerContas().filter(x => x.id !== id));
+  marcarRemovido('contas', id);
   if(contaEditando === id) limparFormConta();
   renderContas();
 }
@@ -2898,6 +3000,406 @@ function renderUltimos(){
     }));
 }
 
+/* ---------- ligação com o Supabase ----------
+   O aparelho continua sendo a fonte imediata: tudo é lançado e lido do
+   próprio celular, com ou sem internet. A nuvem entra ao lado, para
+   levar o que mudou daqui e trazer o que mudou de outro aparelho.
+
+   Não usa a biblioteca do Supabase de propósito: ela seria mais um
+   arquivo baixado da internet, e o app tem de continuar num arquivo só
+   e abrindo sem sinal. O que o Supabase expõe é uma API REST comum,
+   então bastam algumas chamadas de fetch. */
+
+const CHAVE_NUVEM      = 'beccaGesso.nuvem.v1';        /* endereço e chave */
+const CHAVE_SESSAO_N   = 'beccaGesso.sessaoNuvem.v1';  /* quem entrou */
+const CHAVE_RECEBIDO   = 'beccaGesso.recebido.v1';     /* até onde já baixamos */
+const CHAVE_ENVIADO    = 'beccaGesso.enviado.v1';      /* o que já subiu */
+const CHAVE_REMOVIDOS  = 'beccaGesso.removidos.v1';    /* o que foi apagado aqui */
+const CHAVE_ULTIMA_SIN = 'beccaGesso.ultimaSincronia.v1';
+
+/* De cada lado, o mesmo par: a tabela lá e o campo que identifica o
+   registro aqui. */
+const TABELAS = {
+  orcamentos: {tabela:'orcamentos', coluna:'numero', chaveLocal:'orcNumero'},
+  contas:     {tabela:'contas',     coluna:'chave',  chaveLocal:'id'},
+};
+
+const LIMITE_PAGINA = 500;
+
+function lerJson(chave, padrao){
+  try{
+    const v = JSON.parse(localStorage.getItem(chave) || 'null');
+    return (v === null || v === undefined) ? padrao : v;
+  }catch(e){ return padrao; }
+}
+
+function gravarJson(chave, valor){
+  try{ localStorage.setItem(chave, JSON.stringify(valor)); }catch(e){}
+}
+
+function lerNuvem(){ return lerJson(CHAVE_NUVEM, null); }
+
+function nuvemConfigurada(){
+  const c = lerNuvem();
+  return !!(c && c.url && c.chave);
+}
+
+/* O painel do Supabase mostra o endereço e a chave em blocos que a
+   pessoa copia inteiros. Em vez de exigir que ela recorte, o app
+   procura o que interessa dentro do que foi colado. */
+function limparEndereco(texto){
+  const t = String(texto || '').trim();
+  const m = t.match(/https?:\/\/[a-z0-9-]+\.supabase\.(co|in)/i);
+  if(m) return m[0];
+  return t.replace(/\/+$/, '');
+}
+
+function limparChave(texto){
+  const t = String(texto || '').trim();
+  /* chave nova (sb_publishable_…) ou a antiga, que é um JWT */
+  const m = t.match(/sb_publishable_[A-Za-z0-9_-]+/) ||
+            t.match(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_.-]+/);
+  return m ? m[0] : t;
+}
+
+function lerSessaoNuvem(){ return lerJson(CHAVE_SESSAO_N, null); }
+
+function entrouNaNuvem(){
+  const s = lerSessaoNuvem();
+  return !!(s && s.token && s.dono);
+}
+
+function guardarSessaoDaResposta(r){
+  const antes = lerSessaoNuvem() || {};
+  gravarJson(CHAVE_SESSAO_N, {
+    token: r.access_token,
+    renovacao: r.refresh_token || antes.renovacao,
+    expiraEm: Date.now() + ((r.expires_in || 3600) * 1000),
+    email: (r.user && r.user.email) || antes.email || '',
+    dono: (r.user && r.user.id) || antes.dono || '',
+  });
+}
+
+/* ---------- as chamadas ---------- */
+
+async function pedirNuvem(caminho, opcoes){
+  const cfg = lerNuvem();
+  if(!cfg) throw new Error('a conexão com a nuvem ainda não foi configurada');
+  const o = opcoes || {};
+  const cabecalho = Object.assign({
+    'apikey': cfg.chave,
+    'Content-Type': 'application/json',
+  }, o.headers || {});
+  if(!o.semToken){
+    const s = lerSessaoNuvem();
+    if(s && s.token) cabecalho['Authorization'] = 'Bearer ' + s.token;
+  }
+
+  let r;
+  try{
+    r = await fetch(cfg.url + caminho, {
+      method: o.metodo || 'GET',
+      headers: cabecalho,
+      body: o.corpo === undefined ? undefined : JSON.stringify(o.corpo),
+    });
+  }catch(e){
+    const erro = new Error('não consegui falar com a nuvem (sem internet?)');
+    erro.semRede = true;
+    throw erro;
+  }
+
+  const texto = await r.text();
+  let corpo = null;
+  try{ corpo = texto ? JSON.parse(texto) : null; }catch(e){ corpo = texto; }
+
+  if(!r.ok){
+    const msg = (corpo && (corpo.msg || corpo.message || corpo.error_description ||
+                 corpo.error || corpo.hint)) || `erro ${r.status}`;
+    const erro = new Error(String(msg));
+    erro.status = r.status;
+    throw erro;
+  }
+  return corpo;
+}
+
+/* O token de entrada vale cerca de uma hora. Em vez de ficar olhando o
+   relógio, tenta e, se levar 401, renova e tenta de novo — uma vez só,
+   para um token de fato inválido não virar laço. */
+async function comToken(tentar){
+  try{
+    return await tentar();
+  }catch(erro){
+    if(erro.status !== 401) throw erro;
+    await renovarToken();
+    return await tentar();
+  }
+}
+
+async function renovarToken(){
+  const s = lerSessaoNuvem();
+  if(!s || !s.renovacao){
+    const e = new Error('a sessão venceu; entre de novo');
+    e.precisaEntrar = true;
+    throw e;
+  }
+  try{
+    const r = await pedirNuvem('/auth/v1/token?grant_type=refresh_token', {
+      metodo:'POST', semToken:true, corpo:{refresh_token: s.renovacao}});
+    guardarSessaoDaResposta(r);
+  }catch(erro){
+    if(erro.semRede) throw erro;
+    sairDaNuvem();
+    const e = new Error('a sessão venceu; entre de novo');
+    e.precisaEntrar = true;
+    throw e;
+  }
+}
+
+async function entrarNaNuvem(email, senha){
+  const r = await pedirNuvem('/auth/v1/token?grant_type=password', {
+    metodo:'POST', semToken:true,
+    corpo:{email: String(email || '').trim(), password: senha}});
+  guardarSessaoDaResposta(r);
+  return r;
+}
+
+function sairDaNuvem(){
+  try{ localStorage.removeItem(CHAVE_SESSAO_N); }catch(e){}
+}
+
+/* Sair de vez: além da sessão, esquece os marcadores de sincronia, para
+   uma próxima entrada baixar tudo do zero em vez de achar que já tem. */
+function esquecerNuvem(){
+  sairDaNuvem();
+  for(const c of [CHAVE_RECEBIDO, CHAVE_ENVIADO, CHAVE_ULTIMA_SIN]){
+    try{ localStorage.removeItem(c); }catch(e){}
+  }
+}
+
+/* ---------- o que ainda não subiu ---------- */
+
+function listaDe(tipo){
+  return tipo === 'orcamentos' ? lerHistorico() : lerContas();
+}
+
+function gravarLista(tipo, lista){
+  if(tipo === 'orcamentos'){
+    gravarHistorico(lista.slice().sort(
+      (a, b) => (b.atualizadoEm || 0) - (a.atualizadoEm || 0)));
+  }else{
+    gravarContas(lista);
+  }
+}
+
+/* Apagar de verdade não basta: sem deixar registro, o outro aparelho
+   mandaria o item de volta na sincronização seguinte. */
+function marcarRemovido(tipo, chave){
+  if(!chave) return;
+  const r = lerJson(CHAVE_REMOVIDOS, {});
+  r[tipo] = r[tipo] || {};
+  r[tipo][chave] = Date.now();
+  gravarJson(CHAVE_REMOVIDOS, r);
+  agendarSincronia();
+}
+
+function pendentesDe(tipo){
+  const cfg = TABELAS[tipo];
+  const enviado = (lerJson(CHAVE_ENVIADO, {})[tipo]) || {};
+  const removidos = (lerJson(CHAVE_REMOVIDOS, {})[tipo]) || {};
+  const lista = listaDe(tipo);
+  const vivas = new Set(lista.map(e => e[cfg.chaveLocal]).filter(Boolean));
+  const linhas = [];
+
+  for(const e of lista){
+    const k = e[cfg.chaveLocal];
+    if(!k) continue;
+    const quando = e.atualizadoEm || 0;
+    if(enviado[k] !== quando) linhas.push({chave:k, dados:e, quando:quando, removido:false});
+  }
+  for(const [k, quando] of Object.entries(removidos)){
+    /* um item apagado e depois restaurado volta a valer: a versão viva
+       ganha da lápide */
+    if(vivas.has(k)) continue;
+    if(enviado[k] !== quando) linhas.push({chave:k, dados:{}, quando:quando, removido:true});
+  }
+  return linhas;
+}
+
+async function enviarPendentes(tipo){
+  const linhas = pendentesDe(tipo);
+  if(!linhas.length) return 0;
+  const cfg = TABELAS[tipo];
+  const dono = (lerSessaoNuvem() || {}).dono;
+
+  for(let i = 0; i < linhas.length; i += LIMITE_PAGINA){
+    const lote = linhas.slice(i, i + LIMITE_PAGINA);
+    await comToken(() => pedirNuvem(
+      `/rest/v1/${cfg.tabela}?on_conflict=dono,${cfg.coluna}`, {
+        metodo:'POST',
+        headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},
+        corpo: lote.map(l => ({
+          dono: dono,
+          [cfg.coluna]: l.chave,
+          dados: l.removido ? {} : l.dados,
+          atualizado_em: l.quando,
+          removido: l.removido,
+        })),
+      }));
+  }
+
+  const enviado = lerJson(CHAVE_ENVIADO, {});
+  enviado[tipo] = enviado[tipo] || {};
+  for(const l of linhas) enviado[tipo][l.chave] = l.quando;
+  gravarJson(CHAVE_ENVIADO, enviado);
+  return linhas.length;
+}
+
+/* ---------- o que desceu ---------- */
+
+function aplicarRecebidas(tipo, linhas){
+  const cfg = TABELAS[tipo];
+  const por = new Map(listaDe(tipo)
+    .filter(e => e[cfg.chaveLocal])
+    .map(e => [e[cfg.chaveLocal], e]));
+
+  const removidos = lerJson(CHAVE_REMOVIDOS, {}); removidos[tipo] = removidos[tipo] || {};
+  const enviado = lerJson(CHAVE_ENVIADO, {});     enviado[tipo]   = enviado[tipo]   || {};
+  let mudou = 0;
+
+  for(const l of linhas){
+    const k = l[cfg.coluna];
+    if(!k) continue;
+    const aqui = por.get(k);
+    const la = Number(l.atualizado_em) || 0;
+    /* quando o item não está mais aqui, o que vale é a hora em que foi
+       apagado — senão uma exclusão recente seria desfeita pela nuvem */
+    const daqui = aqui ? (aqui.atualizadoEm || 0) : (removidos[tipo][k] || 0);
+    if(daqui >= la) continue;
+
+    if(l.removido){
+      if(aqui){ por.delete(k); mudou++; }
+      removidos[tipo][k] = la;
+    }else{
+      por.set(k, l.dados);
+      delete removidos[tipo][k];
+      mudou++;
+    }
+    /* veio de lá com esta hora: não precisa voltar para lá */
+    enviado[tipo][k] = la;
+  }
+
+  if(mudou) gravarLista(tipo, [...por.values()]);
+  gravarJson(CHAVE_REMOVIDOS, removidos);
+  gravarJson(CHAVE_ENVIADO, enviado);
+  return mudou;
+}
+
+async function receber(tipo){
+  const cfg = TABELAS[tipo];
+  const recebido = lerJson(CHAVE_RECEBIDO, {});
+  let desde = recebido[tipo] || '1970-01-01T00:00:00Z';
+  let mudou = 0;
+
+  /* gte e não gt: dois registros podem cair no mesmo instante, e aplicar
+     duas vezes o mesmo não faz mal — pular um faria */
+  for(let volta = 0; volta < 50; volta++){
+    const linhas = await comToken(() => pedirNuvem(
+      `/rest/v1/${cfg.tabela}` +
+      `?select=${cfg.coluna},dados,atualizado_em,gravado_em,removido` +
+      `&gravado_em=gte.${encodeURIComponent(desde)}` +
+      `&order=gravado_em.asc&limit=${LIMITE_PAGINA}`));
+    if(!Array.isArray(linhas) || !linhas.length) break;
+
+    mudou += aplicarRecebidas(tipo, linhas);
+    const ultima = linhas[linhas.length - 1].gravado_em;
+    recebido[tipo] = ultima;
+    gravarJson(CHAVE_RECEBIDO, recebido);
+    if(linhas.length < LIMITE_PAGINA) break;
+    if(ultima === desde) break;      /* não avançou: para, para não girar */
+    desde = ultima;
+  }
+  return mudou;
+}
+
+/* ---------- a sincronização ---------- */
+
+let sincronizando = false;
+let timerSincronia = null;
+
+function podeSincronizar(){
+  return nuvemConfigurada() && entrouNaNuvem();
+}
+
+function agendarSincronia(){
+  if(!podeSincronizar()) return;
+  clearTimeout(timerSincronia);
+  timerSincronia = setTimeout(() => sincronizar({silencioso:true}), 3000);
+}
+
+async function sincronizar(opcoes){
+  const o = opcoes || {};
+  if(sincronizando) return null;
+  if(!podeSincronizar()) return null;
+  if(navigator.onLine === false){
+    mostrarEstadoNuvem('offline');
+    return null;
+  }
+
+  sincronizando = true;
+  mostrarEstadoNuvem('indo');
+  try{
+    let baixados = 0, enviados = 0;
+    for(const tipo of Object.keys(TABELAS)){
+      baixados += await receber(tipo);
+      enviados += await enviarPendentes(tipo);
+    }
+    gravarJson(CHAVE_ULTIMA_SIN, Date.now());
+    if(baixados){
+      if(!el('painelHist').hidden) renderHistorico();
+      if(!el('secaoContas').hidden) renderContas();
+      if(!el('secaoInicio').hidden) renderInicio();
+    }
+    mostrarEstadoNuvem('ok');
+    return {baixados, enviados};
+  }catch(erro){
+    mostrarEstadoNuvem(erro.semRede ? 'offline' : 'erro', erro.message);
+    if(erro.precisaEntrar && !el('tranca')) { /* nada a fazer */ }
+    if(!o.silencioso) throw erro;
+    return null;
+  }finally{
+    sincronizando = false;
+  }
+}
+
+/* ---------- o aviso na tela ---------- */
+
+const RECADO_NUVEM = {
+  desligada: {texto:'', titulo:''},
+  fora:      {texto:'Nuvem desligada', titulo:'Entre para sincronizar'},
+  indo:      {texto:'Sincronizando…', titulo:'Trocando dados com a nuvem'},
+  ok:        {texto:'Tudo salvo na nuvem', titulo:''},
+  offline:   {texto:'Sem internet', titulo:'O que você lançar sobe quando o sinal voltar'},
+  erro:      {texto:'Nuvem com problema', titulo:''},
+};
+
+function mostrarEstadoNuvem(estado, detalhe){
+  const alvo = el('nuvemEstado');
+  if(!alvo) return;
+  const e = estado || (!nuvemConfigurada() ? 'desligada'
+                     : (entrouNaNuvem() ? 'ok' : 'fora'));
+  const r = RECADO_NUVEM[e] || RECADO_NUVEM.desligada;
+  alvo.hidden = !r.texto;
+  alvo.className = 'nuvem-estado ' + e;
+  alvo.textContent = r.texto;
+  const pendentes = podeSincronizar()
+    ? pendentesDe('orcamentos').length + pendentesDe('contas').length : 0;
+  if(e === 'ok' && pendentes){
+    alvo.textContent = `${pendentes} ${pendentes === 1 ? 'item' : 'itens'} para subir`;
+    alvo.className = 'nuvem-estado pendente';
+  }
+  alvo.title = detalhe || r.titulo;
+}
+
 /* ---------- senha de acesso ----------
    Isto é uma tranca de tela, não criptografia: serve para quem pega o
    aparelho destravado e abre o app. A senha não fica guardada em texto
@@ -2984,7 +3486,16 @@ function esquecerSessao(){
 function trancar(){
   document.body.classList.add('trancado');
   el('tranca').hidden = false;
-  el('acUsuario').value = '';
+  const naNuvem = nuvemConfigurada();
+  el('rotuloUsuario').textContent = naNuvem ? 'E-mail' : 'Usuário';
+  el('acUsuario').type = naNuvem ? 'email' : 'text';
+  el('acUsuario').setAttribute('inputmode', naNuvem ? 'email' : 'text');
+  el('trancaNota').textContent = naNuvem
+    ? 'Entre com o e-mail e a senha da sua conta. Os orçamentos e as ' +
+      'contas ficam guardados na nuvem e neste aparelho.'
+    : 'Se esquecer a senha não há como recuperá-la. Mantenha um backup ' +
+      'dos orçamentos.';
+  el('acUsuario').value = naNuvem ? ((lerSessaoNuvem() || {}).email || '') : '';
   el('acSenha').value = '';
   el('acErro').hidden = true;
   setTimeout(() => el('acUsuario').focus(), 60);
@@ -2996,6 +3507,52 @@ function destrancar(){
   el('tranca').hidden = true;
 }
 
+/* Com a nuvem ligada, a tranca deixa de ser decorativa: quem entra é o
+   Supabase. Mas o app precisa abrir na obra, sem sinal — então a cada
+   entrada bem-sucedida o app também guarda aqui o PBKDF2 da mesma
+   senha, e é ele que confere quando o prazo vence fora de área. */
+function exigeEntrada(){
+  return nuvemConfigurada() || temSenha();
+}
+
+async function entradaConfere(usuario, senha){
+  if(!nuvemConfigurada()) return await senhaConfere(usuario, senha);
+
+  if(navigator.onLine === false){
+    if(!temSenha()){
+      const e = new Error('Sem internet, e este aparelho ainda não entrou ' +
+        'nenhuma vez. Conecte à internet para entrar da primeira vez.');
+      e.mostrar = true;
+      throw e;
+    }
+    return await senhaConfere(usuario, senha);
+  }
+
+  try{
+    await entrarNaNuvem(usuario, senha);
+    /* guarda a mesma senha para valer offline da próxima vez */
+    await definirSenha(usuario, senha);
+    return true;
+  }catch(erro){
+    /* sem rede não é senha errada: cai para o que está guardado aqui */
+    if(erro.semRede && temSenha()) return await senhaConfere(usuario, senha);
+    if(erro.semRede){
+      const e = new Error('Sem internet, e este aparelho ainda não entrou ' +
+        'nenhuma vez. Conecte à internet para entrar da primeira vez.');
+      e.mostrar = true;
+      throw e;
+    }
+    return false;
+  }
+}
+
+/* Na primeira entrada com nuvem, o que já existe no aparelho precisa
+   subir; e o que já está na nuvem precisa descer. */
+async function depoisDeEntrar(){
+  if(!podeSincronizar()) return;
+  try{ await sincronizar({silencioso:true}); }catch(e){}
+}
+
 let tentativas = 0;
 
 async function tentarEntrar(evento){
@@ -3004,31 +3561,194 @@ async function tentarEntrar(evento){
   botao.disabled = true;
   botao.textContent = 'Conferindo…';
   try{
-    const ok = await senhaConfere(el('acUsuario').value, el('acSenha').value);
+    const ok = await entradaConfere(el('acUsuario').value, el('acSenha').value);
     if(ok){
       tentativas = 0;
       destrancar();
+      mostrarEstadoNuvem();
+      depoisDeEntrar();
       return;
     }
     tentativas++;
+    const comoChamar = nuvemConfigurada() ? 'E-mail' : 'Usuário';
     el('acErro').hidden = false;
-    el('acErro').textContent = 'Usuário ou senha não confere.';
+    el('acErro').textContent = `${comoChamar} ou senha não confere.`;
     el('acSenha').value = '';
     el('acSenha').focus();
     /* espera crescente, para dificultar tentativa após tentativa */
     if(tentativas >= 3){
       const espera = Math.min(10, tentativas - 2) * 1000;
       el('acErro').textContent =
-        `Usuário ou senha não confere. Aguarde ${espera / 1000}s.`;
+        `${comoChamar} ou senha não confere. Aguarde ${espera / 1000}s.`;
       await new Promise(r => setTimeout(r, espera));
     }
   }catch(erro){
     el('acErro').hidden = false;
-    el('acErro').textContent = 'Não consegui conferir a senha neste navegador.';
+    el('acErro').textContent = (erro && erro.mostrar)
+      ? erro.message
+      : 'Não consegui conferir a senha neste navegador.';
   }finally{
     botao.disabled = false;
     botao.textContent = 'Entrar';
   }
+}
+
+/* ---------- painel da nuvem ---------- */
+
+function abrirNuvem(){
+  const cfg = lerNuvem() || {};
+  el('nvUrl').value = cfg.url || '';
+  el('nvChave').value = cfg.chave || '';
+  el('nvAviso').hidden = true;
+  desenharSituacaoNuvem();
+  el('painelNuvem').hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function fecharNuvem(){
+  el('painelNuvem').hidden = true;
+  document.body.style.overflow = '';
+  mostrarEstadoNuvem();
+}
+
+function quandoFoi(ms){
+  if(!ms) return 'ainda não';
+  const min = Math.floor((Date.now() - ms) / 60000);
+  if(min < 1) return 'agora há pouco';
+  if(min < 60) return `há ${min} min`;
+  const h = Math.floor(min / 60);
+  if(h < 24) return `há ${h} ${h === 1 ? 'hora' : 'horas'}`;
+  return fmtDataBR(new Date(ms).toISOString().slice(0, 10));
+}
+
+function desenharSituacaoNuvem(){
+  const caixa = el('nvSituacao');
+  const sessao = lerSessaoNuvem();
+  el('nvLigada').hidden = !entrouNaNuvem();
+
+  if(!nuvemConfigurada()){
+    caixa.className = 'nuvem-situacao';
+    caixa.innerHTML = 'A nuvem ainda não está ligada. Os orçamentos e as ' +
+      'contas existem só dentro deste aparelho.';
+    return;
+  }
+  if(!entrouNaNuvem()){
+    caixa.className = 'nuvem-situacao parcial';
+    caixa.innerHTML = 'Endereço e chave guardados, mas ninguém entrou ainda. ' +
+      'Feche o app e entre com o seu e-mail e senha.';
+    return;
+  }
+  const pendentes = pendentesDe('orcamentos').length + pendentesDe('contas').length;
+  caixa.className = 'nuvem-situacao ligada';
+  caixa.innerHTML =
+    `Ligada como <b>${escapeHtml(sessao.email || '—')}</b>.<br>` +
+    `Última sincronia: <b>${quandoFoi(lerJson(CHAVE_ULTIMA_SIN, 0))}</b>.<br>` +
+    (pendentes
+      ? `<b>${plural(pendentes, 'item', 'itens')}</b> esperando para subir.`
+      : 'Tudo que está aqui já está na nuvem.');
+}
+
+function avisarNuvem(texto){
+  el('nvAviso').hidden = false;
+  el('nvAviso').textContent = texto;
+}
+
+async function salvarNuvem(){
+  const url = limparEndereco(el('nvUrl').value);
+  const chave = limparChave(el('nvChave').value);
+  if(!/^https?:\/\/.+/.test(url)) return avisarNuvem('O endereço não parece certo.');
+  if(chave.length < 20) return avisarNuvem('A chave não parece completa.');
+
+  const botao = el('nvSalvar');
+  botao.disabled = true;
+  botao.textContent = 'Conferindo…';
+  el('nvAviso').hidden = true;
+  const antes = lerNuvem();
+  gravarJson(CHAVE_NUVEM, {url: url, chave: chave});
+
+  const desfazer = () => {
+    if(antes) gravarJson(CHAVE_NUVEM, antes);
+    else try{ localStorage.removeItem(CHAVE_NUVEM); }catch(e){}
+    botao.disabled = false;
+    botao.textContent = 'Salvar e conectar';
+  };
+
+  try{
+    /* Uma leitura sem entrar. Com as regras ligadas, o esperado é vir
+       uma lista vazia — a regra não deixa o anônimo enxergar linha
+       nenhuma, mas o projeto responde. É isso que prova que o endereço
+       existe, que a chave foi aceita e que as tabelas estão lá. */
+    await pedirNuvem('/rest/v1/orcamentos?select=numero&limit=1', {semToken:true});
+  }catch(erro){
+    if(erro.semRede){
+      desfazer();
+      return avisarNuvem('Sem internet para conferir agora. Tente de novo com sinal.');
+    }
+    if(erro.status === 401){
+      desfazer();
+      return avisarNuvem('A chave não foi aceita por esse projeto. ' +
+        'Confira se copiou a chave anon / publishable, e não outra.');
+    }
+    if(erro.status === 404){
+      desfazer();
+      return avisarNuvem('O projeto respondeu, mas as tabelas não existem. ' +
+        'Rode o arquivo build/supabase.sql no SQL Editor do Supabase.');
+    }
+    desfazer();
+    return avisarNuvem('Não consegui falar com esse projeto: ' + erro.message);
+  }
+
+  botao.disabled = false;
+  botao.textContent = 'Salvar e conectar';
+  desenharSituacaoNuvem();
+  mostrarEstadoNuvem();
+  if(!entrouNaNuvem()){
+    avisarNuvem('Pronto. Agora feche e abra o app para entrar com o seu ' +
+      'e-mail e senha.');
+  }else{
+    avisarNuvem('Conexão salva.');
+  }
+}
+
+async function sincronizarAgora(){
+  const botao = el('nvSincronizar');
+  botao.disabled = true;
+  botao.textContent = 'Sincronizando…';
+  el('nvAviso').hidden = true;
+  try{
+    const r = await sincronizar({});
+    if(r) avisarNuvem(`Pronto: ${plural(r.enviados, 'item enviado', 'itens enviados')}, ` +
+      `${plural(r.baixados, 'item recebido', 'itens recebidos')}.`);
+    desenharSituacaoNuvem();
+    renderInicio();
+  }catch(erro){
+    avisarNuvem('Não deu certo: ' + (erro && erro.message ? erro.message : erro));
+  }finally{
+    botao.disabled = false;
+    botao.textContent = 'Sincronizar agora';
+  }
+}
+
+function sairDaConta(){
+  if(!confirm('Sair da conta neste aparelho?\n\nOs orçamentos e as contas ' +
+              'continuam aqui e continuam na nuvem.')) return;
+  esquecerNuvem();
+  desenharSituacaoNuvem();
+  mostrarEstadoNuvem();
+  avisarNuvem('Você saiu. Feche e abra o app para entrar de novo.');
+}
+
+function desligarNuvem(){
+  if(!confirm('Desligar a nuvem neste aparelho?\n\nOs orçamentos e as contas ' +
+              'continuam guardados aqui, e continuam guardados na nuvem. ' +
+              'O app volta a pedir só a senha do aparelho.')) return;
+  esquecerNuvem();
+  try{ localStorage.removeItem(CHAVE_NUVEM); }catch(e){}
+  el('nvUrl').value = '';
+  el('nvChave').value = '';
+  desenharSituacaoNuvem();
+  mostrarEstadoNuvem();
+  avisarNuvem('Nuvem desligada neste aparelho.');
 }
 
 /* ---------- painel da senha ---------- */
@@ -3316,6 +4036,7 @@ function renderHistorico(){
     const quem = e && e.cliNome ? ` de ${e.cliNome}` : '';
     if(!confirm(`Excluir o orçamento nº ${num}${quem}? Isso não pode ser desfeito.`)) return;
     gravarHistorico(lerHistorico().filter(x => x.orcNumero !== num));
+    marcarRemovido('orcamentos', num);
     /* se era o que está na tela, começa um novo para não ser regravado */
     if(num === el('orcNumero').value) novoOrcamento();
     renderHistorico();
@@ -3648,6 +4369,20 @@ el('painelAcesso').addEventListener('click', e => {
   if(e.target === el('painelAcesso')) fecharAcesso();
 });
 
+el('nuvemBtn').addEventListener('click', abrirNuvem);
+el('nvFechar').addEventListener('click', fecharNuvem);
+el('nvSalvar').addEventListener('click', salvarNuvem);
+el('nvSincronizar').addEventListener('click', sincronizarAgora);
+el('nvSair').addEventListener('click', sairDaConta);
+el('nvDesligar').addEventListener('click', desligarNuvem);
+el('nuvemEstado').addEventListener('click', abrirNuvem);
+el('painelNuvem').addEventListener('click', e => {
+  if(e.target === el('painelNuvem')) fecharNuvem();
+});
+/* o sinal voltou: sobe o que ficou esperando */
+window.addEventListener('online', () => sincronizar({silencioso:true}));
+window.addEventListener('offline', () => mostrarEstadoNuvem('offline'));
+
 el('msgBtn').addEventListener('click', abrirMensagens);
 el('msgFechar').addEventListener('click', fecharMensagens);
 el('msgSalvar').addEventListener('click', salvarMensagens);
@@ -3687,6 +4422,7 @@ el('painelHist').addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => {
   if(e.key !== 'Escape') return;
+  if(!el('painelNuvem').hidden) return fecharNuvem();
   if(!el('painelAcesso').hidden) return fecharAcesso();
   if(!el('painelMsg').hidden) return fecharMensagens();
   if(!el('painelHist').hidden) fecharHistorico();
@@ -3697,15 +4433,18 @@ window.addEventListener('beforeunload', salvar);
 document.addEventListener('visibilitychange', () => {
   if(document.visibilityState === 'hidden'){ salvar(); return; }
   /* voltou para o app: se o prazo venceu, tranca de novo */
-  if(temSenha() && !estaDestrancado() && el('tranca').hidden) trancar();
-  else if(temSenha() && !el('tranca').hidden) return;
-  else if(temSenha()) marcarDestrancado();
+  if(exigeEntrada() && !estaDestrancado() && el('tranca').hidden) trancar();
+  else if(exigeEntrada() && !el('tranca').hidden) return;
+  else if(exigeEntrada()) marcarDestrancado();
+  /* voltou para o app: boa hora para conferir se há novidade na nuvem */
+  if(el('tranca').hidden) sincronizar({silencioso:true});
 });
 
 /* ---------- início ---------- */
 
 /* mostra a tela de acesso quando há senha e a sessão ainda não foi aberta */
 if(document.body.classList.contains('trancado')) trancar();
+else if(exigeEntrada() && !estaDestrancado()) trancar();
 
 if(!restaurar()){
   el('orcData').value = hojeISO();
@@ -3720,6 +4459,9 @@ el('ctCategoria').innerHTML = '<option value="">— sem categoria —</option>' 
   CATEGORIAS.map(c => `<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`).join('');
 limparFormConta();
 abrirSecao(secaoGuardada());
+
+mostrarEstadoNuvem();
+if(el('tranca').hidden) sincronizar({silencioso:true});
 
 /* ---------- funcionamento offline ---------- */
 if('serviceWorker' in navigator && location.protocol.indexOf('http') === 0){

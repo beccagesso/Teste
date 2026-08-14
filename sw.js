@@ -4,7 +4,7 @@
    Ao publicar uma versão nova, troque o número em VERSAO — é isso que
    faz o iPhone baixar os arquivos atualizados em vez de usar os antigos. */
 
-const VERSAO = 'becca-orcamentos-v10';
+const VERSAO = 'becca-orcamentos-v11';
 
 const ARQUIVOS = [
   './',
@@ -38,6 +38,13 @@ self.addEventListener('fetch', evento => {
   const req = evento.request;
   if(req.method !== 'GET') return;
 
+  /* Só cuida dos arquivos do próprio app. As chamadas para o Supabase
+     saem daqui de fora sem passar por este cache — se passassem, uma
+     chamada que falhasse receberia de volta o index.html guardado, e o
+     app tentaria ler a página inteira como se fosse a resposta do
+     banco, sem erro visível. */
+  if(new URL(req.url).origin !== self.location.origin) return;
+
   evento.respondWith(
     fetch(req)
       .then(resposta => {
@@ -48,7 +55,10 @@ self.addEventListener('fetch', evento => {
         return resposta;
       })
       .catch(() => caches.match(req).then(
-        achou => achou || caches.match('./index.html')
+        /* só uma navegação merece cair no index.html; para os outros
+           arquivos, faltar é faltar */
+        achou => achou || (req.mode === 'navigate'
+          ? caches.match('./index.html') : Response.error())
       ))
   );
 });
