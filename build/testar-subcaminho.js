@@ -25,6 +25,9 @@ const checar=(c,m)=>{console.log(`  ${c?'ok  ':'FALHA'}  ${m}`); if(!c)falhas.pu
   const quebrados=[];
   p.on('response', r=>{ if(r.status()>=400) quebrados.push(`${r.status()} ${r.url()}`); });
   await p.goto(base,{waitUntil:'networkidle'});
+  /* o app abre no resumo do mês; daqui para a frente o teste é do editor */
+  await p.click('.secao-btn[data-secao="orcamentos"]');
+  await p.waitForTimeout(250);
 
   checar(quebrados.length===0, `nenhum arquivo faltando ${quebrados.length?'-> '+quebrados.join(' | '):''}`);
 

@@ -49,6 +49,14 @@ async function preencher(p, { cliente, obra, desc, qtd, unidade, valor }) {
 const guardados = p => p.evaluate(() =>
   JSON.parse(localStorage.getItem('beccaGesso.historico.v1') || '[]'));
 
+/* O app abre no resumo do mês. Estes testes são da seção de orçamentos,
+   então a primeira coisa é ir para ela. A escolha fica guardada, então
+   as próximas aberturas já caem no lugar certo. */
+async function irParaOrcamentos(p) {
+  await p.click('.secao-btn[data-secao="orcamentos"]');
+  await p.waitForTimeout(250);
+}
+
 (async () => {
   const srv = await servidor();
   const base = `http://127.0.0.1:${srv.address().port}`;
@@ -58,6 +66,7 @@ const guardados = p => p.evaluate(() =>
   const erros = [];
   p.on('pageerror', e => erros.push(String(e)));
   await p.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
+  await irParaOrcamentos(p);
 
   // ---------- 1. arquivamento automático ----------
   console.log('\n[1] Arquivamento automático');

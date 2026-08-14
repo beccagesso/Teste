@@ -4,7 +4,7 @@
    Ao publicar uma versão nova, troque o número em VERSAO — é isso que
    faz o iPhone baixar os arquivos atualizados em vez de usar os antigos. */
 
-const VERSAO = 'becca-orcamentos-v9';
+const VERSAO = 'becca-orcamentos-v10';
 
 const ARQUIVOS = [
   './',

@@ -282,6 +282,174 @@
   /* sem isto o display:grid acima venceria o hidden e o bloco apareceria */
   .actions-sec[hidden]{display:none;}
 
+  /* ---------- TELA DE INÍCIO ---------- */
+  .secao-inicio{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:18px;
+    max-width:880px;
+    margin:0 auto;
+    align-items:start;
+  }
+  .bloco{
+    background:var(--paper);
+    border:1px solid var(--rule);
+    border-radius:var(--radius);
+    padding:18px 20px;
+    box-shadow:0 8px 24px rgba(20,28,48,0.06);
+  }
+  .bloco-topo{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:14px;
+    padding-bottom:10px;
+    border-bottom:1px solid var(--rule);
+  }
+  .bloco-topo h2{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:13px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.1em;
+    color:var(--ink);
+  }
+  .bloco-nota{font-size:10.5px;color:var(--ink-soft);text-transform:lowercase;}
+  .bloco-link{
+    font-size:10.5px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--ink-soft);
+    border:none;
+    border-bottom:1px solid var(--rule);
+    background:none;
+    padding:0 0 1px;
+  }
+  .bloco-link:hover{color:var(--ink);border-bottom-color:var(--ink);}
+  .bloco-rodape{
+    margin-top:12px;
+    padding-top:10px;
+    border-top:1px solid var(--rule);
+    font-size:11px;
+    color:var(--ink-soft);
+    line-height:1.6;
+  }
+  .bloco-rodape b{color:var(--ink);font-weight:600;}
+
+  .cartoes{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:10px;
+  }
+  .cartao{
+    border:1px solid var(--rule);
+    border-top:3px solid var(--rule);
+    border-radius:var(--radius);
+    background:#fbfbfc;
+    padding:12px 10px;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:3px;
+    text-align:left;
+    line-height:1.25;
+  }
+  .cartao:hover{border-color:var(--ink-soft);border-top-color:var(--ink-soft);}
+  .cartao-rot{
+    font-size:9px;
+    text-transform:uppercase;
+    letter-spacing:0.07em;
+    font-weight:600;
+    color:var(--ink-soft);
+  }
+  .cartao-val{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:15px;
+    font-weight:600;
+    color:var(--ink);
+    white-space:nowrap;
+  }
+  .cartao-sub{font-size:10px;color:var(--ink-soft);}
+  /* o tom diz de longe se o número é bom, neutro ou pede atenção */
+  .cartao.alerta{border-top-color:#a8324a;background:#fdf5f7;}
+  .cartao.alerta .cartao-val{color:#a8324a;}
+  .cartao.alerta:hover{border-color:#a8324a;border-top-color:#a8324a;}
+  .cartao.atencao{border-top-color:var(--gold);background:#fdfaf3;}
+  .cartao.atencao .cartao-val{color:var(--gold);}
+  .cartao.atencao:hover{border-color:var(--gold);border-top-color:var(--gold);}
+  .cartao.bom{border-top-color:var(--ok);}
+  .cartao.bom .cartao-val{color:var(--ok);}
+  .cartao.bom:hover{border-color:var(--ok);border-top-color:var(--ok);}
+
+  .mini-item{
+    display:grid;
+    grid-template-columns:1fr auto auto;
+    grid-template-areas:"nome valor botao"
+                        "sub  sub   botao";
+    align-items:center;
+    gap:3px 14px;
+    padding:11px 0;
+    border-bottom:1px solid var(--rule);
+  }
+  .mini-item:last-child{border-bottom:none;padding-bottom:0;}
+  .mini-item:first-child{padding-top:0;}
+  .mini-nome{
+    grid-area:nome;
+    font-size:13px;
+    font-weight:600;
+    overflow-wrap:anywhere;
+  }
+  .mini-valor{
+    grid-area:valor;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    font-weight:600;
+    text-align:right;
+    white-space:nowrap;
+  }
+  .mini-sub{
+    grid-area:sub;
+    font-size:10.5px;
+    color:var(--ink-soft);
+    line-height:1.5;
+    overflow-wrap:anywhere;
+  }
+  .mini-sub .atrasado{color:#a8324a;font-weight:600;}
+  .mini-sub .hoje{color:var(--gold);font-weight:600;}
+  .mini-btn{
+    grid-area:botao;
+    align-self:center;
+    padding:9px 12px;
+    border:1px solid var(--rule);
+    border-radius:var(--radius);
+    background:#fff;
+    font-size:10.5px;
+    font-weight:600;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    white-space:nowrap;
+  }
+  .mini-btn:hover{border-color:var(--ink);color:var(--ink);}
+  .mini-btn.destaque{border-color:var(--ok);color:var(--ok);}
+  .mini-restam{
+    font-size:10.5px;
+    color:var(--ink-soft);
+    padding-top:11px;
+    border-top:1px solid var(--rule);
+    margin-top:11px;
+  }
+  .inicio-vazio{text-align:center;color:var(--ink-soft);font-size:12.5px;line-height:2;}
+  .inicio-atalhos{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:8px 22px;
+    padding:4px 0 2px;
+  }
+
   /* ---------- CONTAS A PAGAR ---------- */
   .contas-painel{
     background:var(--paper);
@@ -1013,7 +1181,7 @@
     body{background:#fff;background-image:none;}
     .app{display:block;padding:0;max-width:none;}
     header.top, .editor, .actions, .autosave, .painel,
-    .secoes, .secao-contas{display:none !important;}
+    .secoes, .secao-contas, .secao-inicio{display:none !important;}
     .secao-orcamentos{display:block !important;}
     .doc-wrap{box-shadow:none;border:none;}
     .doc{padding:14mm 16mm;min-height:0;}
@@ -1037,7 +1205,17 @@
     .app{padding:20px 16px 60px;}
     .secao-orcamentos, .secao-contas{grid-template-columns:1fr;}
     .secoes{margin:12px 0 18px;}
-    .secao-btn{font-size:11.5px;padding:14px 8px;letter-spacing:0.05em;}
+    .secao-btn{font-size:10.5px;padding:12px 4px;letter-spacing:0.03em;}
+    .cartoes{grid-template-columns:1fr 1fr;}
+    .cartoes > :last-child{grid-column:1 / -1;}
+    .bloco{padding:16px 14px;}
+    .mini-item{
+      grid-template-columns:1fr auto;
+      grid-template-areas:"nome  valor"
+                          "sub   sub"
+                          "botao botao";
+    }
+    .mini-btn{justify-self:stretch;margin-top:9px;}
     .contas-painel{padding:16px 14px;}
     .contas-resumo{gap:6px;}
     .conta-chip .chip-val{font-size:12.5px;}
@@ -1129,10 +1307,69 @@
   </header>
 
   <nav class="secoes" aria-label="Seções do app">
-    <button type="button" class="secao-btn ativo" data-secao="orcamentos"
-            aria-current="page">Orçamentos</button>
+    <button type="button" class="secao-btn ativo" data-secao="inicio"
+            aria-current="page">Início</button>
+    <button type="button" class="secao-btn" data-secao="orcamentos">Orçamentos</button>
     <button type="button" class="secao-btn" data-secao="contas">Contas a pagar</button>
   </nav>
+
+  <!-- ============ SEÇÃO: INÍCIO ============ -->
+  <section class="secao secao-inicio" id="secaoInicio" hidden>
+
+    <div class="bloco" id="blocoOrc">
+      <div class="bloco-topo">
+        <h2>Orçamentos</h2>
+        <span class="bloco-nota" id="notaMesOrc"></span>
+      </div>
+      <div class="cartoes" id="cartoesOrc"></div>
+      <div class="bloco-rodape" id="anoOrc"></div>
+    </div>
+
+    <div class="bloco" id="blocoContas">
+      <div class="bloco-topo">
+        <h2>Contas a pagar</h2>
+        <span class="bloco-nota" id="notaMesContas"></span>
+      </div>
+      <div class="cartoes" id="cartoesContas"></div>
+      <div class="bloco-rodape" id="anoContas"></div>
+    </div>
+
+    <div class="bloco" id="blocoVencendo" hidden>
+      <div class="bloco-topo">
+        <h2>Vencendo agora</h2>
+        <button type="button" class="bloco-link" data-vai="contas">Ver todas</button>
+      </div>
+      <div id="listaVencendo"></div>
+    </div>
+
+    <div class="bloco" id="blocoRetornos" hidden>
+      <div class="bloco-topo">
+        <h2>Para dar retorno</h2>
+      </div>
+      <div id="listaRetornos"></div>
+    </div>
+
+    <div class="bloco" id="blocoUltimos" hidden>
+      <div class="bloco-topo">
+        <h2>Últimos orçamentos</h2>
+        <button type="button" class="bloco-link" data-acao="hist:">Ver histórico</button>
+      </div>
+      <div id="listaUltimos"></div>
+    </div>
+
+    <div class="bloco inicio-vazio" id="blocoVazio" hidden>
+      <p>Ainda não há nada para resumir aqui.</p>
+      <p>Comece por um <button type="button" class="bloco-link" data-vai="orcamentos">orçamento</button>
+         ou lance uma <button type="button" class="bloco-link" data-vai="contas">conta a pagar</button>.</p>
+    </div>
+
+    <!-- o histórico é a porta do backup, das mensagens e da senha; sem
+         este atalho não haveria como chegar lá a partir do início -->
+    <div class="inicio-atalhos">
+      <button type="button" class="bloco-link" data-acao="hist:">Histórico, backup e ajustes</button>
+    </div>
+
+  </section>
 
   <!-- ============ SEÇÃO: ORÇAMENTOS ============ -->
   <section class="secao secao-orcamentos" id="secaoOrcamentos">
@@ -2767,6 +3004,7 @@ async function aoEscolherBackup(evento){
 const CHAVE_SECAO = 'beccaGesso.secao.v1';
 
 const SECOES = {
+  inicio:     {alvo:'secaoInicio',     titulo:'resumo do mês'},
   orcamentos: {alvo:'secaoOrcamentos', titulo:'documento pronto para impressão / PDF'},
   contas:     {alvo:'secaoContas',     titulo:'o que a empresa tem a pagar'},
 };
@@ -2785,12 +3023,13 @@ function abrirSecao(nome){
   el('tituloSecao').textContent = SECOES[escolhida].titulo;
   try{ localStorage.setItem(CHAVE_SECAO, escolhida); }catch(e){}
   if(escolhida === 'contas') renderContas();
+  if(escolhida === 'inicio') renderInicio();
   window.scrollTo(0, 0);
 }
 
 function secaoGuardada(){
-  try{ return localStorage.getItem(CHAVE_SECAO) || 'orcamentos'; }
-  catch(e){ return 'orcamentos'; }
+  try{ return localStorage.getItem(CHAVE_SECAO) || 'inicio'; }
+  catch(e){ return 'inicio'; }
 }
 
 /* ---------- contas a pagar ---------- */
@@ -3084,6 +3323,224 @@ function renderContas(){
   ligar('ct-excluir', excluirConta);
 }
 
+/* ---------- tela de início ----------
+   Um resumo do que precisa de atenção hoje. Não guarda nada próprio: é
+   tudo lido do histórico e das contas na hora de mostrar. */
+
+function mesISO(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+function nomeDoMes(){
+  return new Date().toLocaleDateString('pt-BR', {month:'long', year:'numeric'});
+}
+
+function somaValores(lista){
+  return lista.reduce((soma, e) => soma + (e.valor || e.total || 0), 0);
+}
+
+function resumoOrcamentos(){
+  const mes = mesISO();
+  const ano = String(new Date().getFullYear());
+  const todos = lerHistorico();
+  const doMes = todos.filter(e => String(e.orcData || '').startsWith(mes));
+  const doAno = todos.filter(e => String(e.orcData || '').startsWith(ano));
+  const comSituacao = (l, s) => l.filter(e => situacaoValida(e.situacao) === s);
+  const grupo = l => ({qtd: l.length, valor: somaValores(l)});
+  return {
+    mes: grupo(doMes),
+    aprovadosMes: grupo(comSituacao(doMes, 'aprovado')),
+    /* aguardando não é do mês: um orçamento de abril ainda espera resposta */
+    aguardando: grupo(comSituacao(todos, 'enviado')),
+    ano: grupo(doAno),
+    aprovadosAno: grupo(comSituacao(doAno, 'aprovado')),
+  };
+}
+
+const DIAS_VENCENDO = 7;
+
+function resumoContasInicio(){
+  const mes = mesISO();
+  const todas = lerContas();
+  const abertas = todas.filter(c => !c.pago);
+  const dias = c => diasAteVencer(c.vencimento);
+  const grupo = l => ({qtd: l.length, valor: somaValores(l)});
+  return {
+    vencidas: grupo(abertas.filter(c => dias(c) !== null && dias(c) < 0)),
+    /* "vence em 7 dias" inclui hoje: hoje é o prazo mais curto que existe */
+    semana: grupo(abertas.filter(c => {
+      const d = dias(c);
+      return d !== null && d >= 0 && d <= DIAS_VENCENDO;
+    })),
+    pagasMes: grupo(todas.filter(c => c.pago && String(c.pagoEm || '').startsWith(mes))),
+    abertas: grupo(abertas),
+  };
+}
+
+/* O que já venceu ou vence dentro da semana, do mais urgente para o menos. */
+function contasVencendo(){
+  return lerContas()
+    .filter(c => {
+      if(c.pago) return false;
+      const d = diasAteVencer(c.vencimento);
+      return d !== null && d <= DIAS_VENCENDO;
+    })
+    .sort((a, b) => String(a.vencimento).localeCompare(String(b.vencimento)));
+}
+
+function cartao(c){
+  return `<button type="button" class="cartao ${c.tom || ''}"${
+    c.acao ? ` data-acao="${escapeAttr(c.acao)}"` : ''}>
+      <span class="cartao-rot">${escapeHtml(c.rot)}</span>
+      <span class="cartao-val">${fmtMoeda(c.valor)}</span>
+      <span class="cartao-sub">${escapeHtml(c.sub)}</span>
+    </button>`;
+}
+
+const plural = (n, um, muitos) => `${n} ${n === 1 ? um : muitos}`;
+
+function renderInicio(){
+  const orc = resumoOrcamentos();
+  const ct = resumoContasInicio();
+  const temAlgo = lerHistorico().length > 0 || lerContas().length > 0;
+
+  el('blocoVazio').hidden = temAlgo;
+  for(const id of ['blocoOrc', 'blocoContas'])
+    if(el(id)) el(id).hidden = !temAlgo;
+
+  el('notaMesOrc').textContent = nomeDoMes();
+  el('notaMesContas').textContent = nomeDoMes();
+
+  el('cartoesOrc').innerHTML = [
+    cartao({rot:'Feitos no mês', valor:orc.mes.valor, acao:'hist:',
+            sub:plural(orc.mes.qtd, 'orçamento', 'orçamentos')}),
+    cartao({rot:'Aprovados no mês', valor:orc.aprovadosMes.valor,
+            tom:orc.aprovadosMes.qtd ? 'bom' : '', acao:'hist:aprovado',
+            sub:plural(orc.aprovadosMes.qtd, 'orçamento', 'orçamentos')}),
+    cartao({rot:'Aguardando resposta', valor:orc.aguardando.valor,
+            tom:orc.aguardando.qtd ? 'atencao' : '', acao:'hist:enviado',
+            sub:plural(orc.aguardando.qtd, 'enviado', 'enviados')}),
+  ].join('');
+
+  el('anoOrc').innerHTML = orc.ano.qtd
+    ? `No ano: <b>${plural(orc.ano.qtd, 'orçamento', 'orçamentos')}</b> somando ` +
+      `<b>${fmtMoeda(orc.ano.valor)}</b>, dos quais ` +
+      `<b>${fmtMoeda(orc.aprovadosAno.valor)}</b> aprovados.`
+    : 'Nenhum orçamento neste ano ainda.';
+
+  el('cartoesContas').innerHTML = [
+    cartao({rot:'Vencidas', valor:ct.vencidas.valor, acao:'contas:vencidas',
+            tom:ct.vencidas.qtd ? 'alerta' : '',
+            sub:plural(ct.vencidas.qtd, 'conta', 'contas')}),
+    cartao({rot:`Vence em ${DIAS_VENCENDO} dias`, valor:ct.semana.valor,
+            tom:ct.semana.qtd ? 'atencao' : '', acao:'contas:avencer',
+            sub:plural(ct.semana.qtd, 'conta', 'contas')}),
+    cartao({rot:'Pagas no mês', valor:ct.pagasMes.valor, acao:'contas:pagas',
+            tom:ct.pagasMes.qtd ? 'bom' : '',
+            sub:plural(ct.pagasMes.qtd, 'conta', 'contas')}),
+  ].join('');
+
+  el('anoContas').innerHTML = ct.abertas.qtd
+    ? `Em aberto no total: <b>${fmtMoeda(ct.abertas.valor)}</b> em ` +
+      `<b>${plural(ct.abertas.qtd, 'conta', 'contas')}</b>.`
+    : 'Nenhuma conta em aberto.';
+
+  renderVencendo();
+  renderRetornosInicio();
+  renderUltimos();
+}
+
+const LIMITE_LISTA_INICIO = 5;
+
+function renderVencendo(){
+  const todas = contasVencendo();
+  el('blocoVencendo').hidden = !todas.length;
+  if(!todas.length) return;
+
+  const lista = todas.slice(0, LIMITE_LISTA_INICIO);
+  el('listaVencendo').innerHTML = lista.map(c => {
+    const d = diasAteVencer(c.vencimento);
+    let quando;
+    if(d < 0) quando = `<span class="atrasado">venceu há ${
+      plural(Math.abs(d), 'dia', 'dias')}</span>`;
+    else if(d === 0) quando = '<span class="hoje">vence hoje</span>';
+    else quando = `vence em ${plural(d, 'dia', 'dias')}`;
+    return `
+      <div class="mini-item">
+        <div class="mini-nome">${escapeHtml(c.descricao)}</div>
+        <div class="mini-valor">${fmtMoeda(c.valor || 0)}</div>
+        <div class="mini-sub">${quando} · ${fmtDataBR(c.vencimento)}${
+          c.fornecedor ? ' · ' + escapeHtml(c.fornecedor) : ''}</div>
+        <button type="button" class="mini-btn destaque ini-pagar"
+                data-id="${escapeAttr(c.id)}">Marcar paga</button>
+      </div>`;
+  }).join('') + (todas.length > lista.length
+    ? `<div class="mini-restam">e mais ${plural(
+        todas.length - lista.length, 'conta', 'contas')} nesse prazo.</div>`
+    : '');
+
+  el('listaVencendo').querySelectorAll('.ini-pagar').forEach(b =>
+    b.addEventListener('click', ev => {
+      alternarPagamento(ev.currentTarget.dataset.id);
+      renderInicio();
+    }));
+}
+
+function renderRetornosInicio(){
+  const pendentes = orcamentosParaRetorno();
+  el('blocoRetornos').hidden = !pendentes.length;
+  if(!pendentes.length) return;
+
+  el('listaRetornos').innerHTML = pendentes
+    .slice(0, LIMITE_LISTA_INICIO)
+    .map(({entrada: e, pendente: p}) => `
+      <div class="mini-item">
+        <div class="mini-nome">${escapeHtml(e.cliNome || 'Sem nome')}</div>
+        <div class="mini-valor">${fmtMoeda(e.total || 0)}</div>
+        <div class="mini-sub">Nº ${escapeHtml(e.orcNumero)} · enviado há ${
+          plural(p.dias, 'dia', 'dias')}</div>
+        <button type="button" class="mini-btn ini-msg"
+                data-num="${escapeAttr(e.orcNumero)}"
+                data-etapa="${p.etapa}">Mandar mensagem</button>
+      </div>`).join('');
+
+  el('listaRetornos').querySelectorAll('.ini-msg').forEach(b =>
+    b.addEventListener('click', ev => {
+      abrirConversa(ev.currentTarget.dataset.num,
+        Number(ev.currentTarget.dataset.etapa));
+      renderInicio();
+    }));
+}
+
+function renderUltimos(){
+  const todos = lerHistorico().slice(0, LIMITE_LISTA_INICIO);
+  el('blocoUltimos').hidden = !todos.length;
+  if(!todos.length) return;
+
+  const rotulo = s => (SITUACOES.find(x => x.chave === s) || SITUACOES[0]).rotulo;
+  el('listaUltimos').innerHTML = todos.map(e => {
+    const sit = situacaoValida(e.situacao);
+    return `
+      <div class="mini-item">
+        <div class="mini-nome">${escapeHtml(e.cliNome || 'Sem nome')}</div>
+        <div class="mini-valor">${fmtMoeda(e.total || 0)}</div>
+        <div class="mini-sub">Nº ${escapeHtml(e.orcNumero || '—')} · ${
+          fmtDataBR(e.orcData)} · ${rotulo(sit)}</div>
+        <button type="button" class="mini-btn ini-abrir"
+                data-num="${escapeAttr(e.orcNumero)}">Abrir</button>
+      </div>`;
+  }).join('');
+
+  el('listaUltimos').querySelectorAll('.ini-abrir').forEach(b =>
+    b.addEventListener('click', ev => {
+      const e = lerHistorico().find(x => x.orcNumero === ev.currentTarget.dataset.num);
+      if(!e) return;
+      carregarOrcamento(e);
+      abrirSecao('orcamentos');
+    }));
+}
+
 /* ---------- senha de acesso ----------
    Isto é uma tranca de tela, não criptografia: serve para quem pega o
    aparelho destravado e abre o app. A senha não fica guardada em texto
@@ -3342,6 +3799,8 @@ function abrirHistorico(){
 function fecharHistorico(){
   el('painelHist').hidden = true;
   document.body.style.overflow = '';
+  /* mudar a situação de um orçamento muda os números do início */
+  if(!el('secaoInicio').hidden) renderInicio();
 }
 
 let filtroSituacao = '';         /* vazio = todas */
@@ -3850,6 +4309,20 @@ document.querySelectorAll('.secao-btn').forEach(b =>
 el('ctSalvar').addEventListener('click', salvarConta);
 el('ctCancelar').addEventListener('click', limparFormConta);
 el('contasBusca').addEventListener('input', renderContas);
+
+/* os cartões do início levam à seção certa já filtrada */
+el('secaoInicio').addEventListener('click', ev => {
+  const cartaoTocado = ev.target.closest('[data-acao]');
+  if(cartaoTocado){
+    const [onde, filtro] = cartaoTocado.dataset.acao.split(':');
+    if(onde === 'hist'){ filtroSituacao = filtro || ''; abrirHistorico(); }
+    else { filtroContas = filtro || ''; abrirSecao('contas'); }
+    return;
+  }
+  const atalho = ev.target.closest('[data-vai]');
+  if(atalho) abrirSecao(atalho.dataset.vai);
+});
+
 
 /* fecha ao tocar fora da caixa ou com Esc */
 el('painelHist').addEventListener('click', e => {

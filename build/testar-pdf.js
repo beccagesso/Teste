@@ -58,6 +58,14 @@ async function gerar(p, qtdServicos) {
   return Buffer.from(b64, 'base64');
 }
 
+/* O app abre no resumo do mês. Estes testes são da seção de orçamentos,
+   então a primeira coisa é ir para ela. A escolha fica guardada, então
+   as próximas aberturas já caem no lugar certo. */
+async function irParaOrcamentos(p) {
+  await p.click('.secao-btn[data-secao="orcamentos"]');
+  await p.waitForTimeout(250);
+}
+
 (async () => {
   const srv = await servidor();
   const base = `http://127.0.0.1:${srv.address().port}`;
@@ -67,6 +75,7 @@ async function gerar(p, qtdServicos) {
   const erros = [];
   p.on('pageerror', e => erros.push(String(e)));
   await p.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
+  await irParaOrcamentos(p);
 
   await p.fill('#cliNome', 'Construtora Alvorada Ltda');
   await p.fill('#cliEndereco', 'Rua das Palmeiras, 480 — Centro, Bauru/SP');

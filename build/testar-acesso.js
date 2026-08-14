@@ -52,6 +52,9 @@ async function reabrirApp(ctx, pagina, base, erros) {
 }
 
 async function definirPelaTela(p, { usuario, senha, atual }) {
+  /* o histórico é a porta da tela de senha, e ele mora no editor */
+  await p.click('.secao-btn[data-secao="orcamentos"]');
+  await p.waitForTimeout(200);
   await p.click('#histBtn');
   await p.waitForTimeout(200);
   await p.click('#acessoBtn');
@@ -74,6 +77,9 @@ async function definirPelaTela(p, { usuario, senha, atual }) {
   p.on('pageerror', e => erros.push(String(e)));
   p.on('dialog', d => d.accept());
   await p.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
+  /* o app abre no resumo; estes testes mexem no orçamento em andamento */
+  await p.click('.secao-btn[data-secao="orcamentos"]');
+  await p.waitForTimeout(250);
 
   // ---------- 1. sem senha, o app abre direto ----------
   console.log('\n[1] Sem senha definida');

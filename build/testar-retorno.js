@@ -62,6 +62,14 @@ const envelhecer = (p, numero, dias) => p.evaluate(({ numero, dias }) => {
   localStorage.setItem(chave, JSON.stringify(lista));
 }, { numero, dias });
 
+/* O app abre no resumo do mês. Estes testes são da seção de orçamentos,
+   então a primeira coisa é ir para ela. A escolha fica guardada, então
+   as próximas aberturas já caem no lugar certo. */
+async function irParaOrcamentos(p) {
+  await p.click('.secao-btn[data-secao="orcamentos"]');
+  await p.waitForTimeout(250);
+}
+
 (async () => {
   const srv = await servidor();
   const base = `http://127.0.0.1:${srv.address().port}`;
@@ -71,6 +79,7 @@ const envelhecer = (p, numero, dias) => p.evaluate(({ numero, dias }) => {
   const erros = [];
   p.on('pageerror', e => erros.push(String(e)));
   await p.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
+  await irParaOrcamentos(p);
 
   /* guarda o que seria aberto no WhatsApp, sem abrir de verdade */
   await p.addInitScript(() => { window.__aberto = []; });

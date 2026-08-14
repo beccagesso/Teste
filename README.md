@@ -3,12 +3,14 @@
 Aplicativo da Becca Gesso. Funciona no navegador, instala na tela de início do
 iPhone e continua funcionando sem internet.
 
-O app tem duas seções, trocadas pelos botões abaixo do cabeçalho:
+O app tem três seções, trocadas pelos botões abaixo do cabeçalho:
 
+- **Início** — o resumo do mês: quanto foi orçado, o que está aprovado, o
+  que vence agora e quem está esperando resposta.
 - **Orçamentos** — montar, imprimir e mandar orçamento pelo WhatsApp.
 - **Contas a pagar** — o que a empresa deve, com vencimento e situação.
 
-Ele abre na última seção que você usou.
+Ele abre no início e, depois, sempre na última seção que você usou.
 
 ## Colocar o app no ar (uma vez só)
 
@@ -201,6 +203,49 @@ linear) ou **un.** (unidade). Ela aparece junto da quantidade no orçamento —
 > usar o app no iPhone e no computador, cada um terá o seu próprio histórico e
 > a sua própria numeração.
 
+## A tela de início
+
+A primeira coisa que aparece ao abrir o app é o resumo do mês. Ela não
+guarda nada próprio: é tudo lido dos orçamentos e das contas na hora.
+
+### Os seis números
+
+Do lado dos **orçamentos**:
+
+- **Feitos no mês** — quanto você orçou neste mês, e quantos orçamentos.
+- **Aprovados no mês** — o que já virou serviço.
+- **Aguardando resposta** — tudo que está marcado como enviado e ainda não
+  teve resposta, de qualquer mês. Um orçamento de abril que ninguém
+  respondeu continua contando aqui.
+
+Do lado das **contas a pagar**:
+
+- **Vencidas** — o que já passou do prazo.
+- **Vence em 7 dias** — o que vence de hoje até daqui a uma semana. O que já
+  venceu não aparece de novo aqui: fica só em "vencidas".
+- **Pagas no mês** — quanto já saiu neste mês.
+
+Cada cartão é um atalho: tocar em **Vencidas** abre as contas já filtradas
+pelas vencidas, tocar em **Aprovados** abre o histórico filtrado pelos
+aprovados. Abaixo dos cartões, uma linha traz o total do ano (nos
+orçamentos) e o total em aberto (nas contas).
+
+### As três listas
+
+- **Vencendo agora** — o que já venceu ou vence dentro de sete dias, da mais
+  atrasada para a mais distante, com um botão para marcar paga sem sair da
+  tela. Mostra até cinco e avisa quantas ficaram de fora.
+- **Para dar retorno** — os orçamentos enviados que já passaram de 1, 5 ou 10
+  dias sem resposta, com o botão que abre a conversa no WhatsApp.
+- **Últimos orçamentos** — os cinco mais recentes, com a situação de cada um
+  e um botão para abrir.
+
+No pé fica **Histórico, backup e ajustes**, que é por onde se chega ao
+backup, às mensagens de retorno e à senha de acesso.
+
+> A tela de início não vai para o papel: imprimir continua saindo só com o
+> orçamento.
+
 ## Contas a pagar
 
 A segunda seção do app é o controle do que a empresa tem a pagar: material,
@@ -351,6 +396,7 @@ node build/testar-backup.js
 node build/testar-retorno.js
 node build/testar-acesso.js
 node build/testar-contas.js
+node build/testar-inicio.js
 node build/testar-subcaminho.js
 ```
 

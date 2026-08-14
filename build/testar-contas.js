@@ -92,7 +92,7 @@ const descricoesVisiveis = p => p.evaluate(() =>
 
   // ---------- 1. navegação entre as seções ----------
   console.log('\n[1] Navegação entre as seções');
-  checar(await p.locator('#secaoOrcamentos').isVisible(), 'abre nos orçamentos');
+  checar(await p.locator('#secaoInicio').isVisible(), 'abre no resumo do mês');
   checar(await p.locator('#secaoContas').isHidden(), 'as contas começam escondidas');
 
   await p.click('.secao-btn[data-secao="contas"]');
@@ -108,6 +108,7 @@ const descricoesVisiveis = p => p.evaluate(() =>
   await p.click('.secao-btn[data-secao="orcamentos"]');
   await p.waitForTimeout(200);
   checar(await p.locator('#secaoOrcamentos').isVisible(), 'dá para voltar aos orçamentos');
+  checar(await p.locator('#secaoContas').isHidden(), 'e as contas somem de novo');
 
   /* a seção escolhida tem de sobreviver a fechar e abrir o app */
   await p.click('.secao-btn[data-secao="contas"]');

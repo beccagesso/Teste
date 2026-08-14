@@ -38,6 +38,14 @@ function checar(cond, msg) {
   if (!cond) falhas.push(msg);
 }
 
+/* O app abre no resumo do mês. Estes testes são da seção de orçamentos,
+   então a primeira coisa é ir para ela. A escolha fica guardada, então
+   as próximas aberturas já caem no lugar certo. */
+async function irParaOrcamentos(p) {
+  await p.click('.secao-btn[data-secao="orcamentos"]');
+  await p.waitForTimeout(250);
+}
+
 (async () => {
   const srv = await servidor();
   const base = `http://127.0.0.1:${srv.address().port}`;
@@ -56,6 +64,7 @@ function checar(cond, msg) {
   });
 
   await page.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
+  await irParaOrcamentos(page);
   checar(erros.length === 0, `sem erros de JavaScript ${erros.length ? '-> ' + erros.join(' | ') : ''}`);
   checar(externos.length === 0, `sem requisições externas ${externos.length ? '-> ' + externos.join(' | ') : ''}`);
 
@@ -264,6 +273,7 @@ function checar(cond, msg) {
   const ctxIphone = await browser.newContext({ ...devices['iPhone 13'] });
   const iphone = await ctxIphone.newPage();
   await iphone.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
+  await irParaOrcamentos(iphone);
   await iphone.fill('#cliNome', 'Construtora Alvorada Ltda');
   await iphone.fill('#cliEndereco', 'Rua das Palmeiras, 480 — Bauru/SP');
   await iphone.fill('.s-desc', 'Forro de gesso liso com moldura');

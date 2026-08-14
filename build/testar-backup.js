@@ -48,6 +48,14 @@ async function preencher(p, cliente, obra, valor) {
 const guardados = p => p.evaluate(() =>
   JSON.parse(localStorage.getItem('beccaGesso.historico.v1') || '[]'));
 
+/* O app abre no resumo do mês. Estes testes são da seção de orçamentos,
+   então a primeira coisa é ir para ela. A escolha fica guardada, então
+   as próximas aberturas já caem no lugar certo. */
+async function irParaOrcamentos(p) {
+  await p.click('.secao-btn[data-secao="orcamentos"]');
+  await p.waitForTimeout(250);
+}
+
 (async () => {
   const srv = await servidor();
   const base = `http://127.0.0.1:${srv.address().port}`;
@@ -57,6 +65,7 @@ const guardados = p => p.evaluate(() =>
   const erros = [];
   p.on('pageerror', e => erros.push(String(e)));
   await p.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
+  await irParaOrcamentos(p);
 
   // ---------- 1. gerar o backup ----------
   console.log('\n[1] Gerar o backup');
@@ -92,6 +101,7 @@ const guardados = p => p.evaluate(() =>
   const p2 = await ctx2.newPage();
   p2.on('pageerror', e => erros.push('p2: ' + String(e)));
   await p2.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
+  await irParaOrcamentos(p2);
   checar((await guardados(p2)).length === 0, 'aparelho novo começa vazio');
 
   await p2.click('#histBtn');
@@ -118,6 +128,7 @@ const guardados = p => p.evaluate(() =>
   const p3 = await ctx3.newPage();
   p3.on('pageerror', e => erros.push('p3: ' + String(e)));
   await p3.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
+  await irParaOrcamentos(p3);
   await preencher(p3, 'Cliente Só Deste Aparelho', 'Rua Nova, 1', '500,00');
   const antesDeRestaurar = (await guardados(p3)).length;
 
