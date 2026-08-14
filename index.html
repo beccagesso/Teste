@@ -330,171 +330,298 @@
 
   /* ---------- TELA DE INÍCIO ---------- */
   .secao-inicio{
-    display:grid;
-    grid-template-columns:1fr;
-    gap:18px;
-    max-width:880px;
+    display:block;
+    max-width:520px;
     margin:0 auto;
-    align-items:start;
   }
-  .bloco{
-    background:var(--paper);
-    border:1px solid var(--rule);
-    border-radius:var(--radius);
-    padding:18px 20px;
-    box-shadow:0 8px 24px rgba(20,28,48,0.06);
+
+  .saudacao{padding:4px 2px 18px;}
+  .saudacao .ola{
+    font-size:22px;
+    font-weight:700;
+    font-family:'Space Grotesk',sans-serif;
+    letter-spacing:-0.01em;
   }
-  .bloco-topo{
+  .saudacao .data{font-size:13px;color:var(--ink-soft);margin-top:3px;}
+
+  /* cartão de destaque com o total do mês e a tendência */
+  .hero{
+    background:linear-gradient(135deg,#33486a 0%,#2a3c5c 55%,#233252 100%);
+    border-radius:22px;
+    padding:24px 22px 20px;
+    color:#fff;
+    margin-bottom:16px;
+    box-shadow:0 14px 30px -10px rgba(30,45,75,.45);
+    position:relative;
+    overflow:hidden;
+  }
+  .hero::after{
+    content:"";
+    position:absolute;
+    right:-40px;
+    top:-60px;
+    width:180px;
+    height:180px;
+    background:radial-gradient(circle,rgba(85,172,228,.35),transparent 70%);
+  }
+  .hero-rot{
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:.09em;
+    color:#a9c0dd;
+    font-weight:600;
+  }
+  .hero-val{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:34px;
+    font-weight:700;
+    margin:6px 0 2px;
+    letter-spacing:-0.01em;
+  }
+  .hero-sub{
+    font-size:12.5px;
+    color:#c3d4e8;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    flex-wrap:wrap;
+  }
+  .trend{
+    display:inline-flex;
+    align-items:center;
+    gap:3px;
+    background:rgba(90,196,140,.22);
+    color:#8fe0b4;
+    padding:2px 8px 2px 6px;
+    border-radius:20px;
+    font-weight:600;
+    font-size:11.5px;
+  }
+  /* uma queda usa o mesmo formato, só que em tom de alerta */
+  .trend.baixa{background:rgba(232,124,124,.22);color:#f3a3a3;}
+  .spark{margin-top:16px;display:block;}
+
+  /* fileiras de indicadores pequenos */
+  .chips-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+  .chips-row-3{grid-template-columns:repeat(3, 1fr);}
+  .chips-rotulo{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:11.5px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--ink-soft);
+    padding:0 4px 10px;
+  }
+  .chip{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    width:100%;
+    border:none;
+    background:#fff;
+    border-radius:16px;
+    padding:13px 14px;
+    box-shadow:0 1px 2px rgba(20,28,48,.05);
+    text-align:left;
+    font:inherit;
+    color:inherit;
+  }
+  .chip:hover, .chip:active{box-shadow:0 1px 5px rgba(20,28,48,.14);}
+  /* .chip-rot e .chip-val já existem para os resumos de contas e
+     histórico (sempre .conta-chip .chip-val / .hist-chip .chip-val);
+     escopar embaixo de .chip evita que as duas famílias se pisem */
+  .chip .chip-topo{display:flex; align-items:center; gap:8px;}
+  .chip .chip-icone{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:26px;
+    height:26px;
+    border-radius:8px;
+    flex:none;
+  }
+  /* o tom diz de longe se o número é bom, neutro ou pede atenção */
+  .chip .chip-icone.bom{background:var(--ok-soft);color:var(--ok);}
+  .chip .chip-icone.atencao{background:var(--gold-soft);color:var(--gold);}
+  .chip .chip-icone.alerta{background:#f7dde3;color:#8f2740;}
+  .chip .chip-icone.neutro{background:var(--canvas);color:var(--ink-soft);}
+  .chip .chip-rot{display:block; font-size:11px; color:var(--ink-soft); font-weight:600;}
+  .chip .chip-val{
+    display:block;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:16px;
+    font-weight:600;
+    color:var(--ink);
+  }
+  .chip .chip-sub{display:block; font-size:10px; color:var(--ink-soft); margin-top:-2px;}
+
+  .rodape-nota{
+    font-size:11px;
+    color:var(--ink-soft);
+    line-height:1.6;
+    padding:2px 4px 20px;
+  }
+  .rodape-nota b{color:var(--ink);font-weight:600;}
+
+  .secao-bloco{margin-bottom:22px;}
+  .secao-topo{
     display:flex;
     align-items:baseline;
     justify-content:space-between;
     gap:12px;
-    margin-bottom:14px;
-    padding-bottom:10px;
-    border-bottom:1px solid var(--rule);
+    padding:0 4px 12px;
   }
-  .bloco-topo h2{
+  .secao-topo h2{
     font-family:'Space Grotesk',sans-serif;
-    font-size:13px;
+    font-size:14px;
     font-weight:700;
-    text-transform:uppercase;
-    letter-spacing:0.1em;
+    margin:0;
     color:var(--ink);
   }
-  .bloco-nota{font-size:10.5px;color:var(--ink-soft);text-transform:lowercase;}
-  .bloco-link{
-    font-size:10.5px;
+  .link-topo{
+    font-size:11.5px;
     font-weight:600;
-    text-transform:uppercase;
-    letter-spacing:0.06em;
     color:var(--ink-soft);
-    border:none;
-    border-bottom:1px solid var(--rule);
     background:none;
-    padding:0 0 1px;
+    border:none;
+    padding:0;
   }
-  .bloco-link:hover{color:var(--ink);border-bottom-color:var(--ink);}
-  .bloco-rodape{
-    margin-top:12px;
-    padding-top:10px;
-    border-top:1px solid var(--rule);
+  .link-topo:hover{color:var(--ink);}
+
+  /* uma linha de lista: conta vencendo, cliente aguardando retorno, ou
+     orçamento recente — cada uma monta o próprio ícone à esquerda */
+  .linha{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    width:100%;
+    background:#fff;
+    border:none;
+    border-radius:16px;
+    padding:13px 14px;
+    margin-bottom:8px;
+    box-shadow:0 1px 2px rgba(20,28,48,.05);
+    text-align:left;
+    font:inherit;
+    color:inherit;
+  }
+  .linha:last-child{margin-bottom:0;}
+  button.linha{cursor:pointer;}
+  button.linha:hover, button.linha:active{box-shadow:0 1px 5px rgba(20,28,48,.14);}
+  .linha-icone{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:38px;
+    height:38px;
+    border-radius:12px;
+    flex:none;
+  }
+  .linha-icone.vencida{background:#f7dde3;color:#8f2740;}
+  .linha-icone.hoje{background:var(--gold-soft);color:var(--gold);}
+  .linha-icone.avencer{background:#e6f2fb;color:#2f7cb0;}
+  .linha-corpo{display:block; flex:1; min-width:0;}
+  .linha-nome{
+    display:block;
+    font-size:13.5px;
+    font-weight:600;
+    overflow-wrap:anywhere;
+  }
+  .linha-sub{
+    display:block;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    margin-top:2px;
+    overflow-wrap:anywhere;
+  }
+  .linha-sub .atrasado{color:#a8324a;font-weight:600;}
+  .linha-sub .hoje{color:var(--gold);font-weight:600;}
+  .linha-valor{
+    display:block;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:14px;
+    font-weight:600;
+    white-space:nowrap;
+    flex:none;
+  }
+  /* botão redondo de marcar como paga, direto na lista de vencendo */
+  .linha-acao{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:34px;
+    height:34px;
+    border-radius:10px;
+    flex:none;
+    border:1px solid var(--rule);
+    background:#fff;
+    color:var(--ink-soft);
+  }
+  .linha-acao:hover{border-color:var(--ok);color:var(--ok);}
+
+  .avatar{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:38px;
+    height:38px;
+    border-radius:50%;
+    flex:none;
+    background:#e6f2fb;
+    color:var(--ink);
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:14px;
+  }
+  .zap{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:34px;
+    height:34px;
+    border-radius:10px;
+    flex:none;
+    border:none;
+    background:var(--ok);
+    color:#fff;
+  }
+  .zap:hover{opacity:.88;}
+
+  .status-dot{width:8px; height:8px; border-radius:50%; flex:none;}
+  .status-dot.rascunho{background:var(--ink-soft);}
+  .status-dot.enviado{background:var(--accent);}
+  .status-dot.aprovado{background:var(--ok);}
+  .status-dot.recusado{background:#a8324a;}
+
+  .linha-restam{
     font-size:11px;
     color:var(--ink-soft);
-    line-height:1.6;
+    text-align:center;
+    padding-top:2px;
   }
-  .bloco-rodape b{color:var(--ink);font-weight:600;}
 
-  .cartoes{
-    display:grid;
-    grid-template-columns:repeat(3, 1fr);
-    gap:10px;
-  }
-  .cartao{
-    border:1px solid var(--rule);
-    border-top:3px solid var(--rule);
-    border-radius:var(--radius);
-    background:#fbfbfc;
-    padding:12px 10px;
-    display:flex;
-    flex-direction:column;
-    align-items:flex-start;
-    gap:3px;
-    text-align:left;
-    line-height:1.25;
-  }
-  .cartao:hover{border-color:var(--ink-soft);border-top-color:var(--ink-soft);}
-  .cartao-rot{
-    font-size:9px;
-    text-transform:uppercase;
-    letter-spacing:0.07em;
-    font-weight:600;
-    color:var(--ink-soft);
-  }
-  .cartao-val{
-    font-family:'IBM Plex Mono',monospace;
-    font-size:15px;
-    font-weight:600;
-    color:var(--ink);
-    white-space:nowrap;
-  }
-  .cartao-sub{font-size:10px;color:var(--ink-soft);}
-  /* o tom diz de longe se o número é bom, neutro ou pede atenção */
-  .cartao.alerta{border-top-color:#a8324a;background:#fdf5f7;}
-  .cartao.alerta .cartao-val{color:#a8324a;}
-  .cartao.alerta:hover{border-color:#a8324a;border-top-color:#a8324a;}
-  .cartao.atencao{border-top-color:var(--gold);background:#fdfaf3;}
-  .cartao.atencao .cartao-val{color:var(--gold);}
-  .cartao.atencao:hover{border-color:var(--gold);border-top-color:var(--gold);}
-  .cartao.bom{border-top-color:var(--ok);}
-  .cartao.bom .cartao-val{color:var(--ok);}
-  .cartao.bom:hover{border-color:var(--ok);border-top-color:var(--ok);}
-
-  .mini-item{
-    display:grid;
-    grid-template-columns:1fr auto auto;
-    grid-template-areas:"nome valor botao"
-                        "sub  sub   botao";
-    align-items:center;
-    gap:3px 14px;
-    padding:11px 0;
-    border-bottom:1px solid var(--rule);
-  }
-  .mini-item:last-child{border-bottom:none;padding-bottom:0;}
-  .mini-item:first-child{padding-top:0;}
-  .mini-nome{
-    grid-area:nome;
-    font-size:13px;
-    font-weight:600;
-    overflow-wrap:anywhere;
-  }
-  .mini-valor{
-    grid-area:valor;
-    font-family:'IBM Plex Mono',monospace;
-    font-size:13px;
-    font-weight:600;
-    text-align:right;
-    white-space:nowrap;
-  }
-  .mini-sub{
-    grid-area:sub;
-    font-size:10.5px;
-    color:var(--ink-soft);
-    line-height:1.5;
-    overflow-wrap:anywhere;
-  }
-  .mini-sub .atrasado{color:#a8324a;font-weight:600;}
-  .mini-sub .hoje{color:var(--gold);font-weight:600;}
-  .mini-btn{
-    grid-area:botao;
-    align-self:center;
-    padding:9px 12px;
-    border:1px solid var(--rule);
-    border-radius:var(--radius);
+  .cartao-vazio{
     background:#fff;
-    font-size:10.5px;
+    border-radius:18px;
+    padding:30px 22px;
+    box-shadow:0 1px 2px rgba(20,28,48,.05);
+    text-align:center;
+    color:var(--ink-soft);
+    font-size:12.5px;
+    line-height:1.9;
+  }
+  .inicio-atalhos{text-align:center; padding-top:6px;}
+  .link-inline{
+    color:var(--ink-soft);
+    font-size:12px;
     font-weight:600;
-    color:var(--ink-soft);
-    text-transform:uppercase;
-    letter-spacing:0.04em;
-    white-space:nowrap;
+    text-decoration:underline;
+    background:none;
+    border:none;
+    padding:0;
   }
-  .mini-btn:hover{border-color:var(--ink);color:var(--ink);}
-  .mini-btn.destaque{border-color:var(--ok);color:var(--ok);}
-  .mini-restam{
-    font-size:10.5px;
-    color:var(--ink-soft);
-    padding-top:11px;
-    border-top:1px solid var(--rule);
-    margin-top:11px;
-  }
-  .inicio-vazio{text-align:center;color:var(--ink-soft);font-size:12.5px;line-height:2;}
-  .inicio-atalhos{
-    display:flex;
-    flex-wrap:wrap;
-    justify-content:center;
-    gap:8px 22px;
-    padding:4px 0 2px;
-  }
+  .link-inline:hover{color:var(--ink);}
 
   /* ---------- CONTAS A PAGAR ---------- */
   .contas-painel{
@@ -1252,16 +1379,11 @@
     .secao-orcamentos, .secao-contas{grid-template-columns:1fr;}
     .secoes{margin:12px 0 18px;}
     .secao-btn{font-size:10.5px;padding:12px 4px;letter-spacing:0.03em;}
-    .cartoes{grid-template-columns:1fr 1fr;}
-    .cartoes > :last-child{grid-column:1 / -1;}
-    .bloco{padding:16px 14px;}
-    .mini-item{
-      grid-template-columns:1fr auto;
-      grid-template-areas:"nome  valor"
-                          "sub   sub"
-                          "botao botao";
-    }
-    .mini-btn{justify-self:stretch;margin-top:9px;}
+    .hero{padding:20px 18px 16px; border-radius:18px;}
+    .hero-val{font-size:28px;}
+    .chips-row-3{grid-template-columns:1fr 1fr;}
+    .chips-row-3 > :last-child{grid-column:1 / -1;}
+    .linha{padding:12px 12px; border-radius:14px;}
     .contas-painel{padding:16px 14px;}
     .contas-resumo{gap:6px;}
     .conta-chip .chip-val{font-size:12.5px;}
@@ -1365,57 +1487,65 @@
   <!-- ============ SEÇÃO: INÍCIO ============ -->
   <section class="secao secao-inicio" id="secaoInicio" hidden>
 
-    <div class="bloco" id="blocoOrc">
-      <div class="bloco-topo">
-        <h2>Orçamentos</h2>
-        <span class="bloco-nota" id="notaMesOrc"></span>
-      </div>
-      <div class="cartoes" id="cartoesOrc"></div>
-      <div class="bloco-rodape" id="anoOrc"></div>
+    <div class="saudacao">
+      <div class="ola" id="saudacaoOla"></div>
+      <div class="data" id="saudacaoData"></div>
     </div>
 
-    <div class="bloco" id="blocoContas">
-      <div class="bloco-topo">
-        <h2>Contas a pagar</h2>
-        <span class="bloco-nota" id="notaMesContas"></span>
+    <div id="grupoOrc">
+      <div class="hero" id="heroOrc">
+        <div class="hero-rot">Orçado em <span id="heroMes"></span></div>
+        <div class="hero-val" id="heroVal">R$ 0,00</div>
+        <div class="hero-sub" id="heroSub"></div>
+        <svg class="spark" id="heroSpark" width="100%" height="36" viewBox="0 0 260 36" preserveAspectRatio="none">
+          <polyline id="heroSparkLinha" fill="none" stroke="#8fe0b4" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+          <circle id="heroSparkPonto" r="4" fill="#8fe0b4"/>
+        </svg>
       </div>
-      <div class="cartoes" id="cartoesContas"></div>
-      <div class="bloco-rodape" id="anoContas"></div>
+      <div class="chips-row" id="chipsOrc"></div>
+      <div class="rodape-nota" id="anoOrc"></div>
     </div>
 
-    <div class="bloco" id="blocoVencendo" hidden>
-      <div class="bloco-topo">
+    <div id="grupoContas">
+      <div class="chips-rotulo">Contas a pagar</div>
+      <div class="chips-row chips-row-3" id="chipsContas"></div>
+      <div class="rodape-nota" id="anoContas"></div>
+    </div>
+
+    <div class="secao-bloco" id="blocoVencendo" hidden>
+      <div class="secao-topo">
         <h2>Vencendo agora</h2>
-        <button type="button" class="bloco-link" data-vai="contas">Ver todas</button>
+        <button type="button" class="link-topo" data-vai="contas">Ver todas</button>
       </div>
       <div id="listaVencendo"></div>
     </div>
 
-    <div class="bloco" id="blocoRetornos" hidden>
-      <div class="bloco-topo">
+    <div class="secao-bloco" id="blocoRetornos" hidden>
+      <div class="secao-topo">
         <h2>Para dar retorno</h2>
       </div>
       <div id="listaRetornos"></div>
     </div>
 
-    <div class="bloco" id="blocoUltimos" hidden>
-      <div class="bloco-topo">
+    <div class="secao-bloco" id="blocoUltimos" hidden>
+      <div class="secao-topo">
         <h2>Últimos orçamentos</h2>
-        <button type="button" class="bloco-link" data-acao="hist:">Ver histórico</button>
+        <button type="button" class="link-topo" data-acao="hist:">Ver histórico</button>
       </div>
       <div id="listaUltimos"></div>
     </div>
 
-    <div class="bloco inicio-vazio" id="blocoVazio" hidden>
+    <div class="cartao-vazio" id="blocoVazio" hidden>
       <p>Ainda não há nada para resumir aqui.</p>
-      <p>Comece por um <button type="button" class="bloco-link" data-vai="orcamentos">orçamento</button>
-         ou lance uma <button type="button" class="bloco-link" data-vai="contas">conta a pagar</button>.</p>
+      <p>Comece por um <button type="button" class="link-inline" data-vai="orcamentos">orçamento</button>
+         ou lance uma <button type="button" class="link-inline" data-vai="contas">conta a pagar</button>.</p>
     </div>
 
     <!-- o histórico é a porta do backup, das mensagens e da senha; sem
          este atalho não haveria como chegar lá a partir do início -->
     <div class="inicio-atalhos">
-      <button type="button" class="bloco-link" data-acao="hist:">Histórico, backup e ajustes</button>
+      <button type="button" class="link-inline" data-acao="hist:">Histórico, backup e ajustes</button>
     </div>
 
   </section>
@@ -3434,8 +3564,44 @@ function mesISO(){
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
 }
 
-function nomeDoMes(){
-  return new Date().toLocaleDateString('pt-BR', {month:'long', year:'numeric'});
+function nomeDoMesCurto(){
+  return new Date().toLocaleDateString('pt-BR', {month:'long'});
+}
+
+/* o mesmo nome, mas de um mês qualquer (usado na tendência: "que julho") */
+function nomeDoMesDe(iso){
+  const [ano, mes] = iso.split('-').map(Number);
+  return new Date(ano, mes - 1, 1).toLocaleDateString('pt-BR', {month:'long'});
+}
+
+function saudacaoDoDia(){
+  const h = new Date().getHours();
+  if(h < 12) return 'Bom dia';
+  if(h < 18) return 'Boa tarde';
+  return 'Boa noite';
+}
+
+/* "Sexta-feira, 14 de agosto" — sem o ano, que já não cabe no cartão
+   e não ajuda quem está olhando o celular no dia em que abriu o app */
+function dataLongaBR(){
+  const texto = new Date().toLocaleDateString('pt-BR',
+    {weekday:'long', day:'numeric', month:'long'});
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
+}
+
+/* as duas letras que representam o cliente no círculo da lista de
+   retorno — primeira e última palavra do nome, ou só a primeira se for
+   uma palavra só */
+const SUFIXOS_EMPRESA = new Set(['ltda','me','epp','eireli','sa','s.a','s/a','mei']);
+
+function iniciaisDoNome(nome){
+  const todas = String(nome || '').trim().split(/\s+/).filter(Boolean);
+  const partes = todas.filter(p =>
+    !SUFIXOS_EMPRESA.has(p.toLowerCase().replace(/[.,]/g, ''))) || todas;
+  const lista = partes.length ? partes : todas;
+  if(!lista.length) return '?';
+  if(lista.length === 1) return lista[0].slice(0, 2).toUpperCase();
+  return (lista[0][0] + lista[lista.length - 1][0]).toUpperCase();
 }
 
 function somaValores(lista){
@@ -3491,16 +3657,100 @@ function contasVencendo(){
     .sort((a, b) => String(a.vencimento).localeCompare(String(b.vencimento)));
 }
 
-function cartao(c){
-  return `<button type="button" class="cartao ${c.tom || ''}"${
+/* O total orçado em cada um dos últimos N meses (o atual por último).
+   Alimenta o número grande do cartão de destaque, a tendência e a
+   linha do gráfico. */
+function totaisUltimosMeses(n){
+  const todos = lerHistorico();
+  const hoje = new Date();
+  const meses = [];
+  for(let i = n - 1; i >= 0; i--){
+    const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,'0')}`;
+    meses.push({mes: iso,
+      total: somaValores(todos.filter(e => String(e.orcData || '').startsWith(iso)))});
+  }
+  return meses;
+}
+
+/* Converte os totais em pontos de um SVG 260×36. Quando todo mês deu o
+   mesmo valor (inclusive todos zerados), a faixa é zero e a linha sai
+   reta no meio — nunca uma divisão por zero. */
+function pontosSparkline(meses){
+  const LARGURA = 260, ALTURA = 36, MARGEM = 4;
+  const valores = meses.map(m => m.total);
+  const max = Math.max(...valores), min = Math.min(...valores);
+  const faixa = max - min;
+  const coords = valores.map((v, i) => ({
+    x: meses.length > 1 ? (i / (meses.length - 1)) * LARGURA : LARGURA,
+    y: faixa > 0
+      ? (ALTURA - MARGEM) - ((v - min) / faixa) * (ALTURA - MARGEM * 2)
+      : ALTURA / 2,
+  }));
+  return {
+    pontos: coords.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' '),
+    ultimo: coords[coords.length - 1],
+  };
+}
+
+/* ícones do início, desenhados à mão para não depender de biblioteca */
+const SVG_CHECK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" ' +
+  'stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>';
+const SVG_RELOGIO = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" ' +
+  'stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/>' +
+  '<path d="M12 7v5l3 3"/></svg>';
+const SVG_ALERTA = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" ' +
+  'stroke="currentColor" stroke-width="2.5"><path d="M12 9v4M12 17h.01M10.3 3.9 ' +
+  '1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>';
+const SVG_ZAP = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">' +
+  '<path d="M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2Zm5.4 14.2c-.2.6' +
+  '-1.3 1.2-1.8 1.3-.5.1-1 .1-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.8s.7' +
+  '-2 .9-2.3c.2-.2.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .6-.1.2-.2.3-.3.5l' +
+  '-.4.5c-.2.2-.3.4-.1.7.2.3.8 1.4 1.8 2.2 1.2 1.1 2.2 1.4 2.6 1.6.3.1.5.1.7-.1l.6' +
+  '-.7c.2-.3.4-.2.7-.1l1.8.9c.2.1.4.2.5.3.1.2.1.9-.1 1.5Z"/></svg>';
+
+function chip(c){
+  return `<button type="button" class="chip"${
     c.acao ? ` data-acao="${escapeAttr(c.acao)}"` : ''}>
-      <span class="cartao-rot">${escapeHtml(c.rot)}</span>
-      <span class="cartao-val">${fmtMoeda(c.valor)}</span>
-      <span class="cartao-sub">${escapeHtml(c.sub)}</span>
+      <span class="chip-topo">
+        <span class="chip-icone ${c.tom || 'neutro'}">${c.icone}</span>
+        <span class="chip-rot">${escapeHtml(c.rot)}</span>
+      </span>
+      <span class="chip-val">${fmtMoeda(c.valor)}</span>
+      <span class="chip-sub">${escapeHtml(c.sub)}</span>
     </button>`;
 }
 
 const plural = (n, um, muitos) => `${n} ${n === 1 ? um : muitos}`;
+
+/* O cartão de destaque: o total orçado no mês, a comparação com o mês
+   anterior (quando há dado para comparar) e a linha dos últimos 6
+   meses. */
+function renderHero(orc){
+  const meses = totaisUltimosMeses(6);
+  const atual = meses[meses.length - 1].total;
+  const anterior = meses[meses.length - 2].total;
+
+  el('heroMes').textContent = nomeDoMesCurto();
+  el('heroVal').textContent = fmtMoeda(atual);
+
+  let sub = `<span>${plural(orc.mes.qtd, 'orçamento', 'orçamentos')}</span>`;
+  if(anterior > 0){
+    const pct = Math.round(((atual - anterior) / anterior) * 100);
+    if(pct !== 0){
+      const seta = pct > 0 ? '↑' : '↓';
+      sub = `<span class="trend${pct < 0 ? ' baixa' : ''}">${seta} ` +
+        `${Math.abs(pct)}% que ${escapeHtml(nomeDoMesDe(meses[meses.length - 2].mes))}` +
+        `</span>` + sub;
+    }
+  }
+  el('heroSub').innerHTML = sub;
+
+  const {pontos, ultimo} = pontosSparkline(meses);
+  el('heroSparkLinha').setAttribute('points', pontos);
+  el('heroSparkPonto').setAttribute('cx', ultimo.x.toFixed(1));
+  el('heroSparkPonto').setAttribute('cy', ultimo.y.toFixed(1));
+}
 
 function renderInicio(){
   const orc = resumoOrcamentos();
@@ -3508,21 +3758,20 @@ function renderInicio(){
   const temAlgo = lerHistorico().length > 0 || lerContas().length > 0;
 
   el('blocoVazio').hidden = temAlgo;
-  for(const id of ['blocoOrc', 'blocoContas'])
+  el('saudacaoOla').textContent = `${saudacaoDoDia()}, Becca.`;
+  el('saudacaoData').textContent = dataLongaBR();
+  for(const id of ['grupoOrc', 'grupoContas'])
     if(el(id)) el(id).hidden = !temAlgo;
 
-  el('notaMesOrc').textContent = nomeDoMes();
-  el('notaMesContas').textContent = nomeDoMes();
+  renderHero(orc);
 
-  el('cartoesOrc').innerHTML = [
-    cartao({rot:'Feitos no mês', valor:orc.mes.valor, acao:'hist:',
-            sub:plural(orc.mes.qtd, 'orçamento', 'orçamentos')}),
-    cartao({rot:'Aprovados no mês', valor:orc.aprovadosMes.valor,
-            tom:orc.aprovadosMes.qtd ? 'bom' : '', acao:'hist:aprovado',
-            sub:plural(orc.aprovadosMes.qtd, 'orçamento', 'orçamentos')}),
-    cartao({rot:'Aguardando resposta', valor:orc.aguardando.valor,
-            tom:orc.aguardando.qtd ? 'atencao' : '', acao:'hist:enviado',
-            sub:plural(orc.aguardando.qtd, 'enviado', 'enviados')}),
+  el('chipsOrc').innerHTML = [
+    chip({rot:'Aprovados', valor:orc.aprovadosMes.valor, icone:SVG_CHECK,
+          tom:orc.aprovadosMes.qtd ? 'bom' : 'neutro', acao:'hist:aprovado',
+          sub:plural(orc.aprovadosMes.qtd, 'orçamento', 'orçamentos')}),
+    chip({rot:'Aguardando', valor:orc.aguardando.valor, icone:SVG_RELOGIO,
+          tom:orc.aguardando.qtd ? 'atencao' : 'neutro', acao:'hist:enviado',
+          sub:plural(orc.aguardando.qtd, 'enviado', 'enviados')}),
   ].join('');
 
   el('anoOrc').innerHTML = orc.ano.qtd
@@ -3531,16 +3780,16 @@ function renderInicio(){
       `<b>${fmtMoeda(orc.aprovadosAno.valor)}</b> aprovados.`
     : 'Nenhum orçamento neste ano ainda.';
 
-  el('cartoesContas').innerHTML = [
-    cartao({rot:'Vencidas', valor:ct.vencidas.valor, acao:'contas:vencidas',
-            tom:ct.vencidas.qtd ? 'alerta' : '',
-            sub:plural(ct.vencidas.qtd, 'conta', 'contas')}),
-    cartao({rot:`Vence em ${DIAS_VENCENDO} dias`, valor:ct.semana.valor,
-            tom:ct.semana.qtd ? 'atencao' : '', acao:'contas:avencer',
-            sub:plural(ct.semana.qtd, 'conta', 'contas')}),
-    cartao({rot:'Pagas no mês', valor:ct.pagasMes.valor, acao:'contas:pagas',
-            tom:ct.pagasMes.qtd ? 'bom' : '',
-            sub:plural(ct.pagasMes.qtd, 'conta', 'contas')}),
+  el('chipsContas').innerHTML = [
+    chip({rot:'Vencidas', valor:ct.vencidas.valor, icone:SVG_ALERTA,
+          tom:ct.vencidas.qtd ? 'alerta' : 'neutro', acao:'contas:vencidas',
+          sub:plural(ct.vencidas.qtd, 'conta', 'contas')}),
+    chip({rot:`Vence em ${DIAS_VENCENDO} dias`, valor:ct.semana.valor, icone:SVG_RELOGIO,
+          tom:ct.semana.qtd ? 'atencao' : 'neutro', acao:'contas:avencer',
+          sub:plural(ct.semana.qtd, 'conta', 'contas')}),
+    chip({rot:'Pagas no mês', valor:ct.pagasMes.valor, icone:SVG_CHECK,
+          tom:ct.pagasMes.qtd ? 'bom' : 'neutro', acao:'contas:pagas',
+          sub:plural(ct.pagasMes.qtd, 'conta', 'contas')}),
   ].join('');
 
   el('anoContas').innerHTML = ct.abertas.qtd
@@ -3563,22 +3812,27 @@ function renderVencendo(){
   const lista = todas.slice(0, LIMITE_LISTA_INICIO);
   el('listaVencendo').innerHTML = lista.map(c => {
     const d = diasAteVencer(c.vencimento);
+    const classe = d < 0 ? 'vencida' : (d === 0 ? 'hoje' : 'avencer');
+    const icone = d < 0 ? SVG_ALERTA : SVG_RELOGIO;
     let quando;
     if(d < 0) quando = `<span class="atrasado">venceu há ${
       plural(Math.abs(d), 'dia', 'dias')}</span>`;
     else if(d === 0) quando = '<span class="hoje">vence hoje</span>';
     else quando = `vence em ${plural(d, 'dia', 'dias')}`;
     return `
-      <div class="mini-item">
-        <div class="mini-nome">${escapeHtml(c.descricao)}</div>
-        <div class="mini-valor">${fmtMoeda(c.valor || 0)}</div>
-        <div class="mini-sub">${quando} · ${fmtDataBR(c.vencimento)}${
-          c.fornecedor ? ' · ' + escapeHtml(c.fornecedor) : ''}</div>
-        <button type="button" class="mini-btn destaque ini-pagar"
-                data-id="${escapeAttr(c.id)}">Marcar paga</button>
+      <div class="linha">
+        <div class="linha-icone ${classe}">${icone}</div>
+        <div class="linha-corpo">
+          <div class="linha-nome">${escapeHtml(c.descricao)}</div>
+          <div class="linha-sub">${quando} · ${fmtDataBR(c.vencimento)}${
+            c.fornecedor ? ' · ' + escapeHtml(c.fornecedor) : ''}</div>
+        </div>
+        <div class="linha-valor">${fmtMoeda(c.valor || 0)}</div>
+        <button type="button" class="linha-acao ini-pagar" data-id="${escapeAttr(c.id)}"
+                aria-label="Marcar ${escapeAttr(c.descricao)} como paga">${SVG_CHECK}</button>
       </div>`;
   }).join('') + (todas.length > lista.length
-    ? `<div class="mini-restam">e mais ${plural(
+    ? `<div class="linha-restam">e mais ${plural(
         todas.length - lista.length, 'conta', 'contas')} nesse prazo.</div>`
     : '');
 
@@ -3597,14 +3851,18 @@ function renderRetornosInicio(){
   el('listaRetornos').innerHTML = pendentes
     .slice(0, LIMITE_LISTA_INICIO)
     .map(({entrada: e, pendente: p}) => `
-      <div class="mini-item">
-        <div class="mini-nome">${escapeHtml(e.cliNome || 'Sem nome')}</div>
-        <div class="mini-valor">${fmtMoeda(e.total || 0)}</div>
-        <div class="mini-sub">Nº ${escapeHtml(e.orcNumero)} · enviado há ${
-          plural(p.dias, 'dia', 'dias')}</div>
-        <button type="button" class="mini-btn ini-msg"
-                data-num="${escapeAttr(e.orcNumero)}"
-                data-etapa="${p.etapa}">Mandar mensagem</button>
+      <div class="linha">
+        <div class="avatar">${escapeHtml(iniciaisDoNome(e.cliNome))}</div>
+        <div class="linha-corpo">
+          <div class="linha-nome">${escapeHtml(e.cliNome || 'Sem nome')}</div>
+          <div class="linha-sub">Nº ${escapeHtml(e.orcNumero)} · enviado há ${
+            plural(p.dias, 'dia', 'dias')}</div>
+        </div>
+        <div class="linha-valor">${fmtMoeda(e.total || 0)}</div>
+        <button type="button" class="zap ini-msg" data-num="${escapeAttr(e.orcNumero)}"
+                data-etapa="${p.etapa}"
+                aria-label="Mandar mensagem pelo WhatsApp para ${
+                  escapeAttr(e.cliNome || 'o cliente')}">${SVG_ZAP}</button>
       </div>`).join('');
 
   el('listaRetornos').querySelectorAll('.ini-msg').forEach(b =>
@@ -3624,14 +3882,15 @@ function renderUltimos(){
   el('listaUltimos').innerHTML = todos.map(e => {
     const sit = situacaoValida(e.situacao);
     return `
-      <div class="mini-item">
-        <div class="mini-nome">${escapeHtml(e.cliNome || 'Sem nome')}</div>
-        <div class="mini-valor">${fmtMoeda(e.total || 0)}</div>
-        <div class="mini-sub">Nº ${escapeHtml(e.orcNumero || '—')} · ${
-          fmtDataBR(e.orcData)} · ${rotulo(sit)}</div>
-        <button type="button" class="mini-btn ini-abrir"
-                data-num="${escapeAttr(e.orcNumero)}">Abrir</button>
-      </div>`;
+      <button type="button" class="linha ini-abrir" data-num="${escapeAttr(e.orcNumero)}">
+        <span class="status-dot ${sit}"></span>
+        <span class="linha-corpo">
+          <span class="linha-nome">${escapeHtml(e.cliNome || 'Sem nome')}</span>
+          <span class="linha-sub">Nº ${escapeHtml(e.orcNumero || '—')} · ${
+            fmtDataBR(e.orcData)} · ${rotulo(sit)}</span>
+        </span>
+        <span class="linha-valor">${fmtMoeda(e.total || 0)}</span>
+      </button>`;
   }).join('');
 
   el('listaUltimos').querySelectorAll('.ini-abrir').forEach(b =>
