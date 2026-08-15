@@ -434,6 +434,179 @@ async function irPara(p, secao) {
 
   await ctxA.close();
   await ctxB.close();
+
+  // =========================================================
+  console.log('\n[11] Snapshot do orçamento sobrevive à edição do cliente');
+  // =========================================================
+  /* Comportamento, não implementação: este teste não chama nenhuma
+     função de domínio direto — só faz o que a Becca faria na tela
+     (cadastrar, escolher no orçamento, editar o cadastro, reabrir) e
+     confere o que aparece. Aparelho isolado dos anteriores, para o
+     cenário ficar exatamente igual ao pedido: só o João existe. */
+  const ctxSnap = await browser.newContext({ ...devices['iPhone 13'] });
+  await ctxSnap.addInitScript(() => localStorage.setItem('beccaGesso.nuvemDesligada.v1', 'true'));
+  const pSnap = await ctxSnap.newPage();
+  const errosSnap = [];
+  pSnap.on('pageerror', e => errosSnap.push(String(e)));
+  pSnap.on('dialog', d => d.accept());
+  await pSnap.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
+
+  // 1. cria o cliente João / 9999 / Rua A
+  await irPara(pSnap, 'clientes');
+  await pSnap.click('#cliNovoBtn');
+  await pSnap.waitForTimeout(150);
+  await pSnap.fill('#cliFormNome', 'João');
+  await pSnap.fill('#cliFormTelefone', '9999');
+  await pSnap.fill('#cliFormEndereco', 'Rua A');
+  await pSnap.click('#cliSalvar');
+  await pSnap.waitForTimeout(250);
+
+  // 2. cria o orçamento associado ao cliente (pela busca, como na tela real)
+  await irPara(pSnap, 'orcamentos');
+  await pSnap.click('#resetBtn');
+  await pSnap.waitForTimeout(300);
+  await pSnap.fill('#cliNome', 'João');
+  await pSnap.waitForTimeout(250);
+  await pSnap.click('.cli-busca-item[data-id]');
+  await pSnap.waitForTimeout(200);
+  await pSnap.fill('.s-desc', 'Forro de gesso');
+  await pSnap.fill('.s-qtd', '10');
+  await pSnap.fill('.s-valor', '100,00');
+
+  // 3. salvamento automático (400ms de debounce, já coberto pela espera acima)
+  await pSnap.waitForTimeout(600);
+  const numeroSnap = await pSnap.inputValue('#orcNumero');
+
+  // 4. confirma o que ficou gravado no orçamento
+  const entradaRecemCriada = await pSnap.evaluate(num =>
+    window.__beccaTeste.lerHistorico().find(e => e.orcNumero === num), numeroSnap);
+  checar(!!entradaRecemCriada.clienteId, 'o orçamento recém-criado ganhou um clienteId');
+  checar(entradaRecemCriada.cliNome === 'João', 'cliNome gravado: João');
+  checar(entradaRecemCriada.cliTelefone === '9999', 'cliTelefone gravado: 9999');
+  checar(entradaRecemCriada.cliEndereco === 'Rua A', 'cliEndereco gravado: Rua A');
+
+  // 5. altera o cadastro do cliente
+  await irPara(pSnap, 'clientes');
+  await pSnap.click('.cliente-item:has-text("João") .cli-abrir');
+  await pSnap.waitForTimeout(200);
+  await pSnap.fill('#cliFormNome', 'João da Silva');
+  await pSnap.fill('#cliFormTelefone', '8888');
+  await pSnap.fill('#cliFormEndereco', 'Rua B');
+  await pSnap.click('#cliSalvar');
+  await pSnap.waitForTimeout(250);
+
+  // 6. recarrega o app (fechar e abrir de verdade, não só trocar de seção)
+  // e reabre o orçamento pelo histórico
+  const pSnapRecarregado = await reabrir(ctxSnap, pSnap, base, errosSnap);
+  await irPara(pSnapRecarregado, 'orcamentos');
+  await pSnapRecarregado.click('#histBtn');
+  await pSnapRecarregado.waitForTimeout(200);
+  await pSnapRecarregado.locator('.hist-item').filter({ hasText: numeroSnap })
+    .locator('.hist-abrir').click();
+  await pSnapRecarregado.waitForTimeout(300);
+
+  // 7. o orçamento reaberto continua com os dados de quando foi salvo
+  checar((await pSnapRecarregado.inputValue('#cliNome')) === 'João',
+    'orçamento reaberto: cliNome continua "João" (não virou "João da Silva")');
+  checar((await pSnapRecarregado.inputValue('#cliTelefone')) === '9999',
+    'orçamento reaberto: cliTelefone continua "9999" (não virou "8888")');
+  checar((await pSnapRecarregado.inputValue('#cliEndereco')) === 'Rua A',
+    'orçamento reaberto: cliEndereco continua "Rua A" (não virou "Rua B")');
+
+  // 8-9. os dados que o gerador de PDF usaria se fosse gerado agora
+  const dadosPdfSnap = await pSnapRecarregado.evaluate(() => window.__beccaTeste.dadosParaPdf());
+  checar(dadosPdfSnap.cliNome === 'João',
+    `PDF usaria "João", não "João da Silva" (usou "${dadosPdfSnap.cliNome}")`);
+  checar(dadosPdfSnap.cliEndereco === 'Rua A',
+    `PDF usaria "Rua A", não "Rua B" (usou "${dadosPdfSnap.cliEndereco}")`);
+
+  // 10. a ficha do cliente, por outro lado, mostra o cadastro ATUAL
+  await irPara(pSnapRecarregado, 'clientes');
+  await pSnapRecarregado.click('.cliente-item:has-text("João da Silva") .cli-abrir');
+  await pSnapRecarregado.waitForTimeout(200);
+  checar((await pSnapRecarregado.inputValue('#cliFormNome')) === 'João da Silva',
+    'cadastro atual do cliente: "João da Silva" (o nome novo)');
+  checar((await pSnapRecarregado.inputValue('#cliFormTelefone')) === '8888',
+    'cadastro atual do cliente: "8888" (o telefone novo)');
+  checar((await pSnapRecarregado.inputValue('#cliFormEndereco')) === 'Rua B',
+    'cadastro atual do cliente: "Rua B" (o endereço novo)');
+
+  checar(errosSnap.length === 0,
+    `sem erros de JavaScript ${errosSnap.length ? '-> ' + errosSnap.join(' | ') : ''}`);
+
+  await ctxSnap.close();
+
+  // =========================================================
+  console.log('\n[12] Editar um cliente não propaga para o histórico');
+  // =========================================================
+  /* Mais amplo que o teste [11]: em vez de conferir só os três campos
+     esperados, compara o histórico inteiro (o array completo, campo a
+     campo) antes e depois de editar um cliente. Se algum mecanismo
+     futuro passar a "atualizar" orçamentos quando o cliente muda — nem
+     que seja um campo novo, nem que seja só num deles — este teste
+     acusa, mesmo sem saber de antemão qual campo seria mexido. */
+  const ctxProp = await browser.newContext({ ...devices['iPhone 13'] });
+  await ctxProp.addInitScript(() => localStorage.setItem('beccaGesso.nuvemDesligada.v1', 'true'));
+  const pProp = await ctxProp.newPage();
+  const errosProp = [];
+  pProp.on('pageerror', e => errosProp.push(String(e)));
+  pProp.on('dialog', d => d.accept());
+  await pProp.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
+
+  await irPara(pProp, 'clientes');
+  await pProp.click('#cliNovoBtn');
+  await pProp.waitForTimeout(150);
+  await pProp.fill('#cliFormNome', 'Regina Alves');
+  await pProp.fill('#cliFormTelefone', '14955554444');
+  await pProp.fill('#cliFormEndereco', 'Alameda das Rosas, 12');
+  await pProp.click('#cliSalvar');
+  await pProp.waitForTimeout(250);
+
+  await irPara(pProp, 'orcamentos');
+  await pProp.click('#resetBtn');
+  await pProp.waitForTimeout(300);
+  await pProp.fill('#cliNome', 'Regina Alves');
+  await pProp.waitForTimeout(250);
+  await pProp.click('.cli-busca-item[data-id]');
+  await pProp.waitForTimeout(200);
+  await pProp.fill('.s-desc', 'Sanca');
+  await pProp.fill('.s-qtd', '5');
+  await pProp.fill('.s-valor', '80,00');
+  await pProp.waitForTimeout(600);
+
+  /* um segundo orçamento, para o teste não depender de haver só um */
+  await pProp.click('#resetBtn');
+  await pProp.waitForTimeout(300);
+  await pProp.fill('#cliNome', 'Outro Cliente Qualquer');
+  await pProp.fill('.s-desc', 'Reboco');
+  await pProp.fill('.s-qtd', '3');
+  await pProp.fill('.s-valor', '60,00');
+  await pProp.waitForTimeout(600);
+
+  const histAntesEdicao = await pProp.evaluate(() => window.__beccaTeste.lerHistorico());
+  checar(histAntesEdicao.length === 2, `dois orçamentos antes de editar o cliente (${histAntesEdicao.length})`);
+
+  await irPara(pProp, 'clientes');
+  await pProp.click('.cliente-item:has-text("Regina Alves") .cli-abrir');
+  await pProp.waitForTimeout(200);
+  await pProp.fill('#cliFormNome', 'Regina Alves de Souza');
+  await pProp.fill('#cliFormTelefone', '14900001111');
+  await pProp.fill('#cliFormEndereco', 'Rua Nova, 999');
+  await pProp.fill('#cliFormEmail', 'regina@exemplo.com');
+  await pProp.fill('#cliFormCidade', 'Bauru');
+  await pProp.click('#cliSalvar');
+  await pProp.waitForTimeout(250);
+
+  const histDepoisEdicao = await pProp.evaluate(() => window.__beccaTeste.lerHistorico());
+  checar(JSON.stringify(histAntesEdicao) === JSON.stringify(histDepoisEdicao),
+    'clientes.atualizar() não mudou nenhum byte do histórico de orçamentos ' +
+    '(comparação do array inteiro, não só dos campos esperados)');
+
+  checar(errosProp.length === 0,
+    `sem erros de JavaScript ${errosProp.length ? '-> ' + errosProp.join(' | ') : ''}`);
+
+  await ctxProp.close();
+
   await browser.close();
   srv.close();
   nuvem.servidor.close();
