@@ -1823,13 +1823,17 @@
     <div class="nuvem-situacao" id="nvSituacao"></div>
 
     <div class="msg-ajuda">
-      Com a nuvem ligada, os orçamentos e as contas ficam guardados fora do
-      celular e aparecem em qualquer aparelho onde você entrar. O app
+      Os orçamentos e as contas ficam guardados fora do celular e aparecem
+      em qualquer aparelho onde você entrar com o seu e-mail e senha. O app
       continua funcionando sem internet: o que você lançar sobe quando o
       sinal voltar.
     </div>
 
     <div class="msg-lista">
+      <div class="msg-ajuda pequena" style="margin-bottom:2px;">
+        Isto aqui só é preciso para usar outro projeto do Supabase. Este
+        aparelho já vem ligado ao projeto da Becca Gesso.
+      </div>
       <label for="nvUrl">Endereço do projeto</label>
       <input type="url" id="nvUrl" autocomplete="off" autocapitalize="none"
              autocorrect="off" spellcheck="false"
@@ -1846,6 +1850,10 @@
       <div class="tranca-erro" id="nvAviso" hidden></div>
     </div>
 
+    <div class="painel-rodape" id="nvDesligada" hidden>
+      <button type="button" class="btn-primary" id="nvLigarPadrao"
+              style="grid-column:1 / -1;">Ligar de novo</button>
+    </div>
     <div class="painel-rodape">
       <button type="button" class="btn-secondary" id="nvDesligar">Desligar</button>
       <button type="button" class="btn-primary" id="nvSalvar">Salvar e conectar</button>
@@ -1923,8 +1931,13 @@
 try{
   const quando = Number(sessionStorage.getItem('beccaGesso.destrancado') || 0);
   const dentroDoPrazo = quando && (Date.now() - quando) < 30 * 60 * 1000;
-  const pedeEntrada = localStorage.getItem('beccaGesso.acesso.v1')
-                   || localStorage.getItem('beccaGesso.nuvem.v1');
+  /* Este arquivo já sai de fábrica ligado a um projeto na nuvem — mesma
+     regra de lerNuvem(), só que sem esperar o resto do script: nada
+     colado à mão e não desligada à mão, então está ligada ao padrão. */
+  const nuvemColada = localStorage.getItem('beccaGesso.nuvem.v1');
+  const nuvemDesligada = localStorage.getItem('beccaGesso.nuvemDesligada.v1') === 'true';
+  const nuvemLigada = !!nuvemColada || !nuvemDesligada;
+  const pedeEntrada = localStorage.getItem('beccaGesso.acesso.v1') || nuvemLigada;
   if(pedeEntrada && !dentroDoPrazo){
     document.body.classList.add('trancado');
   }
@@ -3913,11 +3926,23 @@ function renderUltimos(){
    então bastam algumas chamadas de fetch. */
 
 const CHAVE_NUVEM      = 'beccaGesso.nuvem.v1';        /* endereço e chave */
+const CHAVE_NUVEM_OFF  = 'beccaGesso.nuvemDesligada.v1'; /* desligada à mão neste aparelho */
 const CHAVE_SESSAO_N   = 'beccaGesso.sessaoNuvem.v1';  /* quem entrou */
 const CHAVE_RECEBIDO   = 'beccaGesso.recebido.v1';     /* até onde já baixamos */
 const CHAVE_ENVIADO    = 'beccaGesso.enviado.v1';      /* o que já subiu */
 const CHAVE_REMOVIDOS  = 'beccaGesso.removidos.v1';    /* o que foi apagado aqui */
 const CHAVE_ULTIMA_SIN = 'beccaGesso.ultimaSincronia.v1';
+
+/* O projeto da Becca Gesso já vem ligado: ninguém precisa colar
+   endereço e chave à mão para o app funcionar. A chave é a pública
+   (anon/publishable) — pode ficar no código sem problema, porque quem
+   protege os dados são as regras de acesso do banco (build/supabase.sql),
+   não o segredo dela. Sem essas regras ligadas no projeto, isto aqui
+   deixaria os dados abertos para qualquer um que abrisse o link. */
+const NUVEM_PADRAO = {
+  url: 'https://xipqhkaucbiaezrdvksg.supabase.co',
+  chave: 'sb_publishable_tqRXHAp2o95tJbxt2hNpkQ_uXI0NXXw',
+};
 
 /* De cada lado, o mesmo par: a tabela lá e o campo que identifica o
    registro aqui. */
@@ -3939,7 +3964,19 @@ function gravarJson(chave, valor){
   try{ localStorage.setItem(chave, JSON.stringify(valor)); }catch(e){}
 }
 
-function lerNuvem(){ return lerJson(CHAVE_NUVEM, null); }
+/* Alguém colou um projeto diferente à mão? Essa escolha vale, mesmo com
+   um padrão embutido. Sem nada colado e sem ter sido desligada à mão,
+   cai no projeto padrão da empresa. */
+function lerNuvem(){
+  const guardada = lerJson(CHAVE_NUVEM, null);
+  if(guardada) return guardada;
+  if(NUVEM_PADRAO && !lerJson(CHAVE_NUVEM_OFF, false)) return NUVEM_PADRAO;
+  return null;
+}
+
+function usandoPadrao(){
+  return !lerJson(CHAVE_NUVEM, null) && !!lerNuvem();
+}
 
 function nuvemConfigurada(){
   const c = lerNuvem();
@@ -4527,23 +4564,26 @@ function desenharSituacaoNuvem(){
   const caixa = el('nvSituacao');
   const sessao = lerSessaoNuvem();
   el('nvLigada').hidden = !entrouNaNuvem();
+  el('nvDesligada').hidden = nuvemConfigurada();
 
   if(!nuvemConfigurada()){
     caixa.className = 'nuvem-situacao';
-    caixa.innerHTML = 'A nuvem ainda não está ligada. Os orçamentos e as ' +
-      'contas existem só dentro deste aparelho.';
+    caixa.innerHTML = 'Você desligou a nuvem neste aparelho. Os orçamentos e ' +
+      'as contas existem só aqui, até ligar de novo.';
     return;
   }
+  const projeto = usandoPadrao()
+    ? 'o projeto da Becca Gesso' : 'um projeto personalizado';
   if(!entrouNaNuvem()){
     caixa.className = 'nuvem-situacao parcial';
-    caixa.innerHTML = 'Endereço e chave guardados, mas ninguém entrou ainda. ' +
+    caixa.innerHTML = `Ligado a ${projeto}, mas ninguém entrou ainda. ` +
       'Feche o app e entre com o seu e-mail e senha.';
     return;
   }
   const pendentes = pendentesDe('orcamentos').length + pendentesDe('contas').length;
   caixa.className = 'nuvem-situacao ligada';
   caixa.innerHTML =
-    `Ligada como <b>${escapeHtml(sessao.email || '—')}</b>.<br>` +
+    `Ligada a ${projeto} como <b>${escapeHtml(sessao.email || '—')}</b>.<br>` +
     `Última sincronia: <b>${quandoFoi(lerJson(CHAVE_ULTIMA_SIN, 0))}</b>.<br>` +
     (pendentes
       ? `<b>${plural(pendentes, 'item', 'itens')}</b> esperando para subir.`
@@ -4565,12 +4605,16 @@ async function salvarNuvem(){
   botao.disabled = true;
   botao.textContent = 'Conferindo…';
   el('nvAviso').hidden = true;
-  const antes = lerNuvem();
+  /* só o que está EXPLICITAMENTE salvo, sem cair no padrão — é isso que
+     desfazer() tem de devolver se a conferência falhar */
+  const antes = lerJson(CHAVE_NUVEM, null);
+  const desligadaAntes = lerJson(CHAVE_NUVEM_OFF, false);
   gravarJson(CHAVE_NUVEM, {url: url, chave: chave});
 
   const desfazer = () => {
     if(antes) gravarJson(CHAVE_NUVEM, antes);
     else try{ localStorage.removeItem(CHAVE_NUVEM); }catch(e){}
+    gravarJson(CHAVE_NUVEM_OFF, desligadaAntes);
     botao.disabled = false;
     botao.textContent = 'Salvar e conectar';
   };
@@ -4602,6 +4646,8 @@ async function salvarNuvem(){
 
   botao.disabled = false;
   botao.textContent = 'Salvar e conectar';
+  /* escolher uma conexão à mão é ligar de novo, mesmo que estivesse desligada */
+  try{ localStorage.removeItem(CHAVE_NUVEM_OFF); }catch(e){}
   desenharSituacaoNuvem();
   mostrarEstadoNuvem();
   if(!entrouNaNuvem()){
@@ -4643,14 +4689,28 @@ function sairDaConta(){
 function desligarNuvem(){
   if(!confirm('Desligar a nuvem neste aparelho?\n\nOs orçamentos e as contas ' +
               'continuam guardados aqui, e continuam guardados na nuvem. ' +
-              'O app volta a pedir só a senha do aparelho.')) return;
+              'O app deixa de pedir e-mail e senha para abrir, a não ser que ' +
+              'este aparelho tenha uma senha própria.')) return;
   esquecerNuvem();
   try{ localStorage.removeItem(CHAVE_NUVEM); }catch(e){}
+  gravarJson(CHAVE_NUVEM_OFF, true);
   el('nvUrl').value = '';
   el('nvChave').value = '';
   desenharSituacaoNuvem();
   mostrarEstadoNuvem();
   avisarNuvem('Nuvem desligada neste aparelho.');
+}
+
+function ligarPadrao(){
+  try{ localStorage.removeItem(CHAVE_NUVEM_OFF); }catch(e){}
+  const cfg = lerNuvem() || {};
+  el('nvUrl').value = cfg.url || '';
+  el('nvChave').value = cfg.chave || '';
+  desenharSituacaoNuvem();
+  mostrarEstadoNuvem();
+  avisarNuvem(entrouNaNuvem()
+    ? 'Nuvem ligada de novo.'
+    : 'Nuvem ligada de novo. Feche e abra o app para entrar.');
 }
 
 /* ---------- painel da senha ---------- */
@@ -5277,6 +5337,7 @@ el('nvSalvar').addEventListener('click', salvarNuvem);
 el('nvSincronizar').addEventListener('click', sincronizarAgora);
 el('nvSair').addEventListener('click', sairDaConta);
 el('nvDesligar').addEventListener('click', desligarNuvem);
+el('nvLigarPadrao').addEventListener('click', ligarPadrao);
 el('nuvemEstado').addEventListener('click', abrirNuvem);
 el('painelNuvem').addEventListener('click', e => {
   if(e.target === el('painelNuvem')) fecharNuvem();

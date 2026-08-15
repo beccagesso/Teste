@@ -100,6 +100,10 @@ const conta = (id, valor, vencimento, extra) => Object.assign({
   const base = `http://127.0.0.1:${srv.address().port}`;
   const browser = await chromium.launch();
   const ctx = await browser.newContext({ ...devices['iPhone 13'] });
+  /* estes testes são de outra parte do app; desligar a nuvem
+     evita que a tela de login do Supabase (ligada por padrão)
+     atrapalhe */
+  await ctx.addInitScript(() => localStorage.setItem('beccaGesso.nuvemDesligada.v1', 'true'));
   const p = await ctx.newPage();
   const erros = [];
   p.on('pageerror', e => erros.push(String(e)));

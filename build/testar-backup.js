@@ -61,6 +61,10 @@ async function irParaOrcamentos(p) {
   const base = `http://127.0.0.1:${srv.address().port}`;
   const browser = await chromium.launch();
   const ctx = await browser.newContext({ ...devices['iPhone 13'], acceptDownloads: true });
+  /* estes testes são de outra parte do app; desligar a nuvem
+     evita que a tela de login do Supabase (ligada por padrão)
+     atrapalhe */
+  await ctx.addInitScript(() => localStorage.setItem('beccaGesso.nuvemDesligada.v1', 'true'));
   const p = await ctx.newPage();
   const erros = [];
   p.on('pageerror', e => erros.push(String(e)));
@@ -98,6 +102,10 @@ async function irParaOrcamentos(p) {
   // ---------- 2. restaurar num aparelho vazio ----------
   console.log('\n[2] Restaurar em um aparelho novo');
   const ctx2 = await browser.newContext({ ...devices['iPhone 13'] });
+  /* estes testes são de outra parte do app; desligar a nuvem
+     evita que a tela de login do Supabase (ligada por padrão)
+     atrapalhe */
+  await ctx2.addInitScript(() => localStorage.setItem('beccaGesso.nuvemDesligada.v1', 'true'));
   const p2 = await ctx2.newPage();
   p2.on('pageerror', e => erros.push('p2: ' + String(e)));
   await p2.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
@@ -125,6 +133,10 @@ async function irParaOrcamentos(p) {
   // ---------- 3. restaurar juntando, sem perder o que já existe ----------
   console.log('\n[3] Restaurar sem apagar o que já existe');
   const ctx3 = await browser.newContext({ ...devices['iPhone 13'] });
+  /* estes testes são de outra parte do app; desligar a nuvem
+     evita que a tela de login do Supabase (ligada por padrão)
+     atrapalhe */
+  await ctx3.addInitScript(() => localStorage.setItem('beccaGesso.nuvemDesligada.v1', 'true'));
   const p3 = await ctx3.newPage();
   p3.on('pageerror', e => erros.push('p3: ' + String(e)));
   await p3.goto(`${base}/index.html`, { waitUntil: 'networkidle' });

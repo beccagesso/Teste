@@ -72,6 +72,10 @@ async function definirPelaTela(p, { usuario, senha, atual }) {
   const base = `http://127.0.0.1:${srv.address().port}`;
   const browser = await chromium.launch();
   const ctx = await browser.newContext({ ...devices['iPhone 13'] });
+  /* estes testes são de outra parte do app; desligar a nuvem
+     evita que a tela de login do Supabase (ligada por padrão)
+     atrapalhe */
+  await ctx.addInitScript(() => localStorage.setItem('beccaGesso.nuvemDesligada.v1', 'true'));
   let p = await ctx.newPage();
   const erros = [];
   p.on('pageerror', e => erros.push(String(e)));
@@ -104,6 +108,10 @@ async function definirPelaTela(p, { usuario, senha, atual }) {
   /* duas senhas iguais em aparelhos diferentes não podem dar o mesmo
      resultado guardado — é para isso que serve o sal */
   const ctx2 = await browser.newContext({ ...devices['iPhone 13'] });
+  /* estes testes são de outra parte do app; desligar a nuvem
+     evita que a tela de login do Supabase (ligada por padrão)
+     atrapalhe */
+  await ctx2.addInitScript(() => localStorage.setItem('beccaGesso.nuvemDesligada.v1', 'true'));
   const p2 = await ctx2.newPage();
   p2.on('dialog', d => d.accept());
   await p2.goto(`${base}/index.html`, { waitUntil: 'networkidle' });

@@ -122,16 +122,42 @@ const cta = (id, desc, valor, quando) => ({
   const erros = [];
 
   // =========================================================
-  console.log('\n[1] A tela de conexão');
+  console.log('\n[1] Aparelho de fábrica');
   // =========================================================
+  /* Sem nenhum passo manual: o app já sai do build ligado ao projeto da
+     Becca Gesso. Um aparelho realmente novo, sem nada no armazenamento,
+     tem de pedir login na hora — nunca abrir destravado por engano.
+     Só verifica o que aparece na tela: não faz nenhuma chamada de rede
+     de verdade, então não depende do projeto real existir daqui. */
+  const fabrica = await browser.newContext({ ...devices['iPhone 13'] });
+  const pf = await fabrica.newPage();
+  pf.on('pageerror', e => erros.push(String(e)));
+  await pf.goto(`${baseApp}/index.html`, { waitUntil: 'networkidle' });
+
+  checar(await pf.locator('#tranca').isVisible(),
+    'um aparelho novo, sem nada configurado, já pede login');
+  checar(await pf.locator('.app').isHidden(),
+    'e não deixa o app aparecer atrás enquanto isso');
+  checar((await pf.textContent('#rotuloUsuario')) === 'E-mail',
+    'o campo já pede e-mail, não usuário — a nuvem está ligada por padrão');
+  await fabrica.close();
+
+  // =========================================================
+  console.log('\n[2] Trocar de projeto manualmente');
+  // =========================================================
+  /* Para testar a tela de conexão sem depender do projeto real, este
+     aparelho desliga o padrão de propósito antes de abrir — é o mesmo
+     caminho de alguém que usa "Desligar" e depois cola outro projeto. */
   const zero = await browser.newContext({ ...devices['iPhone 13'] });
+  await zero.addInitScript(() =>
+    localStorage.setItem('beccaGesso.nuvemDesligada.v1', 'true'));
   const p0 = await zero.newPage();
   p0.on('pageerror', e => erros.push(String(e)));
   p0.on('dialog', d => d.accept());
   await p0.goto(`${baseApp}/index.html`, { waitUntil: 'networkidle' });
 
   checar(await p0.locator('#tranca').isHidden(),
-    'sem nuvem configurada, o app abre direto (como antes)');
+    'desligada, o app abre direto');
   checar(await p0.locator('#nuvemEstado').isHidden(),
     'e não mostra aviso de nuvem');
 
@@ -142,6 +168,8 @@ const cta = (id, desc, valor, quando) => ({
   await p0.click('#nuvemBtn');
   await p0.waitForTimeout(300);
   checar(await p0.locator('#painelNuvem').isVisible(), 'o botão Nuvem abre a tela');
+  checar((await p0.textContent('#nvSituacao')).includes('desligou'),
+    'a caixa avisa que foi desligada, não que nunca existiu nada');
 
   /* o painel do Supabase é copiado em bloco; o app tem de achar o que
      interessa no meio do texto */
@@ -168,6 +196,8 @@ const cta = (id, desc, valor, quando) => ({
   checar(guardado && guardado.url === baseNuvem, 'guardou o endereço');
   checar((await p0.textContent('#nvAviso')).includes('feche e abra'),
     'manda fechar e abrir para entrar');
+  checar(await p0.evaluate(() => localStorage.getItem('beccaGesso.nuvemDesligada.v1')) !== 'true',
+    'escolher uma conexão à mão liga de novo, mesmo que estivesse desligada');
 
   /* chave errada não pode ser aceita */
   await p0.fill('#nvChave', 'sb_publishable_chaveQueNaoExisteNenhumLugar');
@@ -182,7 +212,80 @@ const cta = (id, desc, valor, quando) => ({
   await zero.close();
 
   // =========================================================
-  console.log('\n[2] A tranca passa a ser do Supabase');
+  console.log('\n[3] Desligar não é definitivo, e não volta sozinho');
+  // =========================================================
+  const D = await browser.newContext({ ...devices['iPhone 13'] });
+  let pd = await D.newPage();
+  pd.on('pageerror', e => erros.push(String(e)));
+  pd.on('dialog', dlg => dlg.accept());
+  await pd.goto(`${baseApp}/index.html`, { waitUntil: 'networkidle' });
+  /* grava uma vez só — diferente de addInitScript, que rodaria nas
+     próximas recargas também e recolocaria o que "Desligar" acabou de
+     apagar */
+  await pd.evaluate(([url, chave]) => {
+    localStorage.setItem('beccaGesso.nuvem.v1', JSON.stringify({ url, chave }));
+  }, [baseNuvem, nuvem.chaveValida]);
+  pd = await reabrir(D, pd, baseApp, erros);
+  checar(await pd.locator('#tranca').isVisible(), 'liga normalmente com um projeto configurado');
+
+  /* entra primeiro; o histórico só existe depois de destravar a tela */
+  await pd.fill('#acUsuario', EMAIL);
+  await pd.fill('#acSenha', SENHA);
+  await pd.click('#acEntrar');
+  await pd.waitForTimeout(1200);
+  await pd.click('.secao-btn[data-secao="orcamentos"]');
+  await pd.waitForTimeout(200);
+  await pd.click('#histBtn');
+  await pd.waitForTimeout(250);
+  await pd.click('#nuvemBtn');
+  await pd.waitForTimeout(300);
+  await pd.click('#nvDesligar');
+  await pd.waitForTimeout(400);
+  checar(await pd.evaluate(() => localStorage.getItem('beccaGesso.nuvemDesligada.v1')) === 'true',
+    'desligar grava que foi à mão, não só apaga a conexão');
+  checar(await pd.evaluate(() => nuvemConfigurada()) === false,
+    'a nuvem para de contar como configurada');
+
+  /* entrar pela nuvem também guarda uma senha local, para funcionar
+     offline depois — desligar não apaga essa senha, e não devia: quem
+     desliga não está necessariamente tirando a tranca do aparelho. A
+     tela volta a pedir "Usuário", não mais "E-mail". */
+  pd = await reabrir(D, pd, baseApp, erros);
+  checar(await pd.locator('#tranca').isVisible(),
+    'a senha local que ficou guardada continua trancando o aparelho');
+  checar((await pd.textContent('#rotuloUsuario')) === 'Usuário',
+    'mas agora pede usuário, não mais e-mail — não é mais a nuvem que confere');
+  await pd.fill('#acUsuario', EMAIL);
+  await pd.fill('#acSenha', SENHA);
+  await pd.click('#acEntrar');
+  await pd.waitForTimeout(900);
+  checar(await pd.locator('#tranca').isHidden(),
+    'a mesma senha continua valendo, agora só localmente');
+
+  /* pelo próprio painel, sem precisar redigitar nada */
+  await pd.click('.secao-btn[data-secao="orcamentos"]');
+  await pd.waitForTimeout(200);
+  await pd.click('#histBtn');
+  await pd.waitForTimeout(250);
+  await pd.click('#nuvemBtn');
+  await pd.waitForTimeout(300);
+  checar(await pd.locator('#nvLigarPadrao').isVisible(), 'o painel oferece ligar de novo');
+  await pd.click('#nvLigarPadrao');
+  await pd.waitForTimeout(300);
+  checar(await pd.evaluate(() => localStorage.getItem('beccaGesso.nuvemDesligada.v1')) !== 'true',
+    'ligar de novo tira a marca de desligada');
+  checar(await pd.evaluate(() => nuvemConfigurada()) === true,
+    'e a nuvem volta a contar como configurada — cai no projeto padrão');
+  await pd.click('#nvFechar');
+  await pd.waitForTimeout(200);
+
+  pd = await reabrir(D, pd, baseApp, erros);
+  checar((await pd.textContent('#rotuloUsuario')) === 'E-mail',
+    'religada, a tela volta a pedir e-mail — é a nuvem de novo, não só a senha local');
+  await D.close();
+
+  // =========================================================
+  console.log('\n[4] A tranca passa a ser do Supabase');
   // =========================================================
   const A = await aparelho(browser, baseApp, baseNuvem, nuvem.chaveValida, erros);
   A.p = await reabrir(A.ctx, A.p, baseApp, erros);
@@ -209,7 +312,7 @@ const cta = (id, desc, valor, quando) => ({
     'guardou o embaralhamento da senha para valer sem internet');
 
   // =========================================================
-  console.log('\n[3] O que estava no aparelho sobe');
+  console.log('\n[5] O que estava no aparelho sobe');
   // =========================================================
   await lancar(A.p, {
     orcamento: orc('0001/2026', 'Construtora Alvorada', 3561.25),
@@ -233,7 +336,7 @@ const cta = (id, desc, valor, quando) => ({
     `o aviso na tela mostra que está tudo salvo (${await A.p.textContent('#nuvemEstado')})`);
 
   // =========================================================
-  console.log('\n[4] O segundo aparelho recebe tudo');
+  console.log('\n[6] O segundo aparelho recebe tudo');
   // =========================================================
   const B = await aparelho(browser, baseApp, baseNuvem, nuvem.chaveValida, erros);
   B.p = await reabrir(B.ctx, B.p, baseApp, erros);
@@ -252,7 +355,7 @@ const cta = (id, desc, valor, quando) => ({
   checar(pendB === 0, `o que veio da nuvem não vira pendência (${pendB})`);
 
   // =========================================================
-  console.log('\n[5] Uma alteração atravessa de um para o outro');
+  console.log('\n[7] Uma alteração atravessa de um para o outro');
   // =========================================================
   await lancar(B.p, { conta: cta('c-aluguel', 'Aluguel do galpão', 2350) });
   await sincronizar(B.p);
@@ -264,7 +367,7 @@ const cta = (id, desc, valor, quando) => ({
     `o valor novo chegou no primeiro aparelho (${aluguelA && aluguelA.valor})`);
 
   // =========================================================
-  console.log('\n[6] Excluir não pode ressuscitar');
+  console.log('\n[8] Excluir não pode ressuscitar');
   // =========================================================
   /* pelo botão da tela, não por dentro: é o caminho que a Becca usa, e
      é onde mora o gancho que deixa a lápide */
@@ -295,7 +398,7 @@ const cta = (id, desc, valor, quando) => ({
     'e não volta na sincronia seguinte');
 
   // =========================================================
-  console.log('\n[7] Os dois mexeram no mesmo: ganha o mais recente');
+  console.log('\n[9] Os dois mexeram no mesmo: ganha o mais recente');
   // =========================================================
   const base = Date.now();
   /* A edita primeiro, B depois — mas quem sincroniza primeiro é o B */
@@ -344,7 +447,7 @@ const cta = (id, desc, valor, quando) => ({
     `nos dois sentidos vence a mais recente (${naNuvem.dados.cliNome})`);
 
   // =========================================================
-  console.log('\n[8] Sem internet');
+  console.log('\n[10] Sem internet');
   // =========================================================
   await A.ctx.setOffline(true);
   await lancar(A.p, { conta: cta('c-offline', 'Placas compradas na obra', 480) });
@@ -389,7 +492,7 @@ const cta = (id, desc, valor, quando) => ({
     'quando o sinal volta, o que ficou na fila sobe');
 
   // =========================================================
-  console.log('\n[9] Aparelho novo, sem internet, nunca entrou');
+  console.log('\n[11] Aparelho novo, sem internet, nunca entrou');
   // =========================================================
   const C = await aparelho(browser, baseApp, baseNuvem, nuvem.chaveValida, erros);
   await C.ctx.setOffline(true);
@@ -402,7 +505,7 @@ const cta = (id, desc, valor, quando) => ({
   await C.ctx.close();
 
   // =========================================================
-  console.log('\n[10] Token vencido se renova sozinho');
+  console.log('\n[12] Token vencido se renova sozinho');
   // =========================================================
   const tok = (await B.p.evaluate(() =>
     JSON.parse(localStorage.getItem('beccaGesso.sessaoNuvem.v1')))).token;
@@ -415,7 +518,7 @@ const cta = (id, desc, valor, quando) => ({
     'e o lançamento sobe depois de renovar');
 
   // =========================================================
-  console.log('\n[11] Sem entrar, a nuvem não entrega nada');
+  console.log('\n[13] Sem entrar, a nuvem não entrega nada');
   // =========================================================
   /* Com as regras ligadas, o anônimo não toma erro: ele simplesmente
      não enxerga linha nenhuma. É a proteção funcionando. */
@@ -444,7 +547,7 @@ const cta = (id, desc, valor, quando) => ({
   checar((await comEntrada.json()).length > 0, 'com a entrada feita, lê');
 
   // =========================================================
-  console.log('\n[12] Desligar a nuvem não apaga nada');
+  console.log('\n[14] Desligar a nuvem não apaga nada');
   // =========================================================
   const antesDeDesligar = (await historico(B.p)).length;
   await B.p.evaluate(() => {

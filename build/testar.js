@@ -54,6 +54,10 @@ async function irParaOrcamentos(p) {
   // ---------- 1. carga limpa e sem dependências externas ----------
   console.log('\n[1] Carga da página');
   const ctx = await browser.newContext();
+  /* estes testes são de outra parte do app; desligar a nuvem
+     evita que a tela de login do Supabase (ligada por padrão)
+     atrapalhe */
+  await ctx.addInitScript(() => localStorage.setItem('beccaGesso.nuvemDesligada.v1', 'true'));
   const page = await ctx.newPage();
   const erros = [], externos = [];
   page.on('console', m => { if (m.type() === 'error') erros.push(m.text()); });
@@ -271,6 +275,10 @@ async function irParaOrcamentos(p) {
   // ---------- 5. iPhone ----------
   console.log('\n[5] iPhone (Safari)');
   const ctxIphone = await browser.newContext({ ...devices['iPhone 13'] });
+  /* estes testes são de outra parte do app; desligar a nuvem
+     evita que a tela de login do Supabase (ligada por padrão)
+     atrapalhe */
+  await ctxIphone.addInitScript(() => localStorage.setItem('beccaGesso.nuvemDesligada.v1', 'true'));
   const iphone = await ctxIphone.newPage();
   await iphone.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
   await irParaOrcamentos(iphone);

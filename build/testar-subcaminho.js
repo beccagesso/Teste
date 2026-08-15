@@ -21,6 +21,10 @@ const checar=(c,m)=>{console.log(`  ${c?'ok  ':'FALHA'}  ${m}`); if(!c)falhas.pu
   console.log('servindo em', base);
   const b=await chromium.launch();
   const c=await b.newContext({...devices['iPhone 13']});
+  /* estes testes são de outra parte do app; desligar a nuvem
+     evita que a tela de login do Supabase (ligada por padrão)
+     atrapalhe */
+  await c.addInitScript(() => localStorage.setItem('beccaGesso.nuvemDesligada.v1', 'true'));
   const p=await c.newPage();
   const quebrados=[];
   p.on('response', r=>{ if(r.status()>=400) quebrados.push(`${r.status()} ${r.url()}`); });

@@ -52,27 +52,35 @@ impressão do próprio navegador.
 
 ## Nuvem (Supabase)
 
-Sem a nuvem, os orçamentos e as contas existem só dentro do celular. Com ela
-ligada, ficam guardados fora do aparelho e aparecem em qualquer lugar onde
-você entrar — o celular na obra e o computador em casa vendo a mesma coisa.
+Os orçamentos e as contas ficam guardados fora do celular e aparecem em
+qualquer lugar onde você entrar — o celular na obra e o computador em casa
+vendo a mesma coisa. **O app já sai pronto**, ligado ao projeto da Becca
+Gesso: não precisa colar endereço nem chave em lugar nenhum. Quem abrir o
+link já cai direto na tela de entrar com e-mail e senha, e quem já entrou
+antes num aparelho cai direto nos dados salvos.
 
 O app **continua funcionando sem internet**. O celular segue sendo a fonte
 imediata: você lança normalmente na obra sem sinal, e o que foi lançado sobe
 quando a internet volta. A nuvem entra ao lado, não no lugar.
 
-### Ligar (uma vez por aparelho)
+### O que já está pronto
 
-1. No painel do Supabase, abra **SQL Editor → New query**, cole o conteúdo de
-   `build/supabase.sql` e clique em **Run**. Isso cria as duas tabelas e liga
-   as regras de acesso. Pode rodar de novo depois sem estragar nada.
-2. Ainda no Supabase, abra **Authentication → Users → Add user** e crie o seu
-   usuário com e-mail e senha. É com ele que você vai entrar no app.
-3. No app: **Histórico → Nuvem**. Cole o endereço do projeto e a chave
-   pública, que ficam em **Project Settings → API**. Pode colar os blocos
-   inteiros — o app acha o que interessa. Toque em **Salvar e conectar**.
-4. Feche e abra o app. Agora ele pede e-mail e senha.
+O projeto no Supabase já tem as tabelas criadas, as regras de acesso ligadas
+(`build/supabase.sql`, rodado uma vez) e o seu usuário cadastrado em
+**Authentication → Users**. Não sobra nenhum passo manual — nem para você,
+nem para quem for usar o app depois.
 
-Repita só o passo 3 e 4 no segundo aparelho.
+### Usar em outro projeto do Supabase (avançado)
+
+Isto só é preciso se um dia você quiser trocar de projeto. Em
+**Histórico → Nuvem**, cole o endereço e a chave pública do novo projeto
+(ficam em **Project Settings → API** — pode colar os blocos inteiros, o app
+acha o que interessa) e toque em **Salvar e conectar**. Feche e abra o app
+para entrar com o e-mail e a senha desse projeto.
+
+**Desligar** tira a nuvem deste aparelho específico (por exemplo, para usar
+o app totalmente offline nele). **Ligar de novo** volta para o projeto da
+Becca Gesso, sem precisar colar nada de novo.
 
 ### Por que a senha passou a importar
 
@@ -109,12 +117,6 @@ banco recusa uma versão mais velha que chegue atrasada.
 
 Excluir também atravessa: um orçamento apagado no celular some do computador
 na sincronização seguinte, e não volta.
-
-### Desligar
-
-**Histórico → Nuvem → Desligar** tira a nuvem deste aparelho. Nada é apagado:
-os orçamentos e as contas continuam no aparelho e continuam na nuvem. O app
-volta a pedir só a senha local.
 
 ## Senha de acesso
 
