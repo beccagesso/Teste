@@ -4,7 +4,7 @@
    Ao publicar uma versão nova, troque o número em VERSAO — é isso que
    faz o iPhone baixar os arquivos atualizados em vez de usar os antigos. */
 
-const VERSAO = 'becca-orcamentos-v13';
+const VERSAO = 'becca-orcamentos-v14';
 
 const ARQUIVOS = [
   './',
@@ -12,6 +12,26 @@ const ARQUIVOS = [
   './manifest.json',
   './icone-180.png',
   './icone-512.png',
+  './src/app.js',
+  './src/core/acesso.js',
+  './src/core/cloud.js',
+  './src/core/dates.js',
+  './src/core/errors.js',
+  './src/core/ids.js',
+  './src/core/money.js',
+  './src/core/storage.js',
+  './src/core/sync.js',
+  './src/calculations/orcamento.js',
+  './src/calculations/financeiro.js',
+  './src/domain/index.js',
+  './src/domain/clientes.js',
+  './src/domain/fornecedores.js',
+  './src/domain/categorias.js',
+  './src/domain/orcamentos.js',
+  './src/domain/contas.js',
+  './src/ui/dom.js',
+  './src/ui/components.js',
+  './src/ui/clientes.js',
 ];
 
 self.addEventListener('install', evento => {

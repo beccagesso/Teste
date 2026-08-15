@@ -158,7 +158,7 @@ const descricoesVisiveis = p => p.evaluate(() =>
   checar(avisos.some(a => /vencimento/i.test(a)), 'exige o vencimento');
   checar((await contasGravadas(p)).length === 1, 'nada incompleto foi guardado');
   await p.click('#ctCancelar').catch(() => {});
-  await p.evaluate(() => limparFormConta());
+  await p.evaluate(() => window.__beccaTeste.limparFormConta());
   await p.waitForTimeout(150);
 
   // ---------- 4. situação pelo vencimento ----------
@@ -301,19 +301,20 @@ const descricoesVisiveis = p => p.evaluate(() =>
   /* 31 de janeiro não pode virar 31 de fevereiro (o JavaScript joga
      para março sozinho se ninguém segurar) */
   const virada = await p.evaluate(() => {
+    const t = window.__beccaTeste;
     const casos = [['2026-01-31', '2026-02-28'], ['2028-01-31', '2028-02-29'],
                    ['2026-03-31', '2026-04-30'], ['2026-12-15', '2027-01-15']];
-    const antesDeTudo = lerContas();
+    const antesDeTudo = t.lerContas();
     const saida = [];
     for (const [de, esperado] of casos) {
-      gravarContas([{ id: 'teste', descricao: 'Virada de mês', valor: 10,
+      t.gravarContas([{ id: 'teste', descricao: 'Virada de mês', valor: 10,
                       vencimento: de, pago: false }]);
-      repetirNoProximoMes('teste');
-      const nova = lerContas().find(c => c.id !== 'teste');
+      t.repetirNoProximoMes('teste');
+      const nova = t.lerContas().find(c => c.id !== 'teste');
       saida.push({ de, esperado, deu: nova ? nova.vencimento : null });
     }
-    gravarContas(antesDeTudo);
-    renderContas();
+    t.gravarContas(antesDeTudo);
+    t.renderContas();
     return saida;
   });
   for (const v of virada) {
@@ -322,16 +323,17 @@ const descricoesVisiveis = p => p.evaluate(() =>
 
   // ---------- 11. backup ----------
   console.log('\n[11] As contas vão no backup');
-  const backup = await p.evaluate(() => conteudoDoBackup());
+  const backup = await p.evaluate(() => window.__beccaTeste.conteudoDoBackup());
   const lido = JSON.parse(backup);
   checar(Array.isArray(lido.contas) && lido.contas.length === antes + 1,
     `o backup leva as contas (${lido.contas && lido.contas.length})`);
 
   const voltou = await p.evaluate(texto => {
-    const guardadas = lerContas();
+    const t = window.__beccaTeste;
+    const guardadas = t.lerContas();
     localStorage.removeItem('beccaGesso.contas.v1');
-    restaurarDoTexto(texto);
-    const depois = lerContas();
+    t.restaurarDoTexto(texto);
+    const depois = t.lerContas();
     return { quantas: depois.length, iguais:
       JSON.stringify(depois.map(c => c.id).sort()) ===
       JSON.stringify(guardadas.map(c => c.id).sort()) };
@@ -340,19 +342,20 @@ const descricoesVisiveis = p => p.evaluate(() =>
     'restaurar o backup traz as contas de volta');
 
   /* restaurar duas vezes não pode duplicar nada */
-  await p.evaluate(texto => restaurarDoTexto(texto), backup);
+  await p.evaluate(texto => window.__beccaTeste.restaurarDoTexto(texto), backup);
   checar((await contasGravadas(p)).length === antes + 1,
     'restaurar o mesmo backup de novo não duplica');
 
   /* um backup antigo não pode desfazer o que foi mexido depois */
   const preservou = await p.evaluate(texto => {
-    const lista = lerContas();
+    const t = window.__beccaTeste;
+    const lista = t.lerContas();
     lista[0].valor = 9999;
     lista[0].atualizadoEm = Date.now() + 1000;
-    gravarContas(lista);
+    t.gravarContas(lista);
     const id = lista[0].id;
-    restaurarDoTexto(texto);
-    return lerContas().find(c => c.id === id).valor;
+    t.restaurarDoTexto(texto);
+    return t.lerContas().find(c => c.id === id).valor;
   }, backup);
   checar(preservou === 9999, 'backup antigo não sobrescreve a versão mais nova');
 
@@ -396,7 +399,7 @@ const descricoesVisiveis = p => p.evaluate(() =>
   await p.waitForTimeout(600);
   checar(semNbsp(await p.textContent('#totTotal')).includes('3.561,25'),
     `o orçamento continua calculando (${await p.textContent('#totTotal')})`);
-  const pdf = await p.evaluate(() => pdfDoOrcamento().size);
+  const pdf = await p.evaluate(() => window.__beccaTeste.pdfDoOrcamento().size);
   checar(pdf > 40000, `o PDF continua sendo gerado (${(pdf / 1024).toFixed(0)} KB)`);
 
   checar(erros.length === 0,

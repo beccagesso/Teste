@@ -3,12 +3,14 @@
 Aplicativo da Becca Gesso. Funciona no navegador, instala na tela de início do
 iPhone e continua funcionando sem internet.
 
-O app tem três seções, trocadas pelos botões abaixo do cabeçalho:
+O app tem quatro seções, trocadas pelos botões abaixo do cabeçalho:
 
 - **Início** — o resumo do mês: quanto foi orçado, o que está aprovado, o
   que vence agora e quem está esperando resposta.
 - **Orçamentos** — montar, imprimir e mandar orçamento pelo WhatsApp.
 - **Contas a pagar** — o que a empresa deve, com vencimento e situação.
+- **Clientes** — quem já foi atendido: nome, telefone, endereço e o
+  histórico de orçamentos de cada um.
 
 Ele abre no início e, depois, sempre na última seção que você usou.
 
@@ -257,9 +259,15 @@ condições daquele orçamento, não as de hoje.
 
 ### Cliente já atendido
 
-Ao digitar o nome do cliente, o app sugere os que já estão no histórico. Ao
-reconhecer o cliente, ele preenche o endereço da obra — mas só quando o campo
-está vazio, para nunca apagar o que você digitou.
+O campo de cliente do orçamento é uma busca: ao digitar, aparecem os clientes
+já cadastrados (nome e telefone) para escolher, com a opção **+ Novo
+cliente** para cadastrar sem sair do orçamento. Ao escolher um cliente, o
+telefone e o endereço vêm junto — mas só preenchem o que estiver vazio, para
+nunca apagar o que você já tinha digitado para aquele orçamento específico.
+
+Cada cliente também tem sua própria seção (**Clientes**, no menu), com busca
+por nome, telefone ou documento, e o histórico de orçamentos de cada um. Veja
+mais em [Clientes](#clientes).
 
 ### Unidade de medida
 
@@ -267,9 +275,9 @@ Cada serviço tem a sua unidade: **m²** (metro quadrado), **m.l.** (metro
 linear) ou **un.** (unidade). Ela aparece junto da quantidade no orçamento —
 "38,5 m²" em vez de só "38,5". O padrão é m².
 
-> Os dados ficam guardados **dentro do aparelho**, não em um servidor. Se você
-> usar o app no iPhone e no computador, cada um terá o seu próprio histórico e
-> a sua própria numeração.
+> Os dados ficam guardados dentro do aparelho. Com a nuvem ligada (é o
+> padrão — veja [Nuvem](#nuvem-supabase)), eles também aparecem em qualquer
+> outro aparelho onde você entrar com o mesmo e-mail e senha.
 
 ## A tela de início
 
@@ -386,13 +394,33 @@ ou observação.
 > arquivo **junta** com o que já existe, e entre duas versões da mesma conta
 > fica a que foi mexida por último.
 
+## Clientes
+
+A terceira seção é o cadastro de clientes: nome, telefone, e-mail, CPF/CNPJ,
+endereço, cidade e bairro. Cada cliente mostra também há quantos orçamentos
+ele tem e qual foi o último.
+
+- **Buscar** — a caixa no topo procura por nome, telefone ou documento.
+- **+ Novo cliente** — abre um cadastro em branco. Só o nome é obrigatório;
+  o resto pode ser preenchido depois.
+- **Abrir** — mostra os dados do cliente (já editáveis) e a lista dos
+  orçamentos dele.
+- **Desativar** — some da busca e das sugestões, mas não apaga nada: os
+  orçamentos que já apontam para aquele cliente continuam intactos.
+
+Alterar o endereço ou o telefone de um cliente **não muda** os orçamentos já
+emitidos para ele — cada orçamento guarda a sua própria cópia desses dados,
+tirada no momento em que foi salvo, exatamente para o documento que o
+cliente recebeu nunca mudar sozinho depois.
+
 ## Arquivos do projeto
 
 | Arquivo | Para que serve |
 |---|---|
-| `index.html` | O app inteiro num arquivo só. É o que abre no navegador. |
+| `index.html` | A casca do app (HTML e estilo) — o que abre no navegador. |
+| `src/` | A lógica do app, em módulos JavaScript comuns (sem framework). |
 | `manifest.json` | Diz ao iPhone o nome, o ícone e as cores do app. |
-| `sw.js` | Faz o app funcionar sem internet. |
+| `sw.js` | Faz o app funcionar sem internet — guarda `index.html` e todo `src/`. |
 | `icone-180.png`, `icone-512.png` | Ícones da tela de início. |
 | `build/` | Os arquivos de origem usados para montar o `index.html`. |
 | `build/pdf.js` | O gerador de PDF, escrito à mão para não depender de biblioteca. |
@@ -401,8 +429,25 @@ ou observação.
 | `gerador-orcamento-becca-gesso.html` | A versão original, guardada para consulta. |
 
 O `index.html` **não é editado à mão** — ele é montado a partir do
-`build/template.html`. Se editar direto no `index.html`, a mudança se perde na
-próxima vez que o arquivo for gerado.
+`build/template.html` (fontes, logo e o gerador de PDF entram embutidos). Se
+editar direto no `index.html`, a mudança se perde na próxima vez que o
+arquivo for gerado. Já os arquivos dentro de `src/` são editados direto: eles
+são carregados pelo navegador tal como estão, sem passar pelo `gerar.py`.
+
+### Como o `src/` é organizado
+
+```
+src/
+├── core/          armazenamento, nuvem, sincronização, dinheiro, datas, ids
+├── domain/        cliente, fornecedor, categoria, orçamento, conta
+├── calculations/  as contas de um orçamento e os resumos financeiros
+├── ui/            a tela de Clientes e a busca de cliente do orçamento
+└── app.js         liga tudo isso à tela — início, orçamentos e contas
+```
+
+`app.js` ainda concentra o desenho das telas de Início, Orçamentos e Contas a
+pagar (o que existia antes desta etapa); só a Etapa seguinte deve terminar de
+separar cada uma no seu próprio arquivo dentro de `ui/`.
 
 ## O fecho do documento
 
@@ -485,6 +530,7 @@ node build/testar-contas.js
 node build/testar-inicio.js
 node build/testar-nuvem.js
 node build/testar-subcaminho.js
+node build/testar-clientes.js
 ```
 
 O `testar-nuvem.js` roda contra um Supabase de mentira (`build/falso-supabase.js`),

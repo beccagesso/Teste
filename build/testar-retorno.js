@@ -96,14 +96,17 @@ async function irParaOrcamentos(p) {
 
   // ---------- 1. número de telefone ----------
   console.log('\n[1] Número do cliente');
-  const formatos = await p.evaluate(() => ({
-    comMascara: telefoneParaWhats('(14) 99757-7371'),
-    soDigitos: telefoneParaWhats('14997577371'),
-    fixo: telefoneParaWhats('1433334444'),
-    comPais: telefoneParaWhats('5514997577371'),
-    curto: telefoneParaWhats('99757'),
-    vazio: telefoneParaWhats(''),
-  }));
+  const formatos = await p.evaluate(() => {
+    const f = window.__beccaTeste.telefoneParaWhats;
+    return {
+      comMascara: f('(14) 99757-7371'),
+      soDigitos: f('14997577371'),
+      fixo: f('1433334444'),
+      comPais: f('5514997577371'),
+      curto: f('99757'),
+      vazio: f(''),
+    };
+  });
   checar(formatos.comMascara === '5514997577371',
     `número com máscara vira ${formatos.comMascara}`);
   checar(formatos.soDigitos === '5514997577371', 'número sem máscara funciona');
@@ -125,13 +128,13 @@ async function irParaOrcamentos(p) {
     'orçamento recém-criado ainda não pede retorno');
 
   await envelhecer(p, numA, 0);
-  await p.evaluate(() => renderHistorico());
+  await p.evaluate(() => window.__beccaTeste.renderHistorico());
   await p.waitForTimeout(150);
   checar(await p.locator('#histRetornos').isHidden(),
     'enviado hoje ainda não pede retorno');
 
   await envelhecer(p, numA, 1);
-  await p.evaluate(() => renderHistorico());
+  await p.evaluate(() => window.__beccaTeste.renderHistorico());
   await p.waitForTimeout(150);
   checar(await p.locator('#histRetornos').isVisible(),
     'depois de 1 dia, aparece na lista');
@@ -141,20 +144,20 @@ async function irParaOrcamentos(p) {
     'é o orçamento certo');
 
   await envelhecer(p, numSemFone, 10);
-  await p.evaluate(() => renderHistorico());
+  await p.evaluate(() => window.__beccaTeste.renderHistorico());
   await p.waitForTimeout(150);
   checar((await p.locator('.retorno-item').count()) === 1,
     'orçamento sem telefone não entra na lista');
 
   // aprovado ou recusado sai da cobrança
-  await p.evaluate((n) => marcarSituacao(n, 'aprovado'), numA);
-  await p.evaluate(() => renderHistorico());
+  await p.evaluate((n) => window.__beccaTeste.marcarSituacao(n, 'aprovado'), numA);
+  await p.evaluate(() => window.__beccaTeste.renderHistorico());
   await p.waitForTimeout(150);
   checar(await p.locator('#histRetornos').isHidden(),
     'orçamento aprovado sai da lista de cobrança');
-  await p.evaluate((n) => marcarSituacao(n, 'enviado'), numA);
+  await p.evaluate((n) => window.__beccaTeste.marcarSituacao(n, 'enviado'), numA);
   await envelhecer(p, numA, 1);
-  await p.evaluate(() => renderHistorico());
+  await p.evaluate(() => window.__beccaTeste.renderHistorico());
   await p.waitForTimeout(150);
 
   // ---------- 3. abrir a conversa ----------
@@ -175,7 +178,7 @@ async function irParaOrcamentos(p) {
   // ---------- 4. as etapas seguintes ----------
   console.log('\n[4] Etapas de 5 e 10 dias');
   await envelhecer(p, numA, 5);
-  await p.evaluate(() => renderHistorico());
+  await p.evaluate(() => window.__beccaTeste.renderHistorico());
   await p.waitForTimeout(150);
   checar(await p.locator('#histRetornos').isVisible(),
     'aos 5 dias volta a pedir retorno');
@@ -187,7 +190,7 @@ async function irParaOrcamentos(p) {
   checar(/dúvida/i.test(texto5), `mensagem de 5 dias: "${texto5.slice(0, 60)}…"`);
 
   await envelhecer(p, numA, 10);
-  await p.evaluate(() => renderHistorico());
+  await p.evaluate(() => window.__beccaTeste.renderHistorico());
   await p.waitForTimeout(150);
   await p.locator('.retorno-btn').first().click();
   await p.waitForTimeout(250);
@@ -198,7 +201,7 @@ async function irParaOrcamentos(p) {
     `mensagem de 10 dias fala da validade: "${texto10.slice(0, 60)}…"`);
 
   await envelhecer(p, numA, 30);
-  await p.evaluate(() => renderHistorico());
+  await p.evaluate(() => window.__beccaTeste.renderHistorico());
   await p.waitForTimeout(150);
   checar(await p.locator('#histRetornos').isHidden(),
     'depois das três etapas, para de cobrar');
@@ -213,7 +216,7 @@ async function irParaOrcamentos(p) {
   checar((await itemAna.count()) === 1, 'orçamento de 12 dias pede retorno');
   await itemAna.locator('.retorno-btn').click();
   await p.waitForTimeout(250);
-  await p.evaluate(() => renderHistorico());
+  await p.evaluate(() => window.__beccaTeste.renderHistorico());
   await p.waitForTimeout(150);
   checar((await p.locator('.retorno-item').filter({ hasText: 'Ana Paula' }).count()) === 0,
     'atender a etapa de 10 dias encerra também as anteriores');
@@ -224,9 +227,26 @@ async function irParaOrcamentos(p) {
     await p.click('#histFechar');
     await p.waitForTimeout(200);
   }
+
+  /* cadastra a Ana Paula na tela de Clientes — os orçamentos criados
+     antes, direto pelo formulário, não passaram pela busca de cliente
+     (Etapa 2), então ainda não existe um cadastro dela */
+  await p.click('.secao-btn[data-secao="clientes"]');
+  await p.waitForTimeout(250);
+  await p.click('#cliNovoBtn');
+  await p.waitForTimeout(200);
+  await p.fill('#cliFormNome', 'Ana Paula');
+  await p.fill('#cliFormTelefone', '14 98888-7777');
+  await p.click('#cliSalvar');
+  await p.waitForTimeout(200);
+
+  await p.click('.secao-btn[data-secao="orcamentos"]');
+  await p.waitForTimeout(250);
   await p.click('#resetBtn');
   await p.waitForTimeout(350);
   await p.fill('#cliNome', 'Ana Paula');
+  await p.waitForTimeout(250);
+  await p.click('.cli-busca-item[data-id]');
   await p.waitForTimeout(300);
   checar((await p.inputValue('#cliTelefone')).replace(/\D/g, '') === '14988887777',
     `telefone veio junto com o cliente: "${await p.inputValue('#cliTelefone')}"`);
@@ -235,7 +255,7 @@ async function irParaOrcamentos(p) {
   console.log('\n[6] Mensagens personalizáveis');
 
   /* o app não sabe o nome de quem usa: o padrão não pode inventar nenhum */
-  const padroes = await p.evaluate(() => MENSAGENS_PADRAO);
+  const padroes = await p.evaluate(() => window.__beccaTeste.MENSAGENS_PADRAO);
   const todosPadroes = Object.values(padroes).join(' ');
   checar(!/Becca|aqui é a|aqui é o/i.test(todosPadroes),
     'nenhuma mensagem padrão inventa um nome para quem envia');
@@ -283,7 +303,7 @@ async function irParaOrcamentos(p) {
   await p.fill('#msgD1', '   ');
   await p.click('#msgSalvar');
   await p.waitForTimeout(250);
-  checar((await p.evaluate(() => lerMensagens().d1)) === padroes.d1,
+  checar((await p.evaluate(() => window.__beccaTeste.lerMensagens().d1)) === padroes.d1,
     'mensagem apagada volta ao padrão');
 
   // voltar ao padrão
@@ -299,14 +319,14 @@ async function irParaOrcamentos(p) {
 
   // ---------- 7. as mensagens entram no backup ----------
   console.log('\n[7] Mensagens no backup');
-  await p.evaluate(() => gravarMensagens(Object.assign(lerMensagens(),
-    {d5: 'Texto só desta oficina {numero}'})));
-  const backup = await p.evaluate(() => JSON.parse(conteudoDoBackup()));
+  await p.evaluate(() => window.__beccaTeste.gravarMensagens(Object.assign(
+    window.__beccaTeste.lerMensagens(), {d5: 'Texto só desta oficina {numero}'})));
+  const backup = await p.evaluate(() => JSON.parse(window.__beccaTeste.conteudoDoBackup()));
   checar(backup.mensagens && backup.mensagens.d5 === 'Texto só desta oficina {numero}',
     'o backup leva as mensagens junto');
-  await p.evaluate(() => restaurarMensagensPadrao());
-  await p.evaluate((b) => { restaurarDoTexto(JSON.stringify(b)); }, backup);
-  checar((await p.evaluate(() => lerMensagens().d5)) === 'Texto só desta oficina {numero}',
+  await p.evaluate(() => window.__beccaTeste.restaurarMensagensPadrao());
+  await p.evaluate((b) => { window.__beccaTeste.restaurarDoTexto(JSON.stringify(b)); }, backup);
+  checar((await p.evaluate(() => window.__beccaTeste.lerMensagens().d5)) === 'Texto só desta oficina {numero}',
     'restaurar o backup traz as mensagens de volta');
 
   checar(erros.length === 0,

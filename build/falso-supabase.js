@@ -32,7 +32,13 @@ const idDoEmail = email =>
     .digest('hex').slice(0, 32)
     .replace(/^(.{8})(.{4})(.{4})(.{4})(.{12})$/, '$1-$2-$3-$4-$5');
 
-const COLUNA = { orcamentos: 'numero', contas: 'chave' };
+const COLUNA = {
+  orcamentos: 'numero',
+  contas: 'chave',
+  clientes: 'chave',
+  fornecedores: 'chave',
+  categorias_financeiras: 'chave',
+};
 
 function criar(opcoes) {
   const o = opcoes || {};
@@ -40,7 +46,7 @@ function criar(opcoes) {
   const chaveValida = o.chave || 'sb_publishable_deMentira123456789';
 
   const estado = {
-    linhas: { orcamentos: [], contas: [] },
+    linhas: { orcamentos: [], contas: [], clientes: [], fornecedores: [], categorias_financeiras: [] },
     /* o teste mexe nestes para simular casos difíceis */
     tokensVencidos: new Set(),
     quedaNaProxima: null,
@@ -149,7 +155,8 @@ function criar(opcoes) {
       }
 
       // ---------- tabelas ----------
-      const m = url.pathname.match(/^\/rest\/v1\/(orcamentos|contas)$/);
+      const m = url.pathname.match(
+        /^\/rest\/v1\/(orcamentos|contas|clientes|fornecedores|categorias_financeiras)$/);
       if (!m) return responder(res, 404, { message: 'não existe' });
 
       const tabela = m[1];

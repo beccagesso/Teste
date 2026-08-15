@@ -260,28 +260,35 @@ async function irParaOrcamentos(p) {
     await p.waitForTimeout(200);
   }
 
-  /* cria um cliente conhecido só para esta seção, para não depender do
-     que as seções anteriores deixaram no histórico */
-  await p.click('#resetBtn');
-  await p.waitForTimeout(400);
-  await preencher(p, {
-    cliente: 'Edificadora Santa Rita', obra: 'Rua Rio Branco, 77 — Jaú/SP',
-    desc: 'Forro de gesso', qtd: '20', unidade: 'm²', valor: '95,00',
-  });
+  /* cadastra um cliente pela tela de Clientes (Etapa 2: a busca do
+     orçamento sugere quem já está cadastrado, não mais quem apareceu
+     em algum orçamento anterior) */
+  await p.click('.secao-btn[data-secao="clientes"]');
+  await p.waitForTimeout(250);
+  await p.click('#cliNovoBtn');
+  await p.waitForTimeout(200);
+  await p.fill('#cliFormNome', 'Edificadora Santa Rita');
+  await p.fill('#cliFormEndereco', 'Rua Rio Branco, 77 — Jaú/SP');
+  await p.click('#cliSalvar');
+  await p.waitForTimeout(200);
 
+  await p.click('.secao-btn[data-secao="orcamentos"]');
+  await p.waitForTimeout(250);
   await p.click('#resetBtn');
   await p.waitForTimeout(400);
-  await p.locator('#cliNome').focus();
-  await p.waitForTimeout(150);
+
+  await p.fill('#cliNome', 'Edificadora Santa Rita');
+  await p.waitForTimeout(250);
   const sugestoes = await p.evaluate(() =>
-    [...document.querySelectorAll('#clientesConhecidos option')].map(o => o.value));
+    [...document.querySelectorAll('#cliBuscaResultados .cli-busca-item[data-id]')]
+      .map(b => b.querySelector('span').textContent));
   checar(sugestoes.length > 0, `clientes sugeridos: ${sugestoes.length}`);
   checar(sugestoes.includes('Edificadora Santa Rita'),
     `o cliente já atendido está entre as sugestões (${sugestoes.join(' | ')})`);
   checar(new Set(sugestoes).size === sugestoes.length,
     'nenhum cliente repetido na lista');
 
-  await p.fill('#cliNome', 'Edificadora Santa Rita');
+  await p.click('.cli-busca-item[data-id]');
   await p.waitForTimeout(300);
   checar((await p.inputValue('#cliEndereco')).includes('Rio Branco'),
     `endereço da obra veio junto: "${await p.inputValue('#cliEndereco')}"`);
@@ -291,6 +298,8 @@ async function irParaOrcamentos(p) {
   await p.waitForTimeout(400);
   await p.fill('#cliEndereco', 'Endereço novo, 500');
   await p.fill('#cliNome', 'Edificadora Santa Rita');
+  await p.waitForTimeout(250);
+  await p.click('.cli-busca-item[data-id]');
   await p.waitForTimeout(300);
   checar((await p.inputValue('#cliEndereco')) === 'Endereço novo, 500',
     'endereço já preenchido não é substituído');

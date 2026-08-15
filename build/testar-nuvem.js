@@ -80,22 +80,23 @@ async function entrar(p, email, senha) {
   await p.waitForTimeout(1400);
 }
 
-const sincronizar = p => p.evaluate(() => sincronizar({}));
-const historico = p => p.evaluate(() => lerHistorico());
-const contas = p => p.evaluate(() => lerContas());
+const sincronizar = p => p.evaluate(() => window.__beccaTeste.sincronizar({}));
+const historico = p => p.evaluate(() => window.__beccaTeste.lerHistorico());
+const contas = p => p.evaluate(() => window.__beccaTeste.lerContas());
 
 /* grava um orçamento e uma conta direto no armazenamento do aparelho */
 async function lancar(p, { orcamento, conta }) {
   await p.evaluate(({ o, c }) => {
+    const t = window.__beccaTeste;
     if (o) {
-      const l = lerHistorico().filter(x => x.orcNumero !== o.orcNumero);
+      const l = t.lerHistorico().filter(x => x.orcNumero !== o.orcNumero);
       l.unshift(o);
-      gravarHistorico(l);
+      t.gravarHistorico(l);
     }
     if (c) {
-      const l = lerContas().filter(x => x.id !== c.id);
+      const l = t.lerContas().filter(x => x.id !== c.id);
       l.push(c);
-      gravarContas(l);
+      t.gravarContas(l);
     }
   }, { o: orcamento || null, c: conta || null });
 }
@@ -178,7 +179,7 @@ const cta = (id, desc, valor, quando) => ({
   await p0.fill('#nvChave',
     `anon public\n${nuvem.chaveValida}\nservice_role  (não use)`);
   const limpo = await p0.evaluate(([u, k]) => ({
-    url: limparEndereco(u), chave: limparChave(k),
+    url: window.__beccaTeste.limparEndereco(u), chave: window.__beccaTeste.limparChave(k),
   }), [`Project URL\nhttps://abcdefgh.supabase.co/\n`,
        `anon public\n${nuvem.chaveValida}\nservice_role`]);
   checar(limpo.url === 'https://abcdefgh.supabase.co',
@@ -243,7 +244,7 @@ const cta = (id, desc, valor, quando) => ({
   await pd.waitForTimeout(400);
   checar(await pd.evaluate(() => localStorage.getItem('beccaGesso.nuvemDesligada.v1')) === 'true',
     'desligar grava que foi à mão, não só apaga a conexão');
-  checar(await pd.evaluate(() => nuvemConfigurada()) === false,
+  checar(await pd.evaluate(() => window.__beccaTeste.nuvemConfigurada()) === false,
     'a nuvem para de contar como configurada');
 
   /* entrar pela nuvem também guarda uma senha local, para funcionar
@@ -274,7 +275,7 @@ const cta = (id, desc, valor, quando) => ({
   await pd.waitForTimeout(300);
   checar(await pd.evaluate(() => localStorage.getItem('beccaGesso.nuvemDesligada.v1')) !== 'true',
     'ligar de novo tira a marca de desligada');
-  checar(await pd.evaluate(() => nuvemConfigurada()) === true,
+  checar(await pd.evaluate(() => window.__beccaTeste.nuvemConfigurada()) === true,
     'e a nuvem volta a contar como configurada — cai no projeto padrão');
   await pd.click('#nvFechar');
   await pd.waitForTimeout(200);
@@ -330,7 +331,8 @@ const cta = (id, desc, valor, quando) => ({
     'subiu no nome da dona');
 
   const pend = await A.p.evaluate(() =>
-    pendentesDe('orcamentos').length + pendentesDe('contas').length);
+    window.__beccaTeste.pendentesDe('orcamentos').length +
+    window.__beccaTeste.pendentesDe('contas').length);
   checar(pend === 0, `depois de subir não sobra nada pendente (${pend})`);
   checar((await A.p.textContent('#nuvemEstado')).includes('salvo'),
     `o aviso na tela mostra que está tudo salvo (${await A.p.textContent('#nuvemEstado')})`);
@@ -351,7 +353,8 @@ const cta = (id, desc, valor, quando) => ({
 
   /* o que desceu não pode voltar a subir sozinho */
   const pendB = await B.p.evaluate(() =>
-    pendentesDe('orcamentos').length + pendentesDe('contas').length);
+    window.__beccaTeste.pendentesDe('orcamentos').length +
+    window.__beccaTeste.pendentesDe('contas').length);
   checar(pendB === 0, `o que veio da nuvem não vira pendência (${pendB})`);
 
   // =========================================================
@@ -454,12 +457,12 @@ const cta = (id, desc, valor, quando) => ({
   await A.p.waitForTimeout(200);
   const salvouOffline = (await contas(A.p)).some(c => c.id === 'c-offline');
   checar(salvouOffline, 'dá para lançar sem internet');
-  const rOff = await A.p.evaluate(() => sincronizar({ silencioso: true }));
+  const rOff = await A.p.evaluate(() => window.__beccaTeste.sincronizar({ silencioso: true }));
   checar(rOff === null, 'a sincronia não trava sem sinal');
-  await A.p.evaluate(() => mostrarEstadoNuvem('offline'));
+  await A.p.evaluate(() => window.__beccaTeste.mostrarEstadoNuvem('offline'));
   checar((await A.p.textContent('#nuvemEstado')).includes('Sem internet'),
     'a tela avisa que está sem internet');
-  const pendOff = await A.p.evaluate(() => pendentesDe('contas').length);
+  const pendOff = await A.p.evaluate(() => window.__beccaTeste.pendentesDe('contas').length);
   checar(pendOff === 1, `o lançamento fica na fila (${pendOff})`);
 
   /* o app tem de abrir e a entrada tem de funcionar sem sinal, pelo
@@ -486,7 +489,7 @@ const cta = (id, desc, valor, quando) => ({
     'mesmo assim entra, pela senha guardada aqui');
   await A.p.unroute('**/auth/v1/**');
 
-  await A.p.evaluate(() => sincronizar({ silencioso: true }));
+  await A.p.evaluate(() => window.__beccaTeste.sincronizar({ silencioso: true }));
   await A.p.waitForTimeout(500);
   checar(nuvem.estado.linhas.contas.some(l => l.chave === 'c-offline'),
     'quando o sinal volta, o que ficou na fila sobe');
@@ -511,7 +514,7 @@ const cta = (id, desc, valor, quando) => ({
     JSON.parse(localStorage.getItem('beccaGesso.sessaoNuvem.v1')))).token;
   nuvem.estado.tokensVencidos.add(tok);
   await lancar(B.p, { conta: cta('c-renova', 'Depois do token vencer', 90) });
-  const rRenova = await B.p.evaluate(() => sincronizar({}));
+  const rRenova = await B.p.evaluate(() => window.__beccaTeste.sincronizar({}));
   await B.p.waitForTimeout(400);
   checar(rRenova !== null, 'a sincronia se recupera do token vencido');
   checar(nuvem.estado.linhas.contas.some(l => l.chave === 'c-renova'),
@@ -551,7 +554,7 @@ const cta = (id, desc, valor, quando) => ({
   // =========================================================
   const antesDeDesligar = (await historico(B.p)).length;
   await B.p.evaluate(() => {
-    esquecerNuvem();
+    window.__beccaTeste.esquecerNuvem();
     localStorage.removeItem('beccaGesso.nuvem.v1');
   });
   B.p = await reabrir(B.ctx, B.p, baseApp, erros);

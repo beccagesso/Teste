@@ -126,7 +126,7 @@ async function irParaOrcamentos(p) {
 
   /* a numeração precisa continuar de onde parou, senão o próximo
      orçamento repetiria um número já usado */
-  const proximo = await p2.evaluate(() => proximoNumero());
+  const proximo = await p2.evaluate(() => window.__beccaTeste.proximoNumero());
   checar(proximo === '0003/' + new Date().getFullYear(),
     `numeração continua de onde parou: ${proximo}`);
 

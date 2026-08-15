@@ -44,7 +44,7 @@ async function gerar(p, qtdServicos) {
       qtd: 12.5, valor: 340.75,
       unidade: i % 3 === 0 ? 'm²' : (i % 3 === 1 ? 'm.l.' : 'un.'),
     });
-    const d = dadosParaPdf();
+    const d = window.__beccaTeste.dadosParaPdf();
     d.servicos = lista;
     d.subtotal = d.total = lista.reduce((a, x) => a + x.qtd * x.valor, 0);
     d.parcela = d.total / 5;
@@ -169,18 +169,19 @@ async function irParaOrcamentos(p) {
 
   // ---------- 4. envio ----------
   console.log('\n[4] Envio pelo WhatsApp');
-  const nome = await p.evaluate(() => nomeDoArquivo());
+  const nome = await p.evaluate(() => window.__beccaTeste.nomeDoArquivo());
   checar(/^Orcamento - \d{4}-\d{4} - Construtora Alvorada Ltda\.pdf$/.test(nome),
     `nome do arquivo: ${nome}`);
 
-  const resumo = await p.evaluate(() => resumoParaTexto(dadosParaPdf()));
+  const resumo = await p.evaluate(() =>
+    window.__beccaTeste.resumoParaTexto(window.__beccaTeste.dadosParaPdf()));
   checar(resumo.includes('Construtora Alvorada Ltda'), 'resumo em texto traz o cliente');
   checar(/R\$/.test(resumo), 'resumo em texto traz os valores');
 
   /* o botão precisa produzir um arquivo de verdade para o compartilhamento */
   const arquivo = await p.evaluate(async () => {
-    const blob = pdfDoOrcamento();
-    const f = new File([blob], nomeDoArquivo(), {type: 'application/pdf'});
+    const blob = window.__beccaTeste.pdfDoOrcamento();
+    const f = new File([blob], window.__beccaTeste.nomeDoArquivo(), {type: 'application/pdf'});
     return {tipo: f.type, tamanho: f.size, podeCompartilhar:
       !!(navigator.canShare && navigator.canShare({files: [f]}))};
   });

@@ -61,9 +61,10 @@ function mesISO(deltaMeses) {
    baterias). */
 async function semear(p, { historico, contas }) {
   await p.evaluate(({ h, c }) => {
-    gravarHistorico(h);
-    gravarContas(c);
-    renderInicio();
+    const t = window.__beccaTeste;
+    t.gravarHistorico(h);
+    t.gravarContas(c);
+    t.renderInicio();
   }, { h: historico || [], c: contas || [] });
 }
 
@@ -335,7 +336,7 @@ const conta = (id, valor, vencimento, extra) => Object.assign({
   const ccDepois = await chips(p, 'chipsContas');
   checar(semNbsp(acharC(ccDepois, 'vencidas').valor) === 'R$ 200,00',
     `o indicador de vencidas acompanha (${semNbsp(acharC(ccDepois, 'vencidas').valor)})`);
-  checar((await p.evaluate(() => lerContas().find(c => c.id === 'a'))).pago === true,
+  checar((await p.evaluate(() => window.__beccaTeste.lerContas().find(c => c.id === 'a'))).pago === true,
     'o pagamento ficou gravado de verdade');
 
   // ---------- 9. quando há muitas vencendo ----------
@@ -375,13 +376,16 @@ const conta = (id, valor, vencimento, extra) => Object.assign({
 
   // ---------- 11. iniciais em outros formatos de nome ----------
   console.log('\n[11] Iniciais em outros formatos de nome');
-  const casosIniciais = await p.evaluate(() => ([
-    iniciaisDoNome('Rafael Moretti'),
-    iniciaisDoNome('Ana'),
-    iniciaisDoNome(''),
-    iniciaisDoNome('  Edifício   Solar   das   Acácias  '),
-    iniciaisDoNome('Gessos Bauru ME'),
-  ]));
+  const casosIniciais = await p.evaluate(() => {
+    const f = window.__beccaTeste.iniciaisDoNome;
+    return [
+      f('Rafael Moretti'),
+      f('Ana'),
+      f(''),
+      f('  Edifício   Solar   das   Acácias  '),
+      f('Gessos Bauru ME'),
+    ];
+  });
   checar(casosIniciais[0] === 'RM', `nome e sobrenome (${casosIniciais[0]})`);
   checar(casosIniciais[1] === 'AN', `uma palavra só usa as duas primeiras letras (${casosIniciais[1]})`);
   checar(casosIniciais[2] === '?', `nome vazio não quebra (${casosIniciais[2]})`);
@@ -442,7 +446,7 @@ const conta = (id, valor, vencimento, extra) => Object.assign({
   await p.waitForTimeout(350);
   checar(await p.locator('#secaoContas').isVisible(),
     'o indicador de vencidas abre as contas a pagar');
-  checar(await p.evaluate(() => filtroContas) === 'vencidas',
+  checar(await p.evaluate(() => window.__beccaTeste.filtroContas()) === 'vencidas',
     'já chega filtrado pelas vencidas');
 
   await p.click('.secao-btn[data-secao="inicio"]');
@@ -451,7 +455,7 @@ const conta = (id, valor, vencimento, extra) => Object.assign({
   await p.waitForTimeout(350);
   checar(await p.locator('#painelHist').isVisible(),
     'o indicador de aprovados abre o histórico');
-  checar(await p.evaluate(() => filtroSituacao) === 'aprovado',
+  checar(await p.evaluate(() => window.__beccaTeste.filtroSituacao()) === 'aprovado',
     'já chega filtrado pelos aprovados');
   await p.click('#histFechar');
   await p.waitForTimeout(300);
