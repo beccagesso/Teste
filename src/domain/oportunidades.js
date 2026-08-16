@@ -94,11 +94,15 @@ export function criar(dados){
   return oportunidade;
 }
 
-/* Não muda `status` (isso é só `alterarStatus`) nem `clienteId` (o
-   vínculo com o cliente nasce na criação e não é reatribuído aqui —
-   não há pedido para isso, e inventar essa possibilidade agora seria
-   arquitetura especulativa). Um `titulo` vazio é rejeitado do mesmo
-   jeito que na criação. */
+/* Não muda `status` (isso é só `alterarStatus` — editar dados
+   cadastrais aqui nunca muda o estado da oportunidade, nem quando ela
+   está aprovada ou perdida). Um `titulo` vazio é rejeitado do mesmo
+   jeito que na criação; um `clienteId` esvaziado também (a oportunidade
+   continua pertencendo a exatamente um cliente — só passa a apontar
+   para outro). Trocar o cliente daqui nunca toca nenhum orçamento: o
+   vínculo de cada orçamento com seu cliente é independente (mora em
+   `orcamentos.js`, com o próprio snapshot), e esta função nunca lê nem
+   grava nada lá. */
 export function atualizar(id, dados){
   const d = dados || {};
   const lista = lerOportunidades();
@@ -110,6 +114,10 @@ export function atualizar(id, dados){
     if(!t) return null;
     o.titulo = t;
   }
+  if(d.clienteId !== undefined){
+    if(!d.clienteId) return null;
+    o.clienteId = d.clienteId;
+  }
   if(d.origemId !== undefined) o.origemId = d.origemId || null;
   if(d.origemDetalhe !== undefined) o.origemDetalhe = String(d.origemDetalhe).trim();
   if(d.valorEstimado !== undefined) o.valorEstimado = Number(d.valorEstimado) || 0;
@@ -117,6 +125,8 @@ export function atualizar(id, dados){
   for(const campo of ['visitaAgendadaEm', 'visitaRealizadaEm', 'proximoContatoEm']){
     if(d[campo] !== undefined) o[campo] = d[campo] || null;
   }
+  if(d.motivoPerdaId !== undefined) o.motivoPerdaId = d.motivoPerdaId || null;
+  if(d.motivoPerdaDetalhe !== undefined) o.motivoPerdaDetalhe = String(d.motivoPerdaDetalhe).trim();
 
   o.atualizadoEm = Date.now();
   gravarOportunidades(lista);

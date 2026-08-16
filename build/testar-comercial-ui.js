@@ -43,6 +43,17 @@ async function irPara(p, secao) {
   await p.waitForTimeout(250);
 }
 
+/* recarrega mantendo o armazenamento — o "fechar e abrir o app" */
+async function reabrir(ctx, p, baseApp, erros) {
+  await p.close();
+  const nova = await ctx.newPage();
+  nova.on('pageerror', e => erros.push(String(e)));
+  nova.on('dialog', d => d.accept());
+  await nova.goto(`${baseApp}/index.html`, { waitUntil: 'networkidle' });
+  await nova.waitForTimeout(400);
+  return nova;
+}
+
 (async () => {
   const srv = await servidor();
   const base = `http://127.0.0.1:${srv.address().port}`;
@@ -261,6 +272,175 @@ async function irPara(p, secao) {
     document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
   checar(semRolagemHorizontal, 'sem rolagem horizontal no painel de criação, no iPhone');
   await p.click('#opoFechar');
+
+  // =========================================================
+  console.log('\n[9] Editar oportunidade (Etapa 3.2.1)');
+  // =========================================================
+  await irPara(p, 'clientes');
+  await p.click('#cliNovoBtn');
+  await p.waitForTimeout(150);
+  await p.fill('#cliFormNome', 'Cliente Edicao');
+  await p.click('#cliSalvar');
+  await p.waitForTimeout(250);
+
+  await irPara(p, 'comercial');
+  await p.click('#opoNovoBtn');
+  await p.waitForTimeout(150);
+  await p.selectOption('#opoFormCliente', { label: 'Cliente Edicao' });
+  await p.fill('#opoFormTitulo', 'Editar depois de criar');
+  await p.click('#opoSalvar');
+  await p.waitForTimeout(300);
+
+  await p.locator('.oportunidade-item').filter({ hasText: 'Editar depois de criar' }).locator('.opo-abrir').click();
+  await p.waitForTimeout(200);
+  checar(await p.locator('#opoEditarBtn').isVisible(), 'painel de detalhe tem o botão "Editar"');
+  await p.click('#opoEditarBtn');
+  await p.waitForTimeout(150);
+  checar(await p.locator('#opoEditTitulo').isVisible(), 'clicar em Editar mostra o formulário de edição');
+  checar((await p.inputValue('#opoEditTitulo')) === 'Editar depois de criar', 'título atual vem preenchido');
+
+  // 3a. cancelar não salva nada
+  await p.fill('#opoEditTitulo', 'Isto não deveria ficar salvo');
+  await p.click('#opoEditCancelar');
+  await p.waitForTimeout(150);
+  checar(await p.locator('#opoEditTitulo').isHidden(), 'Cancelar sai do modo de edição');
+  checar((await p.locator('#opoDetTitulo').textContent()) === 'Editar depois de criar',
+    'e o título não mudou (Cancelar não grava)');
+
+  // 3b. validação: título vazio não salva
+  await p.click('#opoEditarBtn');
+  await p.waitForTimeout(150);
+  await p.fill('#opoEditTitulo', '   ');
+  await p.click('#opoEditSalvar');
+  await p.waitForTimeout(150);
+  checar(await p.locator('#opoEditAviso').isVisible(), 'título vazio: mostra aviso e não sai do modo de edição');
+  checar(await p.locator('#opoEditTitulo').isVisible(), 'painel continua em edição');
+
+  // 3c. edição completa dos campos cadastrais
+  await p.fill('#opoEditTitulo', 'Reforma completa — sede nova');
+  await p.fill('#opoEditOrigemDetalhe', 'Indicou um amigo');
+  await p.selectOption('#opoEditOrigem', { label: 'Google' });
+  await p.fill('#opoEditValor', '18.000,00');
+  await p.fill('#opoEditResponsavel', 'Becca Gesso');
+  await p.fill('#opoEditVisitaAgendada', '2026-09-10');
+  await p.fill('#opoEditVisitaRealizada', '2026-09-12');
+  await p.fill('#opoEditProximoContato', '2026-09-20');
+  await p.click('#opoEditSalvar');
+  await p.waitForTimeout(250);
+
+  checar(await p.locator('#opoEditTitulo').isHidden(), 'depois de salvar, volta para o modo de leitura');
+  const cabecalhoEditado = await p.locator('#opoDetCabecalho').textContent();
+  checar((await p.locator('#opoDetTitulo').textContent()) === 'Reforma completa — sede nova', 'título foi salvo');
+  checar(cabecalhoEditado.includes('Google'), 'origem foi salva');
+  checar(cabecalhoEditado.includes('Indicou um amigo'), 'detalhe da origem foi salvo');
+  checar(cabecalhoEditado.includes('18.000'), 'valor estimado foi salvo');
+  checar(cabecalhoEditado.includes('Becca Gesso'), 'responsável foi salvo');
+  checar(cabecalhoEditado.includes('10/09/2026'), 'visita agendada foi salva');
+  checar(cabecalhoEditado.includes('12/09/2026'), 'visita realizada foi salva');
+  checar(cabecalhoEditado.includes('20/09/2026'), 'próximo contato foi salvo');
+
+  // reflete na lista também
+  await p.click('#opoDetFechar');
+  await p.waitForTimeout(200);
+  checar((await p.locator('.oportunidade-item').filter({ hasText: 'Reforma completa' }).count()) === 1,
+    'a lista já mostra o novo título');
+
+  // 3d. reabrir e confirmar que persistiu de verdade (não só na memória da tela)
+  const pReaberta = await reabrir(ctx, p, base, erros);
+  await irPara(pReaberta, 'comercial');
+  await pReaberta.locator('.oportunidade-item').filter({ hasText: 'Reforma completa' })
+    .locator('.opo-abrir').click();
+  await pReaberta.waitForTimeout(200);
+  const cabecalhoReaberto = await pReaberta.locator('#opoDetCabecalho').textContent();
+  checar(cabecalhoReaberto.includes('Google') && cabecalhoReaberto.includes('18.000') &&
+    cabecalhoReaberto.includes('Becca Gesso'), 'depois de reabrir o app, os dados editados continuam salvos');
+  await pReaberta.click('#opoDetFechar');
+
+  // =========================================================
+  console.log('\n[10] Teste crítico: editar oportunidade não toca cliente nem orçamento');
+  // =========================================================
+  await irPara(pReaberta, 'clientes');
+  await pReaberta.click('#cliNovoBtn');
+  await pReaberta.waitForTimeout(150);
+  await pReaberta.fill('#cliFormNome', 'Joao Critico Edicao');
+  await pReaberta.fill('#cliFormTelefone', '(14) 90000-1111');
+  await pReaberta.fill('#cliFormEndereco', 'Rua Original, 100');
+  await pReaberta.click('#cliSalvar');
+  await pReaberta.waitForTimeout(250);
+
+  await pReaberta.click('#cliNovoBtn');
+  await pReaberta.waitForTimeout(150);
+  await pReaberta.fill('#cliFormNome', 'Pedro Novo Cliente');
+  await pReaberta.click('#cliSalvar');
+  await pReaberta.waitForTimeout(250);
+
+  await irPara(pReaberta, 'orcamentos');
+  await pReaberta.click('#resetBtn');
+  await pReaberta.waitForTimeout(300);
+  await pReaberta.fill('#cliNome', 'Joao Critico Edicao');
+  await pReaberta.waitForTimeout(250);
+  await pReaberta.click('.cli-busca-item[data-id]');
+  await pReaberta.waitForTimeout(200);
+  await pReaberta.fill('.s-desc', 'Forro');
+  await pReaberta.fill('.s-qtd', '1');
+  await pReaberta.fill('.s-valor', '7.000,00');
+  await pReaberta.waitForTimeout(600);
+  const numeroCritico = await pReaberta.inputValue('#orcNumero');
+
+  const setup = await pReaberta.evaluate(async ({ numero }) => {
+    const opo = await import('./src/domain/oportunidades.js');
+    const cli = await import('./src/domain/clientes.js');
+    const orc = await import('./src/domain/orcamentos.js');
+
+    const joao = cli.lerClientes().find(c => c.nome === 'Joao Critico Edicao');
+    const pedro = cli.lerClientes().find(c => c.nome === 'Pedro Novo Cliente');
+    const oportunidade = opo.criar({ clienteId: joao.id, titulo: 'Reforma João' });
+
+    const lista = orc.lerHistorico();
+    const entrada = lista.find(x => x.orcNumero === numero);
+    entrada.oportunidadeId = oportunidade.id;
+    orc.gravarHistorico(lista);
+
+    return {
+      joaoId: joao.id, pedroId: pedro.id, oportunidadeId: oportunidade.id,
+      joaoAntes: JSON.parse(JSON.stringify(joao)),
+      orcamentoAntes: JSON.parse(JSON.stringify(orc.lerHistorico().find(x => x.orcNumero === numero))),
+    };
+  }, { numero: numeroCritico });
+
+  await irPara(pReaberta, 'comercial');
+  await pReaberta.locator('.oportunidade-item').filter({ hasText: 'Reforma João' }).locator('.opo-abrir').click();
+  await pReaberta.waitForTimeout(200);
+  await pReaberta.click('#opoEditarBtn');
+  await pReaberta.waitForTimeout(150);
+  await pReaberta.selectOption('#opoEditCliente', { label: 'Pedro Novo Cliente' });
+  await pReaberta.fill('#opoEditTitulo', 'Reforma — cliente trocado');
+  await pReaberta.fill('#opoEditValor', '9.500,00');
+  await pReaberta.click('#opoEditSalvar');
+  await pReaberta.waitForTimeout(250);
+
+  const depois = await pReaberta.evaluate(async ({ joaoId, oportunidadeId, numero }) => {
+    const opo = await import('./src/domain/oportunidades.js');
+    const cli = await import('./src/domain/clientes.js');
+    const orc = await import('./src/domain/orcamentos.js');
+    return {
+      oportunidade: opo.buscarPorId(oportunidadeId),
+      joao: cli.buscarPorId(joaoId),
+      orcamento: orc.lerHistorico().find(x => x.orcNumero === numero),
+    };
+  }, { joaoId: setup.joaoId, oportunidadeId: setup.oportunidadeId, numero: numeroCritico });
+
+  checar(depois.oportunidade.clienteId === setup.pedroId, 'Oportunidade: clienteId mudou para Pedro');
+  checar(depois.oportunidade.titulo === 'Reforma — cliente trocado', 'Oportunidade: título mudou');
+  checar(depois.oportunidade.valorEstimado === 9500, 'Oportunidade: valorEstimado mudou');
+
+  checar(JSON.stringify(depois.joao) === JSON.stringify(setup.joaoAntes),
+    'Cliente João: nenhum byte mudou (edição da oportunidade não tocou o cadastro)');
+
+  checar(depois.orcamento.clienteId === setup.joaoId,
+    'Orçamento: clienteId continua sendo João (não seguiu a troca de cliente da oportunidade)');
+  checar(JSON.stringify(depois.orcamento) === JSON.stringify(setup.orcamentoAntes),
+    'Orçamento: nenhum byte mudou — cálculo, situação e snapshot (cliNome/cliTelefone/cliEndereco) intactos');
 
   checar(erros.length === 0, `sem erros de JavaScript ${erros.length ? '-> ' + erros.join(' | ') : ''}`);
 
