@@ -36,6 +36,10 @@ const cli = domain.clientes;
 const forn = domain.fornecedores;
 const cat = domain.categorias;
 const cta = domain.contas;
+const opo = domain.oportunidades;
+const ativ = domain.atividadesComerciais;
+const org = domain.origens;
+const mot = domain.motivosPerda;
 
 /* ---------- liga as entidades à sincronização ----------
    O motor de sincronização (src/core/sync.js) não conhece nenhuma
@@ -54,6 +58,14 @@ sync.configurarTabelas({
                  ler: forn.lerFornecedores, gravar: forn.gravarFornecedores},
   categorias:   {tabela:'categorias_financeiras', coluna:'chave', chaveLocal:'id',
                  ler: cat.lerCategorias, gravar: cat.gravarCategorias},
+  oportunidades: {tabela:'oportunidades', coluna:'chave', chaveLocal:'id',
+                 ler: opo.lerOportunidades, gravar: opo.gravarOportunidades},
+  atividadesComerciais: {tabela:'atividades_comerciais', coluna:'chave', chaveLocal:'id',
+                 ler: ativ.lerAtividades, gravar: ativ.gravarAtividades},
+  origens:      {tabela:'origens_lead', coluna:'chave', chaveLocal:'id',
+                 ler: org.lerOrigens, gravar: org.gravarOrigens},
+  motivosPerda: {tabela:'motivos_perda', coluna:'chave', chaveLocal:'id',
+                 ler: mot.lerMotivosPerda, gravar: mot.gravarMotivosPerda},
 });
 sync.aoMudarEstadoNuvem((estado, detalhe) => mostrarEstadoNuvem(estado, detalhe));
 sync.aoReceberDados(() => {
@@ -1439,7 +1451,10 @@ function renderHistorico(){
   }));
 
   alvo.querySelectorAll('.hist-sit').forEach(s => s.addEventListener('change', ev => {
-    orc.marcarSituacao(ev.currentTarget.dataset.num, ev.currentTarget.value);
+    /* passa pela ponte em domain/index.js: se este orçamento tiver uma
+       oportunidade vinculada e a situação virar "aprovado", a
+       oportunidade pode avançar para "aprovada" (Etapa 3.1, item 12) */
+    domain.marcarOrcamentoESituacao(ev.currentTarget.dataset.num, ev.currentTarget.value);
     renderHistorico();
   }));
 

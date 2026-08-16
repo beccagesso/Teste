@@ -11,8 +11,27 @@ import * as fornecedores from './fornecedores.js';
 import * as categorias from './categorias.js';
 import * as orcamentos from './orcamentos.js';
 import * as contas from './contas.js';
+import * as oportunidades from './oportunidades.js';
+import * as atividadesComerciais from './atividadesComerciais.js';
+import * as origens from './origens.js';
+import * as motivosPerda from './motivosPerda.js';
 
-export { clientes, fornecedores, categorias, orcamentos, contas };
+export {
+  clientes, fornecedores, categorias, orcamentos, contas,
+  oportunidades, atividadesComerciais, origens, motivosPerda,
+};
+
+/* Aprovar um orçamento pode aprovar a Oportunidade vinculada a ele —
+   por isso mora aqui, não em `orcamentos.js`: é o único arquivo que já
+   conhece mais de uma entidade ao mesmo tempo. Sem cascata para
+   orçamentos-irmãos: só o orçamento passado como argumento é tocado. */
+export function marcarOrcamentoESituacao(numero, situacao){
+  orcamentos.marcarSituacao(numero, situacao);
+  if(situacao === 'aprovado'){
+    const e = orcamentos.lerHistorico().find(x => x.orcNumero === numero);
+    if(e && e.oportunidadeId) oportunidades.alterarStatus(e.oportunidadeId, 'aprovada');
+  }
+}
 
 /* Quantos orçamentos um cliente já teve, e qual foi o mais recente —
    usado na lista e na ficha do cliente. */
@@ -122,6 +141,8 @@ export function migrarDadosLegados(){
   const resultado = {
     ok: true,
     categoriasSemeadas: false,
+    origensSemeadas: false,
+    motivosPerdaSemeados: false,
     clientesCriados: 0,
     orcamentosVinculados: 0,
     orcamentosComIdNovo: 0,
@@ -193,6 +214,16 @@ export function migrarDadosLegados(){
     }
     if(mudouContas) contas.gravarContas(listaContas);
     resultado.fornecedoresCriados = fornecedores.lerFornecedores().length - fornecedoresAntes;
+
+    /* 5. origens de lead e motivos de perda padrão — só na primeira vez,
+       mesmo padrão das categorias no passo 2 */
+    const semOrigensAntes = origens.lerOrigens().length === 0;
+    origens.semearPadrao();
+    resultado.origensSemeadas = semOrigensAntes && origens.lerOrigens().length > 0;
+
+    const semMotivosAntes = motivosPerda.lerMotivosPerda().length === 0;
+    motivosPerda.semearPadrao();
+    resultado.motivosPerdaSemeados = semMotivosAntes && motivosPerda.lerMotivosPerda().length > 0;
 
   }catch(erro){
     resultado.ok = false;

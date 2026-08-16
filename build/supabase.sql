@@ -112,6 +112,62 @@ create table if not exists public.categorias_financeiras (
   unique (dono, chave)
 );
 
+-- Etapa 3.1: fundação do módulo Comercial — Oportunidade, atividade
+-- comercial, origem de lead e motivo de perda. Mesmo formato exato das
+-- tabelas acima: nenhuma arquitetura paralela.
+
+create table if not exists public.oportunidades (
+  id             uuid primary key default gen_random_uuid(),
+  dono           uuid not null references auth.users(id) on delete cascade
+                 default auth.uid(),
+  chave          text not null,
+  dados          jsonb not null,
+  atualizado_em  bigint not null,
+  gravado_em     timestamptz not null default now(),
+  removido       boolean not null default false,
+
+  unique (dono, chave)
+);
+
+create table if not exists public.atividades_comerciais (
+  id             uuid primary key default gen_random_uuid(),
+  dono           uuid not null references auth.users(id) on delete cascade
+                 default auth.uid(),
+  chave          text not null,
+  dados          jsonb not null,
+  atualizado_em  bigint not null,
+  gravado_em     timestamptz not null default now(),
+  removido       boolean not null default false,
+
+  unique (dono, chave)
+);
+
+create table if not exists public.origens_lead (
+  id             uuid primary key default gen_random_uuid(),
+  dono           uuid not null references auth.users(id) on delete cascade
+                 default auth.uid(),
+  chave          text not null,
+  dados          jsonb not null,
+  atualizado_em  bigint not null,
+  gravado_em     timestamptz not null default now(),
+  removido       boolean not null default false,
+
+  unique (dono, chave)
+);
+
+create table if not exists public.motivos_perda (
+  id             uuid primary key default gen_random_uuid(),
+  dono           uuid not null references auth.users(id) on delete cascade
+                 default auth.uid(),
+  chave          text not null,
+  dados          jsonb not null,
+  atualizado_em  bigint not null,
+  gravado_em     timestamptz not null default now(),
+  removido       boolean not null default false,
+
+  unique (dono, chave)
+);
+
 
 -- ---------------------------------------------------------------------
 -- 2. Índices
@@ -133,6 +189,18 @@ create index if not exists fornecedores_dono_gravado
 
 create index if not exists categorias_financeiras_dono_gravado
   on public.categorias_financeiras (dono, gravado_em);
+
+create index if not exists oportunidades_dono_gravado
+  on public.oportunidades (dono, gravado_em);
+
+create index if not exists atividades_comerciais_dono_gravado
+  on public.atividades_comerciais (dono, gravado_em);
+
+create index if not exists origens_lead_dono_gravado
+  on public.origens_lead (dono, gravado_em);
+
+create index if not exists motivos_perda_dono_gravado
+  on public.motivos_perda (dono, gravado_em);
 
 
 -- ---------------------------------------------------------------------
@@ -191,6 +259,26 @@ create trigger categorias_financeiras_gravado_em
   before insert or update on public.categorias_financeiras
   for each row execute function public.marcar_gravado_em();
 
+drop trigger if exists oportunidades_gravado_em on public.oportunidades;
+create trigger oportunidades_gravado_em
+  before insert or update on public.oportunidades
+  for each row execute function public.marcar_gravado_em();
+
+drop trigger if exists atividades_comerciais_gravado_em on public.atividades_comerciais;
+create trigger atividades_comerciais_gravado_em
+  before insert or update on public.atividades_comerciais
+  for each row execute function public.marcar_gravado_em();
+
+drop trigger if exists origens_lead_gravado_em on public.origens_lead;
+create trigger origens_lead_gravado_em
+  before insert or update on public.origens_lead
+  for each row execute function public.marcar_gravado_em();
+
+drop trigger if exists motivos_perda_gravado_em on public.motivos_perda;
+create trigger motivos_perda_gravado_em
+  before insert or update on public.motivos_perda
+  for each row execute function public.marcar_gravado_em();
+
 
 -- ---------------------------------------------------------------------
 -- 4. Quem pode ver o quê  (a parte que realmente protege)
@@ -212,6 +300,10 @@ alter table public.contas                 enable row level security;
 alter table public.clientes               enable row level security;
 alter table public.fornecedores           enable row level security;
 alter table public.categorias_financeiras enable row level security;
+alter table public.oportunidades          enable row level security;
+alter table public.atividades_comerciais  enable row level security;
+alter table public.origens_lead           enable row level security;
+alter table public.motivos_perda          enable row level security;
 
 drop policy if exists orcamentos_do_dono on public.orcamentos;
 create policy orcamentos_do_dono
@@ -253,6 +345,38 @@ create policy categorias_financeiras_do_dono
   using      (dono = auth.uid())
   with check (dono = auth.uid());
 
+drop policy if exists oportunidades_do_dono on public.oportunidades;
+create policy oportunidades_do_dono
+  on public.oportunidades
+  for all
+  to authenticated
+  using      (dono = auth.uid())
+  with check (dono = auth.uid());
+
+drop policy if exists atividades_comerciais_do_dono on public.atividades_comerciais;
+create policy atividades_comerciais_do_dono
+  on public.atividades_comerciais
+  for all
+  to authenticated
+  using      (dono = auth.uid())
+  with check (dono = auth.uid());
+
+drop policy if exists origens_lead_do_dono on public.origens_lead;
+create policy origens_lead_do_dono
+  on public.origens_lead
+  for all
+  to authenticated
+  using      (dono = auth.uid())
+  with check (dono = auth.uid());
+
+drop policy if exists motivos_perda_do_dono on public.motivos_perda;
+create policy motivos_perda_do_dono
+  on public.motivos_perda
+  for all
+  to authenticated
+  using      (dono = auth.uid())
+  with check (dono = auth.uid());
+
 
 -- ---------------------------------------------------------------------
 -- 5. Conferência
@@ -266,4 +390,5 @@ select tablename, rowsecurity
   from pg_tables
  where schemaname = 'public'
    and tablename in ('orcamentos', 'contas', 'clientes', 'fornecedores',
-                      'categorias_financeiras');
+                      'categorias_financeiras', 'oportunidades',
+                      'atividades_comerciais', 'origens_lead', 'motivos_perda');

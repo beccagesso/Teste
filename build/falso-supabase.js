@@ -38,6 +38,10 @@ const COLUNA = {
   clientes: 'chave',
   fornecedores: 'chave',
   categorias_financeiras: 'chave',
+  oportunidades: 'chave',
+  atividades_comerciais: 'chave',
+  origens_lead: 'chave',
+  motivos_perda: 'chave',
 };
 
 function criar(opcoes) {
@@ -46,7 +50,8 @@ function criar(opcoes) {
   const chaveValida = o.chave || 'sb_publishable_deMentira123456789';
 
   const estado = {
-    linhas: { orcamentos: [], contas: [], clientes: [], fornecedores: [], categorias_financeiras: [] },
+    linhas: { orcamentos: [], contas: [], clientes: [], fornecedores: [], categorias_financeiras: [],
+              oportunidades: [], atividades_comerciais: [], origens_lead: [], motivos_perda: [] },
     /* o teste mexe nestes para simular casos difíceis */
     tokensVencidos: new Set(),
     quedaNaProxima: null,
@@ -156,7 +161,7 @@ function criar(opcoes) {
 
       // ---------- tabelas ----------
       const m = url.pathname.match(
-        /^\/rest\/v1\/(orcamentos|contas|clientes|fornecedores|categorias_financeiras)$/);
+        /^\/rest\/v1\/(orcamentos|contas|clientes|fornecedores|categorias_financeiras|oportunidades|atividades_comerciais|origens_lead|motivos_perda)$/);
       if (!m) return responder(res, 404, { message: 'não existe' });
 
       const tabela = m[1];

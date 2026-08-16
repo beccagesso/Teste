@@ -67,6 +67,10 @@ export function arquivar(estado){
     situacao: situacaoValida(anterior && anterior.situacao),
     enviadoEm: (anterior && anterior.enviadoEm) || undefined,
     retornos: (anterior && anterior.retornos) || undefined,
+    /* opcional — vínculo com uma Oportunidade (Etapa 3). Preserva o que
+       já estava gravado mesmo que a tela ainda não tenha como editá-lo,
+       para não perder o vínculo a cada resalvamento automático. */
+    oportunidadeId: (anterior && anterior.oportunidadeId) || estado.oportunidadeId || null,
     atualizadoEm: Date.now(),
   });
   const semEla = lista.filter(x => x.orcNumero !== entrada.orcNumero);
