@@ -61,6 +61,24 @@ export function dataLongaBR(){
   return texto.charAt(0).toUpperCase() + texto.slice(1);
 }
 
+/* "Hoje — 14:32" / "Ontem — 17:10" / "12/08 — 09:15" — usado na
+   timeline do módulo Comercial (Etapa 3.2) para eventos com hora,
+   diferente de `fmtDataBR`/`fmtDate`, que são só dia. Puramente
+   apresentação: não decide nada, só formata um `criadoEm` (ms). */
+export function fmtDataHoraRelativa(ms){
+  if(!ms) return '—';
+  const d = new Date(ms);
+  const hora = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  const alvo = new Date(d); alvo.setHours(0, 0, 0, 0);
+  const dias = Math.round((hoje - alvo) / DIA_EM_MS);
+
+  if(dias === 0) return `Hoje — ${hora}`;
+  if(dias === 1) return `Ontem — ${hora}`;
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} — ${hora}`;
+}
+
 export function nomeDoMesCurto(){
   return new Date().toLocaleDateString('pt-BR', {month:'long'});
 }

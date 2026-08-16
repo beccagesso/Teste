@@ -819,6 +819,94 @@
     .clientes-lista{max-width:none;}
   }
 
+  /* ---------- TELA COMERCIAL (Etapa 3.2) ---------- */
+  .oportunidade-item{
+    border:1px solid var(--rule);
+    border-left:3px solid var(--accent);
+    border-radius:var(--radius);
+    padding:12px 14px;
+    margin-bottom:10px;
+    background:#fbfbfc;
+  }
+  .opo-status{
+    display:inline-block;
+    font-size:9.5px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    font-weight:700;
+    padding:2px 8px;
+    border-radius:10px;
+    white-space:nowrap;
+    background:#e7eef7;
+    color:var(--ink-soft);
+  }
+  .opo-status-negociacao{background:var(--gold-soft);color:var(--gold);}
+  .opo-status-aprovada{background:#dceee4;color:var(--ok);}
+  .opo-status-perdida{background:#f7dde3;color:#8f2740;}
+
+  .opo-det-scroll{overflow-y:auto;flex:1;}
+  .opo-det-linha{font-size:12.5px;color:var(--ink-soft);margin-bottom:3px;}
+  .opo-det-linha b{color:var(--ink);font-size:14px;}
+  .opo-det-bloco{margin-top:16px;padding-top:14px;border-top:1px solid var(--rule);}
+  .opo-det-rotulo{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--ink-soft);
+    margin-bottom:8px;
+  }
+
+  .opo-funil{display:flex;flex-wrap:wrap;align-items:center;gap:2px;font-size:11px;}
+  .opo-funil-passo{
+    padding:5px 9px;
+    border:1px solid var(--rule);
+    border-radius:12px;
+    color:var(--ink-soft);
+    white-space:nowrap;
+  }
+  .opo-funil-passo.feito{border-color:var(--ok);color:var(--ok);}
+  .opo-funil-passo.atual{border-color:var(--gold);color:var(--gold);background:var(--gold-soft);font-weight:700;}
+  .opo-funil-seta{color:var(--rule);font-size:11px;}
+  .opo-perdida{
+    background:#f7dde3;
+    color:#8f2740;
+    border-radius:var(--radius);
+    padding:10px 12px;
+    font-size:12.5px;
+  }
+
+  .opo-controle-status{margin-top:12px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;}
+  .opo-controle-status label{display:block;margin-bottom:4px;}
+  .opo-controle-status select{width:auto;min-width:160px;}
+  .opo-motivo-perda{
+    margin-top:10px;
+    background:var(--canvas);
+    border-radius:var(--radius);
+    padding:10px 12px;
+  }
+
+  .opo-timeline-item{
+    padding:8px 0;
+    border-top:1px solid var(--rule);
+    font-size:12px;
+  }
+  .opo-timeline-item:first-child{border-top:0;}
+  .opo-timeline-quando{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+  }
+  .opo-timeline-texto{margin-top:2px;}
+  .opo-timeline-dados{font-size:11px;color:var(--ink-soft);margin-top:2px;}
+
+  @media screen and (max-width:900px){
+    .opo-controle-status{flex-direction:column;align-items:stretch;}
+    .opo-controle-status select{width:100%;}
+  }
+
   /* ---------- TELA DE ACESSO ---------- */
   .tranca{
     position:fixed;
@@ -1562,6 +1650,7 @@
     <button type="button" class="secao-btn" data-secao="orcamentos">Orçamentos</button>
     <button type="button" class="secao-btn" data-secao="contas">Contas a pagar</button>
     <button type="button" class="secao-btn" data-secao="clientes">Clientes</button>
+    <button type="button" class="secao-btn" data-secao="comercial">Comercial</button>
   </nav>
 
   <!-- ============ SEÇÃO: INÍCIO ============ -->
@@ -1874,6 +1963,15 @@
     <div class="clientes-lista" id="clientesLista"></div>
   </section>
 
+  <!-- ============ SEÇÃO: COMERCIAL ============ -->
+  <section class="secao secao-comercial" id="secaoComercial" hidden>
+    <div class="clientes-topo">
+      <div></div>
+      <button type="button" class="btn-primary" id="opoNovoBtn">+ Nova oportunidade</button>
+    </div>
+    <div class="clientes-lista" id="comercialLista"></div>
+  </section>
+
 </div>
 
 <!-- ============ CLIENTE (cadastro / edição) ============ -->
@@ -2059,6 +2157,68 @@
     <div class="painel-rodape">
       <button type="button" class="btn-secondary" id="msgPadrao">Voltar ao padrão</button>
       <button type="button" class="btn-primary" id="msgSalvar">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ COMERCIAL: NOVA OPORTUNIDADE ============ -->
+<div class="painel" id="painelOportunidade" hidden>
+  <div class="painel-caixa" role="dialog" aria-modal="true" aria-labelledby="opoFormTituloRotulo">
+    <div class="painel-topo">
+      <h2 id="opoFormTituloRotulo">Nova oportunidade</h2>
+      <button type="button" class="painel-fechar" id="opoFechar"
+              aria-label="Fechar">&times;</button>
+    </div>
+    <div class="field-group">
+      <label for="opoFormCliente">Cliente</label>
+      <select id="opoFormCliente"></select>
+      <label for="opoFormTitulo">Título</label>
+      <input type="text" id="opoFormTitulo" placeholder="Ex.: Forro residência, Drywall comercial">
+      <label for="opoFormOrigem">Origem <span style="text-transform:none;font-weight:400;">— opcional</span></label>
+      <select id="opoFormOrigem"></select>
+      <div class="row2">
+        <div>
+          <label for="opoFormValor">Valor estimado <span style="text-transform:none;font-weight:400;">— opcional</span></label>
+          <input type="text" id="opoFormValor" inputmode="decimal" placeholder="0,00">
+        </div>
+        <div>
+          <label for="opoFormResponsavel">Responsável <span style="text-transform:none;font-weight:400;">— opcional</span></label>
+          <input type="text" id="opoFormResponsavel">
+        </div>
+      </div>
+      <label for="opoFormProximoContato">Próximo contato <span style="text-transform:none;font-weight:400;">— opcional</span></label>
+      <input type="date" id="opoFormProximoContato">
+      <div class="tranca-erro" id="opoAviso" hidden></div>
+    </div>
+    <div class="painel-rodape">
+      <button type="button" class="btn-primary" id="opoSalvar">Criar oportunidade</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ COMERCIAL: DETALHE DA OPORTUNIDADE ============ -->
+<div class="painel" id="painelOportunidadeDetalhe" hidden>
+  <div class="painel-caixa" role="dialog" aria-modal="true" aria-labelledby="opoDetTitulo">
+    <div class="painel-topo">
+      <h2 id="opoDetTitulo">Oportunidade</h2>
+      <button type="button" class="painel-fechar" id="opoDetFechar"
+              aria-label="Fechar">&times;</button>
+    </div>
+    <div class="opo-det-scroll">
+      <div id="opoDetCabecalho"></div>
+      <div class="opo-det-bloco">
+        <div class="opo-det-rotulo">Funil</div>
+        <div id="opoDetFunil"></div>
+        <div id="opoDetControle"></div>
+      </div>
+      <div class="opo-det-bloco">
+        <div class="opo-det-rotulo">Orçamentos vinculados</div>
+        <div id="opoDetVinculo"></div>
+      </div>
+      <div class="opo-det-bloco">
+        <div class="opo-det-rotulo">Histórico</div>
+        <div id="opoDetTimeline"></div>
+      </div>
     </div>
   </div>
 </div>

@@ -46,6 +46,15 @@ export function estatisticasCliente(clienteId){
   };
 }
 
+/* Os orçamentos vinculados a uma oportunidade (Etapa 3.2, exibição
+   só-leitura) — mesma receita de `estatisticasCliente()`, agora
+   filtrando por `oportunidadeId` em vez de `clienteId`. */
+export function orcamentosDaOportunidade(oportunidadeId){
+  return orcamentos.lerHistorico()
+    .filter(e => e.oportunidadeId === oportunidadeId)
+    .sort((a, b) => (b.atualizadoEm || 0) - (a.atualizadoEm || 0));
+}
+
 /* ---------- normalização, para comparar sem falso positivo ---------- */
 
 /* U+0300–U+036F: marcas diacríticas combinantes (acento, til, cedilha

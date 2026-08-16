@@ -29,6 +29,7 @@ import {
 } from './calculations/financeiro.js';
 import * as domain from './domain/index.js';
 import * as clientesUi from './ui/clientes.js';
+import * as comercialUi from './ui/comercial.js';
 import * as componentes from './ui/components.js';
 
 const orc = domain.orcamentos;
@@ -72,6 +73,7 @@ sync.aoReceberDados(() => {
   if(!el('painelHist').hidden) renderHistorico();
   if(!el('secaoContas').hidden) renderContas();
   if(!el('secaoClientes').hidden) clientesUi.renderClientes();
+  if(!el('secaoComercial').hidden) comercialUi.renderOportunidades();
   if(!el('secaoInicio').hidden) renderInicio();
 });
 
@@ -407,6 +409,7 @@ const SECOES = {
   orcamentos: {alvo:'secaoOrcamentos', titulo:'documento pronto para impressão / PDF'},
   contas:     {alvo:'secaoContas',     titulo:'o que a empresa tem a pagar'},
   clientes:   {alvo:'secaoClientes',   titulo:'quem já foi atendido'},
+  comercial:  {alvo:'secaoComercial',  titulo:'oportunidades em andamento'},
 };
 
 function abrirSecao(nome){
@@ -425,6 +428,7 @@ function abrirSecao(nome){
   if(escolhida === 'contas') renderContas();
   if(escolhida === 'inicio') renderInicio();
   if(escolhida === 'clientes') clientesUi.renderClientes();
+  if(escolhida === 'comercial') comercialUi.renderOportunidades();
   window.scrollTo(0, 0);
 }
 
@@ -1843,6 +1847,20 @@ el('cliDesativar').addEventListener('click', () => {
   }
 });
 
+/* ---------- comercial ---------- */
+
+el('opoNovoBtn').addEventListener('click', () => comercialUi.abrirNovaOportunidade());
+el('opoFechar').addEventListener('click', comercialUi.fecharPainelOportunidade);
+el('painelOportunidade').addEventListener('click', e => {
+  if(e.target === el('painelOportunidade')) comercialUi.fecharPainelOportunidade();
+});
+el('opoSalvar').addEventListener('click', () => comercialUi.salvarFormOportunidade());
+
+el('opoDetFechar').addEventListener('click', comercialUi.fecharDetalheOportunidade);
+el('painelOportunidadeDetalhe').addEventListener('click', e => {
+  if(e.target === el('painelOportunidadeDetalhe')) comercialUi.fecharDetalheOportunidade();
+});
+
 /* os cartões do início levam à seção certa já filtrada */
 el('secaoInicio').addEventListener('click', ev => {
   const cartaoTocado = ev.target.closest('[data-acao]');
@@ -1867,6 +1885,8 @@ document.addEventListener('keydown', e => {
   if(!el('painelAcesso').hidden) return fecharAcesso();
   if(!el('painelMsg').hidden) return fecharMensagens();
   if(!el('painelCliente').hidden) return clientesUi.fecharPainelCliente();
+  if(!el('painelOportunidadeDetalhe').hidden) return comercialUi.fecharDetalheOportunidade();
+  if(!el('painelOportunidade').hidden) return comercialUi.fecharPainelOportunidade();
   if(!el('painelHist').hidden) fecharHistorico();
 });
 
