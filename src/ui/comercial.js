@@ -20,6 +20,17 @@ let idAberto = null;          /* oportunidade mostrada no painel de detalhe */
 let pedindoMotivoPerda = false;
 let modoEdicao = false;
 
+/* Etapa 3.3: esta tela não sabe como o editor de orçamento funciona por
+   dentro (nem deveria) — quem sabe é app.js. Mesmo padrão de callback
+   que `components.js` já usa para a busca de cliente
+   (`aoSelecionar`/`aoPedirNovoCliente`): app.js registra o que fazer,
+   esta tela só avisa "o usuário pediu isto". */
+let aoQuererNovoOrcamento = () => {};
+let aoQuererAbrirOrcamento = () => {};
+
+export function aoNovoOrcamento(fn){ aoQuererNovoOrcamento = fn; }
+export function aoAbrirOrcamentoVinculado(fn){ aoQuererAbrirOrcamento = fn; }
+
 function rotuloStatus(chave){
   const s = dom.oportunidades.STATUS_OPORTUNIDADE.find(x => x.chave === chave);
   return s ? s.rotulo : chave;
@@ -191,13 +202,19 @@ function renderControleStatus(oportunidade){
 
 function renderVinculo(oportunidade){
   const vinculados = dom.orcamentosDaOportunidade(oportunidade.id);
-  if(!vinculados.length) return '<div class="msg-ajuda pequena">Nenhum orçamento vinculado.</div>';
-  return vinculados.map(e => `
-    <div class="cliente-ficha-orc">
-      <span>${escapeHtml(e.orcNumero)}</span>
-      <span>${escapeHtml(fmtMoeda(e.total || 0))}</span>
-      <span class="conta-marca">${escapeHtml(rotuloSituacaoOrc(e.situacao))}</span>
-    </div>`).join('');
+  const lista = vinculados.length
+    ? vinculados.map(e => `
+        <button type="button" class="opo-orc-item" data-numero="${escapeAttr(e.orcNumero)}">
+          <span>${escapeHtml(e.orcNumero)}</span>
+          <span>${escapeHtml(fmtMoeda(e.total || 0))}</span>
+          <span class="conta-marca">${escapeHtml(rotuloSituacaoOrc(e.situacao))}</span>
+        </button>`).join('')
+    : '<div class="msg-ajuda pequena">Nenhum orçamento vinculado.</div>';
+
+  return `${lista}
+    <button type="button" class="btn-secondary" id="opoNovoOrcamentoBtn" style="margin-top:10px;">
+      + Novo orçamento
+    </button>`;
 }
 
 function renderTimeline(oportunidade){
@@ -347,6 +364,10 @@ function renderDetalhe(){
   el('opoDetControle').innerHTML = renderControleStatus(o);
   el('opoDetVinculo').innerHTML = renderVinculo(o);
   el('opoDetTimeline').innerHTML = renderTimeline(o);
+
+  el('opoDetVinculo').querySelectorAll('.opo-orc-item').forEach(b =>
+    b.addEventListener('click', ev => aoQuererAbrirOrcamento(ev.currentTarget.dataset.numero)));
+  el('opoNovoOrcamentoBtn').addEventListener('click', () => aoQuererNovoOrcamento(o));
 
   const selectStatus = el('opoStatusSelect');
   if(selectStatus) selectStatus.addEventListener('change', ev => {

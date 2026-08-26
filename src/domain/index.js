@@ -55,6 +55,31 @@ export function orcamentosDaOportunidade(oportunidadeId){
     .sort((a, b) => (b.atualizadoEm || 0) - (a.atualizadoEm || 0));
 }
 
+/* Etapa 3.3: única fonte do evento `orcamento_criado`. `app.js` chama
+   isto em vez de `orcamentos.arquivar()` direto (mesma ideia de
+   `marcarOrcamentoESituacao` — coordenar duas entidades só pode
+   acontecer aqui, nunca dentro de um arquivo de entidade).
+
+   `arquivar()` roda a cada autosave (a cada 400ms de digitação); só
+   registra o evento da PRIMEIRA vez que este número passa a existir —
+   por isso o "já existia?" é calculado ANTES de gravar, e não depois
+   (depois, o registro já estaria lá de qualquer jeito). Todo autosave
+   seguinte encontra `jaExistia = true` e não gera evento nenhum. */
+export function arquivarOrcamento(estado){
+  const jaExistia = !!orcamentos.lerHistorico().find(x => x.orcNumero === estado.orcNumero);
+  const salvo = orcamentos.arquivar(estado);
+  if(salvo && !jaExistia && salvo.oportunidadeId){
+    atividadesComerciais.criar({
+      oportunidadeId: salvo.oportunidadeId,
+      tipo: 'orcamento_criado',
+      texto: `Orçamento ${salvo.orcNumero} criado`,
+      dados: {numero: salvo.orcNumero, valor: salvo.total},
+      automatica: true,
+    });
+  }
+  return salvo;
+}
+
 /* ---------- normalização, para comparar sem falso positivo ---------- */
 
 /* U+0300–U+036F: marcas diacríticas combinantes (acento, til, cedilha

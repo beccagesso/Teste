@@ -533,6 +533,7 @@ node build/testar-subcaminho.js
 node build/testar-clientes.js
 node build/testar-comercial.js
 node build/testar-comercial-ui.js
+node build/testar-comercial-integracao.js
 ```
 
 O `testar-nuvem.js` roda contra um Supabase de mentira (`build/falso-supabase.js`),

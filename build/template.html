@@ -902,6 +902,50 @@
   .opo-timeline-texto{margin-top:2px;}
   .opo-timeline-dados{font-size:11px;color:var(--ink-soft);margin-top:2px;}
 
+  .opo-orc-item{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    width:100%;
+    font-size:11.5px;
+    padding:8px 4px;
+    border:0;
+    border-top:1px solid var(--rule);
+    background:transparent;
+    text-align:left;
+    color:var(--ink);
+  }
+  .opo-orc-item:first-child{border-top:0;}
+  .opo-orc-item:hover{background:#f3f6fa;}
+
+  /* Etapa 3.3: o orçamento aberto a partir de uma oportunidade mostra
+     de onde veio e trava o campo de cliente, para não criar uma
+     inconsistência (oportunidade de um cliente, orçamento de outro). */
+  .opo-contexto{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    background:var(--gold-soft);
+    color:var(--gold);
+    border-radius:var(--radius);
+    padding:9px 12px;
+    margin-bottom:16px;
+    font-size:12px;
+  }
+  .opo-contexto[hidden]{display:none;}
+  .opo-contexto button{
+    border:1px solid var(--gold);
+    background:transparent;
+    color:var(--gold);
+    border-radius:var(--radius);
+    padding:6px 10px;
+    font-size:11px;
+    white-space:nowrap;
+  }
+  #cliNome:disabled{background:var(--canvas);color:var(--ink-soft);}
+
   @media screen and (max-width:900px){
     .opo-controle-status{flex-direction:column;align-items:stretch;}
     .opo-controle-status select{width:100%;}
@@ -1734,6 +1778,11 @@
       </div>
     </div>
 
+    <div class="opo-contexto" id="opoContextoOrcamento" hidden>
+      <span id="opoContextoTexto"></span>
+      <button type="button" id="voltarOportunidadeBtn">← Voltar para oportunidade</button>
+    </div>
+
     <h2>Cliente</h2>
     <div class="field-group">
       <label for="cliNome">Cliente</label>
@@ -1741,6 +1790,9 @@
         <input type="text" id="cliNome" placeholder="Buscar cliente pelo nome…"
                autocomplete="off" enterkeyhint="next">
         <div class="cli-busca-resultados" id="cliBuscaResultados" hidden></div>
+      </div>
+      <div class="msg-ajuda pequena" id="cliBloqueioAviso" hidden>
+        Cliente definido pela oportunidade — para trocar, edite a oportunidade no Comercial.
       </div>
       <label for="cliEndereco">Endereço da obra</label>
       <input type="text" id="cliEndereco" placeholder="Rua, número, bairro e cidade"

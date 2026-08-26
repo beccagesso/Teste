@@ -129,6 +129,11 @@ function condicoes(){
 const CHAVE_RASCUNHO = 'beccaGesso.rascunho.v1';
 let timerSalvar = null;
 
+/* Etapa 3.3: qual oportunidade (se alguma) este orçamento em edição
+   pertence. `null` é o caminho direto de sempre — orçamento sem
+   Comercial nenhum, comportamento inalterado. */
+let oportunidadeAtualId = null;
+
 function estadoAtual(){
   return {
     cliNome: el('cliNome').value,
@@ -140,14 +145,34 @@ function estadoAtual(){
     obs: el('obs').value,
     condicoes: condicoes(),
     servicos: servicos.map(s => ({desc:s.desc, qtd:s.qtd, valor:s.valor, unidade:s.unidade})),
+    oportunidadeId: oportunidadeAtualId,
   };
+}
+
+/* Trava a escolha de cliente quando o orçamento pertence a uma
+   oportunidade — o relacionamento (`clienteId`) não pode ser trocado
+   silenciosamente por baixo dela. O snapshot documental (telefone,
+   endereço) continua editável sempre: não é o mesmo papel. */
+function aplicarBloqueioCliente(bloqueado){
+  el('cliNome').disabled = bloqueado;
+  el('cliBloqueioAviso').hidden = !bloqueado;
+}
+
+function atualizarFaixaOportunidade(){
+  const faixa = el('opoContextoOrcamento');
+  if(!oportunidadeAtualId){ faixa.hidden = true; return; }
+  const oportunidade = domain.oportunidades.buscarPorId(oportunidadeAtualId);
+  faixa.hidden = false;
+  el('opoContextoTexto').textContent = oportunidade
+    ? `Orçamento da oportunidade: ${oportunidade.titulo}`
+    : 'Orçamento vinculado a uma oportunidade';
 }
 
 function salvar(){
   const estado = estadoAtual();
   try{
     localStorage.setItem(CHAVE_RASCUNHO, JSON.stringify(estado));
-    orc.arquivar(estado);
+    domain.arquivarOrcamento(estado);
     piscarAviso();
   }catch(e){ /* modo privado ou cota cheia: o app segue funcionando */ }
 }
@@ -181,6 +206,9 @@ function restaurar(){
   el('orcData').value = d.orcData || hojeISO();
   el('obs').value = d.obs || '';
   aplicarCondicoes(d.condicoes);
+  oportunidadeAtualId = d.oportunidadeId || null;
+  aplicarBloqueioCliente(!!oportunidadeAtualId);
+  atualizarFaixaOportunidade();
 
   servicos = Array.isArray(d.servicos) && d.servicos.length
     ? d.servicos.map(s => novoServico(s.desc || '', parseNum(s.qtd), parseNum(s.valor), s.unidade))
@@ -193,6 +221,9 @@ function carregarOrcamento(e){
   el('cliEndereco').value = e.cliEndereco || '';
   el('cliTelefone').value = e.cliTelefone || '';
   componentes.carregarSelecaoCliente(e.clienteId);
+  oportunidadeAtualId = e.oportunidadeId || null;
+  aplicarBloqueioCliente(!!oportunidadeAtualId);
+  atualizarFaixaOportunidade();
   el('orcNumero').value = e.orcNumero || orc.proximoNumero();
   el('orcData').value = e.orcData || hojeISO();
   el('obs').value = e.obs || '';
@@ -214,6 +245,9 @@ function novoOrcamento(){
   el('orcData').value = hojeISO();
   el('obs').value = '';
   aplicarCondicoes(null);
+  oportunidadeAtualId = null;
+  aplicarBloqueioCliente(false);
+  atualizarFaixaOportunidade();
   servicos = [novoServico()];
   renderServicosEditor();
   renderDoc();
@@ -1695,12 +1729,30 @@ function resumoParaTexto(d){
 }
 
 /* Mandar o orçamento já marca como enviado. Só sobe de rascunho: um
-   orçamento já aprovado não volta a "enviado" por ser mandado de novo. */
+   orçamento já aprovado não volta a "enviado" por ser mandado de novo.
+
+   Etapa 3.3: se este orçamento pertence a uma oportunidade, o
+   compartilhamento também vira um evento — "compartilhado pelo
+   WhatsApp", nunca "cliente recebeu" ou "cliente viu" (o app não tem
+   como provar isso). Única chamada desta função por envio bem-sucedido
+   (as duas rotas de `enviarPeloWhatsApp` convergem aqui), então o
+   evento nunca duplica para uma única ação — e um reenvio mais tarde é
+   um novo compartilhamento de verdade, não um duplicado do mesmo. */
 function marcarComoEnviado(){
   const numero = el('orcNumero').value;
   const e = orc.lerHistorico().find(x => x.orcNumero === numero);
-  if(e && orc.situacaoValida(e.situacao) === 'rascunho'){
+  if(!e) return;
+  if(orc.situacaoValida(e.situacao) === 'rascunho'){
     orc.marcarSituacao(numero, 'enviado');
+  }
+  if(e.oportunidadeId){
+    ativ.criar({
+      oportunidadeId: e.oportunidadeId,
+      tipo: 'orcamento_compartilhado',
+      texto: `Orçamento ${numero} compartilhado pelo WhatsApp`,
+      dados: {numero},
+      automatica: true,
+    });
   }
 }
 
@@ -1859,6 +1911,38 @@ el('opoSalvar').addEventListener('click', () => comercialUi.salvarFormOportunida
 el('opoDetFechar').addEventListener('click', comercialUi.fecharDetalheOportunidade);
 el('painelOportunidadeDetalhe').addEventListener('click', e => {
   if(e.target === el('painelOportunidadeDetalhe')) comercialUi.fecharDetalheOportunidade();
+});
+
+/* ---------- Etapa 3.3: orçamento a partir de uma oportunidade ----------
+   O Comercial não sabe como o editor de orçamento funciona por dentro
+   (nem deveria) — só avisa "o usuário pediu um orçamento novo" ou
+   "quer abrir este orçamento". Quem decide o que fazer é aqui. */
+
+comercialUi.aoNovoOrcamento(oportunidade => {
+  comercialUi.fecharDetalheOportunidade();
+  abrirSecao('orcamentos');
+  novoOrcamento();
+  oportunidadeAtualId = oportunidade.id;
+  const cliente = cli.buscarPorId(oportunidade.clienteId);
+  if(cliente) componentes.selecionarCliente(cliente);
+  aplicarBloqueioCliente(true);
+  atualizarFaixaOportunidade();
+});
+
+comercialUi.aoAbrirOrcamentoVinculado(numero => {
+  const entrada = orc.lerHistorico().find(x => x.orcNumero === numero);
+  if(!entrada) return;
+  comercialUi.fecharDetalheOportunidade();
+  abrirSecao('orcamentos');
+  carregarOrcamento(entrada);
+});
+
+el('voltarOportunidadeBtn').addEventListener('click', () => {
+  const id = oportunidadeAtualId;
+  if(!id) return;
+  salvar();
+  abrirSecao('comercial');
+  comercialUi.abrirOportunidade(id);
 });
 
 /* os cartões do início levam à seção certa já filtrada */
